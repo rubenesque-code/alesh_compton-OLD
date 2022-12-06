@@ -1,0 +1,16 @@
+---
+import { homePage, nonHomePages } from "../data/pages";
+---
+
+<div class="container">
+  <a href="/">{homePage.title}</a>
+  {nonHomePages.map((page) => <a href={page.title}>{page.title}</a>)}
+</div>
+
+<style>
+  .container {
+    display: inline-flex;
+    align-items: center;
+    gap: 1vw;
+  }
+</style>
