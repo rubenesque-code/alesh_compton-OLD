@@ -5,9 +5,11 @@ const { src } = Astro.props;
 ---
 
 <Image id="image" src={src} alt="" format="avif" />
+<div id="background" class="background"></div>
 
 <style>
   img {
+    z-index: 2;
     width: auto;
     max-height: 100%;
     cursor: pointer;
@@ -23,12 +25,25 @@ const { src } = Astro.props;
     /* height: 90%; */
     /* object-fit: contain; */
   }
+  .background {
+    z-index: -1;
+    /* background-color: rgba(244, 245, 246, 0.3); */
+    position: fixed;
+    inset: 0;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' fill-opacity='1' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    transition: opacity ease-in-out 0.5s;
+    opacity: 0;
+  }
 </style>
 
 <script>
   const image = document.getElementById("image");
+  const background = document.getElementById("background");
 
-  if (image) {
+  // could add listener for each image by getting a list of images
+  // if an image is open, isn't possible to click on another.
+  if (image && background) {
     image.addEventListener("click", () => {
       const pageWidth = document.body.scrollWidth;
       const pageHeight = document.body.scrollHeight; // 1660
@@ -76,17 +91,10 @@ const { src } = Astro.props;
         translateX = xDestination - scaledLeft;
       }
 
-      const xPos = image.offsetLeft;
-      // const xDestination = 20;
-
-      const yPos = image.getBoundingClientRect().top;
-      // const yDestination = 20;
-
       const classList = image.classList;
       const expandClass = "expand";
       const isExpanded = classList.contains(expandClass);
       if (isExpanded) {
-        console.log("expanded:", image.getBoundingClientRect());
         image.classList.remove(expandClass);
 
         image.style.transform = "translate(0px) scale(1)";
@@ -97,14 +105,17 @@ const { src } = Astro.props;
           }
           image.style.display = "inline";
         }, 550);
+
+        background.style.opacity = "0";
+        setTimeout(() => {
+          background.style.zIndex = "-1";
+        }, 550);
       } else {
-        console.log("initial:", image.getBoundingClientRect());
         image.classList.add(expandClass);
 
         if (image.parentElement) {
           image.parentElement.style.overflowX = "visible";
         }
-        console.log("scale:", scale);
 
         // const translateY = -(yPos - yDestination);
         // console.log("translateX:", translateX);
@@ -118,6 +129,9 @@ const { src } = Astro.props;
         /*         image.style.transform = `translate(-${xPos - xDestination}px, -${
           yPos - yDestination
         }px scale(${scale})`; */
+
+        background.style.opacity = "1";
+        background.style.zIndex = "1";
       }
     });
   }

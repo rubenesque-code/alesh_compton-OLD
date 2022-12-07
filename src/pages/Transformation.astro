@@ -38,8 +38,8 @@ const page = {
       </div>
       <div id="images-container" class="images-container">
         {
-          page.images.map((imageSrc) => (
-            <MyImage src={imageSrc} alt="" format="avif" />
+          page.images.map((imageSrc, i) => (
+            <MyImage src={imageSrc} index={i} alt="" format="avif" />
           ))
         }
         <div class="images-spacer">helloo</div>
@@ -89,7 +89,7 @@ const page = {
     padding-bottom: 0.5em;
   }
   .images-container::-webkit-scrollbar {
-    height: 8px;
+    height: 6px;
   }
   .images-container::-webkit-scrollbar-track {
     background: rgb(249, 250, 251);
