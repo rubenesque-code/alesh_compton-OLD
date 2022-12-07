@@ -1,0 +1,124 @@
+---
+import { Image } from "@astrojs/image/components";
+
+const { src } = Astro.props;
+---
+
+<Image id="image" src={src} alt="" format="avif" />
+
+<style>
+  img {
+    width: auto;
+    max-height: 100%;
+    cursor: pointer;
+    transition: transform ease-in-out 0.5s;
+    transform-origin: right;
+  }
+  .expand {
+    /* z-index: 2; */
+    /* position: fixed; */
+    /* left: 0; */
+    /* top: 0; */
+    /* width: 90%; */
+    /* height: 90%; */
+    /* object-fit: contain; */
+  }
+</style>
+
+<script>
+  const image = document.getElementById("image");
+
+  if (image) {
+    image.addEventListener("click", () => {
+      const pageWidth = document.body.scrollWidth;
+      const pageHeight = document.body.scrollHeight; // 1660
+
+      const imageWidth = image.getBoundingClientRect().width;
+      const imageHeight = image.getBoundingClientRect().height; // 1084
+
+      const imageOrientation =
+        imageWidth > imageHeight ? "landscape" : ("portrait" as const);
+
+      let scale: number = 1;
+
+      let translateY: number;
+      let translateX: number;
+
+      // if image orientation is landscape then max expansion will be limited by width?
+      // transform position works by calculating scale expansion and adding any transform
+      if (imageOrientation === "landscape") {
+        const maxWidth = pageWidth * 0.9;
+        scale = maxWidth / imageWidth;
+
+        translateX = -100;
+        translateY = -100;
+
+        const xDestination = pageWidth - maxWidth;
+        const yDestination = (pageHeight - imageHeight * scale) / 2;
+      } else {
+        const maxHeight = pageHeight * 0.9; // 1494
+        scale = maxHeight / imageHeight; // 1.38
+
+        const newWidth = imageWidth * scale;
+        const newHeight = imageHeight * scale;
+
+        const initialYTop = image.getBoundingClientRect().top;
+        const scaledYTopChange = (newHeight - imageHeight) / 2;
+        const scaledYPos = initialYTop - scaledYTopChange;
+        const yDestination = (pageHeight - newHeight) / 2;
+        translateY = yDestination - scaledYPos;
+
+        // transform origin is "right". Scales y top and bottom evenly. Left side of image expands; right doesn't move.
+        const initialLeft = image.getBoundingClientRect().left;
+        const scaledLeftChange = newWidth - imageWidth;
+        const scaledLeft = initialLeft - scaledLeftChange;
+        const xDestination = (pageWidth - newWidth) / 2;
+        translateX = xDestination - scaledLeft;
+      }
+
+      const xPos = image.offsetLeft;
+      // const xDestination = 20;
+
+      const yPos = image.getBoundingClientRect().top;
+      // const yDestination = 20;
+
+      const classList = image.classList;
+      const expandClass = "expand";
+      const isExpanded = classList.contains(expandClass);
+      if (isExpanded) {
+        console.log("expanded:", image.getBoundingClientRect());
+        image.classList.remove(expandClass);
+
+        image.style.transform = "translate(0px) scale(1)";
+
+        setTimeout(() => {
+          if (image.parentElement) {
+            image.parentElement.style.overflowX = "auto";
+          }
+          image.style.display = "inline";
+        }, 550);
+      } else {
+        console.log("initial:", image.getBoundingClientRect());
+        image.classList.add(expandClass);
+
+        if (image.parentElement) {
+          image.parentElement.style.overflowX = "visible";
+        }
+        console.log("scale:", scale);
+
+        // const translateY = -(yPos - yDestination);
+        // console.log("translateX:", translateX);
+        // console.log("translateY:", translateY);
+
+        image.style.display = "absolute";
+        // image.style.transform = `translate(-200px, 0) scale(${1.1})`;
+        image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        // image.style.transform = `translate(0, 83px) scale(${1.38})`;
+        // image.style.transform = `translate(-${100}px, -${100}px scale(${scale})`;
+        /*         image.style.transform = `translate(-${xPos - xDestination}px, -${
+          yPos - yDestination
+        }px scale(${scale})`; */
+      }
+    });
+  }
+</script>

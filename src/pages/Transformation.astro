@@ -1,7 +1,11 @@
 ---
+import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import MyImage from "../components/MyImage.astro";
+
 import image1 from "../images/butterfly/1.jpg";
 import image2 from "../images/butterfly/2.jpg";
+import image3 from "../images/butterfly/3.jpg";
 
 import "../styles/global.css";
 
@@ -10,93 +14,98 @@ const page = {
   description: [
     "The project culminated in an exhibition of the paintings in London, a weeklong public screening of the film in Tokyo and a hardback book, which is available for purchase here – https://www.transformation-zine.com/",
   ],
-  images: [image1, image2],
+  images: [image1, image2, image3],
 };
 ---
 
 <div class="page-container">
   <Header />
   <div class="body-container">
-    <div class="text-container">
-      <p class="text">
-        {page.title}
-      </p>
-      {
-        page.description && (
-          <p class="text description">
-            {typeof page.description === "string"
-              ? page.description
-              : page.description.map((sentence) => <span>{sentence}</span>)}
-          </p>
-        )
-      }
-    </div>
-    <div id="images-container" class="images-container">
-      {
-        page.images.map((imageSrc) => (
-          <div class="image-container">
-            <img src={imageSrc} alt="" />
-          </div>
-        ))
-      }
-      <div class="images-spacer">helloo</div>
+    <div class="body-container2">
+      <div class="text-container">
+        <p class="text">
+          {page.title}
+        </p>
+        {
+          page.description && (
+            <p class="text description">
+              {typeof page.description === "string"
+                ? page.description
+                : page.description.map((sentence) => <span>{sentence}</span>)}
+            </p>
+          )
+        }
+      </div>
+      <div id="images-container" class="images-container">
+        {
+          page.images.map((imageSrc) => (
+            <MyImage src={imageSrc} alt="" format="avif" />
+          ))
+        }
+        <div class="images-spacer">helloo</div>
+      </div>
     </div>
   </div>
-  <style>
-    .page-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      padding-left: 2.5vw;
-      padding-bottom: 3px;
-    }
-    .body-container {
-      flex-grow: 1;
-      display: flex;
-      /* border: 1px solid; */
-    }
-    .text-container {
-      margin-right: 58px;
-    }
-    .text {
-      width: 405px;
-    }
-    .description {
-      display: flex;
-      flex-direction: column;
-    }
-    .images-container {
-      /* border: 1px solid blue; */
-      display: flex;
-      gap: 1vw;
-      overflow-x: auto;
-    }
-    .images-container::-webkit-scrollbar {
-      height: 8px;
-    }
-    .images-container::-webkit-scrollbar-track {
-      background: rgb(249, 250, 251);
-      border-radius: 5px;
-    }
-    .images-container::-webkit-scrollbar-thumb {
-      background: rgb(209 213 219);
-      border-radius: 5px;
-    }
-    .images-container::-webkit-scrollbar-thumb:hover {
-      background: rgb(156 163 175);
-    }
-    .images-spacer {
-      /* display: inline; */
-      /* height: 100%; */
-      color: white;
-    }
-    .image-container {
-    }
-    img {
-    }
-  </style>
+  <Footer />
 </div>
+
+<style>
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding-left: 2.5vw;
+    /* border: 1px red solid; */
+  }
+  .body-container {
+    /* border: 1px solid; */
+    flex-grow: 1;
+    height: 100%;
+    position: relative;
+  }
+  .body-container2 {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+  .text-container {
+    margin-right: 58px;
+  }
+  .text {
+    width: 405px;
+  }
+  .description {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1em;
+  }
+  .images-container {
+    /* border: 1px solid blue; */
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    overflow-x: auto;
+    padding-bottom: 0.5em;
+  }
+  .images-container::-webkit-scrollbar {
+    height: 8px;
+  }
+  .images-container::-webkit-scrollbar-track {
+    background: rgb(249, 250, 251);
+    border-radius: 5px;
+  }
+  .images-container::-webkit-scrollbar-thumb {
+    background: rgb(209 213 219);
+    border-radius: 5px;
+  }
+  .images-container::-webkit-scrollbar-thumb:hover {
+    background: rgb(156 163 175);
+  }
+  .images-spacer {
+    color: white;
+  }
+</style>
 
 <script>
   function SmoothScroll(target: HTMLElement, speed: number, smooth: number) {
