@@ -14,7 +14,7 @@ const { src } = Astro.props;
     max-height: 100%;
     cursor: pointer;
     transition: transform ease-in-out 0.5s;
-    transform-origin: right;
+    transform-origin: center;
   }
   .expand {
     /* z-index: 2; */
@@ -54,13 +54,14 @@ const { src } = Astro.props;
       const imageOrientation =
         imageWidth > imageHeight ? "landscape" : ("portrait" as const);
 
-      let scale: number = 1;
+      let scale: number;
 
       let translateY: number;
       let translateX: number;
 
       // if image orientation is landscape then max expansion will be limited by width?
       // transform position works by calculating scale expansion and adding any transform
+
       if (imageOrientation === "landscape") {
         const maxWidth = pageWidth * 0.9;
         scale = maxWidth / imageWidth;
@@ -83,9 +84,24 @@ const { src } = Astro.props;
         const yDestination = (pageHeight - newHeight) / 2;
         translateY = yDestination - scaledYPos;
 
-        // transform origin is "right". Scales y top and bottom evenly. Left side of image expands; right doesn't move.
-        const initialLeft = image.getBoundingClientRect().left;
-        const scaledLeftChange = newWidth - imageWidth;
+        const initialLeft = image.getBoundingClientRect().left; // distance from left side of screen
+
+        const imageInitialCenterLeft = initialLeft + imageWidth / 2;
+        const pageCenterLeft = pageWidth / 2;
+        // const imageScaledCenterLeft = initialLeft + imageWidth / 2;
+        const scaleDirection =
+          imageInitialCenterLeft < pageCenterLeft ? "right" : ("left" as const);
+
+        let scaledLeftChange: number;
+
+        if (scaleDirection === "right") {
+          image.style.transformOrigin = "left";
+          scaledLeftChange = (newWidth - imageWidth) / 2;
+        } else {
+          image.style.transformOrigin = "right";
+          scaledLeftChange = (newWidth - imageWidth) / 2;
+        }
+
         const scaledLeft = initialLeft - scaledLeftChange;
         const xDestination = (pageWidth - newWidth) / 2;
         translateX = xDestination - scaledLeft;
@@ -95,6 +111,7 @@ const { src } = Astro.props;
       const expandClass = "expand";
       const isExpanded = classList.contains(expandClass);
       if (isExpanded) {
+        // console.log("Expanded:",image.getBoundingClientRect())
         image.classList.remove(expandClass);
 
         image.style.transform = "translate(0px) scale(1)";
@@ -111,24 +128,15 @@ const { src } = Astro.props;
           background.style.zIndex = "-1";
         }, 550);
       } else {
+        // console.log("Intial:",image.getBoundingClientRect())
         image.classList.add(expandClass);
 
         if (image.parentElement) {
           image.parentElement.style.overflowX = "visible";
         }
 
-        // const translateY = -(yPos - yDestination);
-        // console.log("translateX:", translateX);
-        // console.log("translateY:", translateY);
-
         image.style.display = "absolute";
-        // image.style.transform = `translate(-200px, 0) scale(${1.1})`;
         image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        // image.style.transform = `translate(0, 83px) scale(${1.38})`;
-        // image.style.transform = `translate(-${100}px, -${100}px scale(${scale})`;
-        /*         image.style.transform = `translate(-${xPos - xDestination}px, -${
-          yPos - yDestination
-        }px scale(${scale})`; */
 
         background.style.opacity = "1";
         background.style.zIndex = "1";
