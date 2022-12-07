@@ -1,6 +1,7 @@
 ---
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import Images from "../components/Images.astro";
 import MyImage from "../components/MyImage.astro";
 
 import image1 from "../images/butterfly/1.jpg";
@@ -37,11 +38,12 @@ const page = {
         }
       </div>
       <div id="images-container" class="images-container">
-        {
+        <Images srcs={page.images} />
+        <!--         {
           page.images.map((imageSrc, i) => (
             <MyImage src={imageSrc} index={i} alt="" format="avif" />
           ))
-        }
+        } -->
         <div class="images-spacer">helloo</div>
       </div>
     </div>

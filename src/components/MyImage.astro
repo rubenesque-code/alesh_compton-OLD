@@ -2,6 +2,7 @@
 import { Image } from "@astrojs/image/components";
 
 const { src } = Astro.props;
+// TODO: landscape image
 ---
 
 <Image id="image" src={src} alt="" format="avif" />
@@ -9,12 +10,10 @@ const { src } = Astro.props;
 
 <style>
   img {
-    z-index: 2;
     width: auto;
     max-height: 100%;
     cursor: pointer;
     transition: transform ease-in-out 0.5s;
-    transform-origin: center;
   }
   .expand {
     /* z-index: 2; */
@@ -45,73 +44,10 @@ const { src } = Astro.props;
   // if an image is open, isn't possible to click on another.
   if (image && background) {
     image.addEventListener("click", () => {
-      const pageWidth = document.body.scrollWidth;
-      const pageHeight = document.body.scrollHeight; // 1660
-
-      const imageWidth = image.getBoundingClientRect().width;
-      const imageHeight = image.getBoundingClientRect().height; // 1084
-
-      const imageOrientation =
-        imageWidth > imageHeight ? "landscape" : ("portrait" as const);
-
-      let scale: number;
-
-      let translateY: number;
-      let translateX: number;
-
-      // if image orientation is landscape then max expansion will be limited by width?
-      // transform position works by calculating scale expansion and adding any transform
-
-      if (imageOrientation === "landscape") {
-        const maxWidth = pageWidth * 0.9;
-        scale = maxWidth / imageWidth;
-
-        translateX = -100;
-        translateY = -100;
-
-        const xDestination = pageWidth - maxWidth;
-        const yDestination = (pageHeight - imageHeight * scale) / 2;
-      } else {
-        const maxHeight = pageHeight * 0.9; // 1494
-        scale = maxHeight / imageHeight; // 1.38
-
-        const newWidth = imageWidth * scale;
-        const newHeight = imageHeight * scale;
-
-        const initialYTop = image.getBoundingClientRect().top;
-        const scaledYTopChange = (newHeight - imageHeight) / 2;
-        const scaledYPos = initialYTop - scaledYTopChange;
-        const yDestination = (pageHeight - newHeight) / 2;
-        translateY = yDestination - scaledYPos;
-
-        const initialLeft = image.getBoundingClientRect().left; // distance from left side of screen
-
-        const imageInitialCenterLeft = initialLeft + imageWidth / 2;
-        const pageCenterLeft = pageWidth / 2;
-        // const imageScaledCenterLeft = initialLeft + imageWidth / 2;
-        const scaleDirection =
-          imageInitialCenterLeft < pageCenterLeft ? "right" : ("left" as const);
-
-        let scaledLeftChange: number;
-
-        if (scaleDirection === "right") {
-          image.style.transformOrigin = "left";
-          scaledLeftChange = (newWidth - imageWidth) / 2;
-        } else {
-          image.style.transformOrigin = "right";
-          scaledLeftChange = (newWidth - imageWidth) / 2;
-        }
-
-        const scaledLeft = initialLeft - scaledLeftChange;
-        const xDestination = (pageWidth - newWidth) / 2;
-        translateX = xDestination - scaledLeft;
-      }
-
       const classList = image.classList;
       const expandClass = "expand";
       const isExpanded = classList.contains(expandClass);
       if (isExpanded) {
-        // console.log("Expanded:",image.getBoundingClientRect())
         image.classList.remove(expandClass);
 
         image.style.transform = "translate(0px) scale(1)";
@@ -120,7 +56,8 @@ const { src } = Astro.props;
           if (image.parentElement) {
             image.parentElement.style.overflowX = "auto";
           }
-          image.style.display = "inline";
+          image.style.position = "static";
+          image.style.zIndex = "0";
         }, 550);
 
         background.style.opacity = "0";
@@ -128,14 +65,74 @@ const { src } = Astro.props;
           background.style.zIndex = "-1";
         }, 550);
       } else {
-        // console.log("Intial:",image.getBoundingClientRect())
         image.classList.add(expandClass);
+
+        const pageWidth = document.body.scrollWidth;
+        const pageHeight = document.body.scrollHeight; // 1660
+
+        const initialImageWidth = image.getBoundingClientRect().width;
+        const imageHeight = image.getBoundingClientRect().height; // 1084
+
+        const initialImageLeft = image.getBoundingClientRect().left;
+
+        const imageOrientation =
+          initialImageWidth > imageHeight ? "landscape" : ("portrait" as const);
+
+        let scale: number;
+
+        let translateY: number;
+        let translateX: number;
+
+        if (imageOrientation === "landscape") {
+          const maxWidth = pageWidth * 0.9;
+          scale = maxWidth / initialImageWidth;
+
+          translateX = -100;
+          translateY = -100;
+
+          const xDestination = pageWidth - maxWidth;
+          const yDestination = (pageHeight - imageHeight * scale) / 2;
+        } else {
+          const maxHeight = pageHeight * 0.9;
+          scale = maxHeight / imageHeight;
+
+          const scaledWidth = initialImageWidth * scale;
+          const newHeight = imageHeight * scale;
+
+          const initialYTop = image.getBoundingClientRect().top;
+          const scaledYTopChange = (newHeight - imageHeight) / 2;
+          const scaledYPos = initialYTop - scaledYTopChange;
+          const yDestination = (pageHeight - newHeight) / 2;
+          translateY = yDestination - scaledYPos;
+
+          const imageInitialCenterLeft =
+            initialImageLeft + initialImageWidth / 2;
+          const pageCenterLeft = pageWidth / 2;
+          const transformDirection: "left" | "right" =
+            imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
+
+          const leftDestination = (pageWidth - scaledWidth) / 2;
+
+          if (transformDirection === "right") {
+            image.style.transformOrigin = "left";
+            translateX = leftDestination - initialImageLeft;
+          } else {
+            image.style.transformOrigin = "right";
+            const scaledWidthChange = scaledWidth - initialImageWidth;
+            const imageLeftAfterScale = initialImageLeft - scaledWidthChange;
+            translateX = leftDestination - imageLeftAfterScale;
+          }
+        }
 
         if (image.parentElement) {
           image.parentElement.style.overflowX = "visible";
         }
 
-        image.style.display = "absolute";
+        // image.style.display = "absolute";
+        image.style.zIndex = "2";
+        image.style.left = `${initialImageLeft}px`;
+        image.style.top = `${image.getBoundingClientRect().top}px`;
+        image.style.position = "fixed";
         image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
 
         background.style.opacity = "1";
