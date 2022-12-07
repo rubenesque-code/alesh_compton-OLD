@@ -1,0 +1,168 @@
+---
+import Header from "../components/Header.astro";
+import image1 from "../images/butterfly/1.jpg";
+import image2 from "../images/butterfly/2.jpg";
+
+import "../styles/global.css";
+
+const page = {
+  title: "Transformation",
+  description: [
+    "The project culminated in an exhibition of the paintings in London, a weeklong public screening of the film in Tokyo and a hardback book, which is available for purchase here – https://www.transformation-zine.com/",
+  ],
+  images: [image1, image2],
+};
+---
+
+<div class="page-container">
+  <Header />
+  <div class="body-container">
+    <div class="text-container">
+      <p class="text">
+        {page.title}
+      </p>
+      {
+        page.description && (
+          <p class="text description">
+            {typeof page.description === "string"
+              ? page.description
+              : page.description.map((sentence) => <span>{sentence}</span>)}
+          </p>
+        )
+      }
+    </div>
+    <div id="images-container" class="images-container">
+      {
+        page.images.map((imageSrc) => (
+          <div class="image-container">
+            <img src={imageSrc} alt="" />
+          </div>
+        ))
+      }
+      <div class="images-spacer">helloo</div>
+    </div>
+  </div>
+  <style>
+    .page-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      padding-left: 2.5vw;
+      padding-bottom: 3px;
+    }
+    .body-container {
+      flex-grow: 1;
+      display: flex;
+      /* border: 1px solid; */
+    }
+    .text-container {
+      margin-right: 58px;
+    }
+    .text {
+      width: 405px;
+    }
+    .description {
+      display: flex;
+      flex-direction: column;
+    }
+    .images-container {
+      /* border: 1px solid blue; */
+      display: flex;
+      gap: 1vw;
+      overflow-x: auto;
+    }
+    .images-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    .images-container::-webkit-scrollbar-track {
+      background: rgb(249, 250, 251);
+      border-radius: 5px;
+    }
+    .images-container::-webkit-scrollbar-thumb {
+      background: rgb(209 213 219);
+      border-radius: 5px;
+    }
+    .images-container::-webkit-scrollbar-thumb:hover {
+      background: rgb(156 163 175);
+    }
+    .images-spacer {
+      /* display: inline; */
+      /* height: 100%; */
+      color: white;
+    }
+    .image-container {
+    }
+    img {
+    }
+  </style>
+</div>
+
+<script>
+  function SmoothScroll(target: HTMLElement, speed: number, smooth: number) {
+    let moving = false;
+    let pos = target.scrollLeft;
+    let frame = target;
+
+    target.addEventListener("mousewheel", scrolled, { passive: false });
+    target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
+
+    function scrolled(e: { preventDefault: () => void }) {
+      e.preventDefault(); // disable default scrolling
+
+      var delta = normalizeWheelDelta(e);
+
+      pos += -delta * speed;
+      pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
+
+      if (!moving) update();
+    }
+
+    function normalizeWheelDelta(e: {
+      preventDefault?: () => void;
+      detail?: any;
+      wheelDelta?: any;
+    }) {
+      if (e.detail) {
+        if (e.wheelDelta)
+          return (e.wheelDelta / e.detail / 40) * (e.detail > 0 ? 1 : -1);
+        // Opera
+        else return -e.detail / 3; // Firefox
+      } else return e.wheelDelta / 120; // IE,Safari,Chrome
+    }
+
+    function update() {
+      moving = true;
+
+      var delta = (pos - target.scrollLeft) / smooth;
+
+      target.scrollLeft += delta;
+
+      if (Math.abs(delta) > 0.5) requestFrame(update);
+      else moving = false;
+    }
+
+    var requestFrame = (function () {
+      // requestAnimationFrame cross browser
+      return (
+        window.requestAnimationFrame ||
+        // window.webkitRequestAnimationFrame ||
+        // window.mozRequestAnimationFrame ||
+        // window.oRequestAnimationFrame ||
+        // window.msRequestAnimationFrame ||
+        function (func) {
+          window.setTimeout(func, 1000 / 50);
+        }
+      );
+    })();
+  }
+
+  const imagesContainer = document.getElementById("images-container");
+  if (imagesContainer) {
+    /*     imagesContainer.addEventListener("wheel", (e) => {
+      if (e.deltaY > 0) imagesContainer.scrollLeft += 100;
+      else imagesContainer.scrollLeft -= 100;
+    }, {});  */
+    SmoothScroll(imagesContainer, 120, 12);
+  }
+</script>
