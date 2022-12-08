@@ -1,0 +1,12 @@
+---
+import Layout from "./Layout.astro";
+
+export type Props = {
+  title: string;
+  description: string[];
+};
+
+const { title, de } = Astro.props;
+---
+
+<Layout pageTitle={title} />

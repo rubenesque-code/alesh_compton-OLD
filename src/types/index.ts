@@ -1,10 +1,10 @@
-type LocalImage = {
+export type LocalImage = {
   type: "image";
   url: string;
 };
-type YoutubeVideo = {
-  type: "youtube-image";
-  youtubeId: string;
+export type YoutubeVideo = {
+  type: "youtube-video";
+  youtubeUrl: string;
 };
 
 export type Page = {

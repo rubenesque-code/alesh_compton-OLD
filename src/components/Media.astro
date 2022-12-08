@@ -1,25 +1,60 @@
 ---
 import { Image } from "@astrojs/image/components";
+import {
+  getYoutubeEmbedUrlFromId,
+  getYoutubeVideoIdFromUrl,
+} from "../helpers/youtube";
+import type { LocalImage, YoutubeVideo } from "../types";
+import Iframe from "./Iframe.astro";
 
-type Props = { srcs: string[]; page: { title: string; description: string[] } };
+type Props = { media: (LocalImage | YoutubeVideo)[] };
 
-const { srcs, page } = Astro.props;
+const { media } = Astro.props;
 // TODO: check responsiveness;
 // IMPROVEMENTS:
 // - image partially in view -> expanded doesn't look great because section of it not in view blinks in.
 // - pre-load next image (images are lazy loaded by default)
 // - background click to close
+// const youtubeUrl = "https://www.youtube.com/watch?v=t6Lj6hzrmtE&t=1s";
+// const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl);
+// const youtubeEmbedUrl = getYoutubeEmbedUrlFromId(youtubeId!);
 ---
 
 <div id="images-container" class="images-container">
-  {srcs.map((src) => <Image class="image" src={src} alt="" format="avif" />)}
+  {
+    media.map((item) =>
+      item.type === "image" ? (
+        <Image class="image" src={item.url} alt="" format="avif" />
+      ) : (
+        <div class="iframe-container">
+          <Iframe
+            src={(function () {
+              const youtubeId = getYoutubeVideoIdFromUrl(item.youtubeUrl);
+              const youtubeEmbedUrl = getYoutubeEmbedUrlFromId({
+                id: youtubeId!,
+                autoplay: true,
+              });
+
+              return youtubeEmbedUrl;
+            })()}
+          />
+        </div>
+      )
+    )
+  }
   <div class="images-spacer">helloo</div>
   <div id="background" class="background"></div>
 </div>
 
 <style>
+  .iframe-container {
+    width: auto;
+    height: 100%;
+    max-height: 1000px;
+    /* border: 2px solid blue; */
+  }
   .images-container {
-    /* border: 1px solid blue; */
+    /* border: 1px solid red; */
     position: relative;
     display: flex;
     align-items: flex-start;
@@ -37,6 +72,7 @@ const { srcs, page } = Astro.props;
   .images-container::-webkit-scrollbar-thumb {
     background: rgb(209 213 219);
     border-radius: 5px;
+    width: 40px;
   }
   .images-container::-webkit-scrollbar-thumb:hover {
     background: rgb(156 163 175);
@@ -51,22 +87,11 @@ const { srcs, page } = Astro.props;
     /* transition: transform ease-in-out 0.5s; */
     transition: transform ease-in-out 0.5s, opacity ease-in-out 0.2s;
   }
-  .expand {
-    /* z-index: 2; */
-    /* position: fixed; */
-    /* left: 0; */
-    /* top: 0; */
-    /* width: 90%; */
-    /* height: 90%; */
-    /* object-fit: contain; */
-  }
   .background {
     z-index: -1;
-    /* background-color: rgba(244, 245, 246, 0.3); */
     position: fixed;
     inset: 0;
     background-color: white;
-    /* background-color: rgba(255, 255, 255, 0.5); */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' fill-opacity='1' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
     transition: opacity ease-in-out 0.5s;
     opacity: 0;
@@ -80,8 +105,6 @@ const { srcs, page } = Astro.props;
   ): { scale: number; translate: { x: number; y: number } } => {
     const pageWidth = document.body.scrollWidth;
     const pageHeight = document.body.scrollHeight;
-
-    // const maxWidth =
 
     const initialImageWidth = image.getBoundingClientRect().width;
     const initialImageHeight = image.getBoundingClientRect().height;
