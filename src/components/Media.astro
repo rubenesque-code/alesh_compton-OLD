@@ -5,7 +5,7 @@ import {
   getYoutubeVideoIdFromUrl,
 } from "../helpers/youtube";
 import type { LocalImage, YoutubeVideo } from "../types";
-import Iframe from "./Iframe.astro";
+import YoutubeIframe from "./YoutubeIframe.astro";
 
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
@@ -27,12 +27,11 @@ const { media } = Astro.props;
         <Image class="image" src={item.url} alt="" format="avif" />
       ) : (
         <div class="iframe-container">
-          <Iframe
-            src={(function () {
+          <YoutubeIframe
+            id={(function () {
               const youtubeId = getYoutubeVideoIdFromUrl(item.youtubeUrl);
-              const youtubeEmbedUrl = getYoutubeEmbedUrlFromId(youtubeId!);
 
-              return youtubeEmbedUrl;
+              return youtubeId!;
             })()}
           />
         </div>
@@ -77,7 +76,7 @@ const { media } = Astro.props;
   .images-spacer {
     color: white;
   }
-  img {
+  .image {
     width: auto;
     max-height: 100%;
     cursor: pointer;

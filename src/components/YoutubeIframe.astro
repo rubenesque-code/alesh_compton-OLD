@@ -1,0 +1,183 @@
+---
+import {
+  getThumbnailFromYoutubeId,
+  getYoutubeEmbedUrlFromId,
+} from "../helpers/youtube";
+
+type Props = {
+  id: string;
+};
+const { id } = Astro.props;
+
+const iframeSrc = getYoutubeEmbedUrlFromId(id);
+const imgSrc = getThumbnailFromYoutubeId(id);
+
+const youtubeIframeParams =
+  "?enablejsapi=1&modestbranding=1&rel=0&fs=0&color=white";
+
+// NOTES
+// - iframe doesn't rerender by default on container size change
+// - can't programmatically play youtube video and have volume before first interaction
+---
+
+<div id="container" class="container">
+  <iframe
+    id="iframe"
+    src={iframeSrc + youtubeIframeParams}
+    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
+    frameborder="0"></iframe>
+  <div id="overlay" class="overlay">
+    <img class="thumbnail" src={imgSrc} alt="" />
+    <div class="playIcon"></div>
+  </div>
+  <div id="unmute" class="unmute">use controls to unmute</div>
+</div>
+
+<style>
+  .container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .overlay {
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(254, 254, 254, 0.5);
+    transition: opacity 0.2s ease-in-out;
+  }
+  .thumbnail {
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .playIcon {
+    z-index: 2;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-40%, -50%);
+    border-style: solid;
+    border-color: transparent transparent transparent #202020;
+    box-sizing: border-box;
+    width: 120px;
+    height: 120px;
+    border-width: 60px 0px 60px 120px;
+  }
+  .unmute {
+    z-index: -1;
+    position: absolute;
+    left: 20px;
+    bottom: 5%;
+    text-transform: uppercase;
+    background-color: black;
+    color: white;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    font-size: small;
+  }
+</style>
+
+<script type="text/javascript">
+  const container = document.getElementById("container");
+  const iframeId = "iframe";
+  const iframe = document.getElementById(iframeId);
+  const overlay = document.getElementById("overlay");
+  const unmute = document.getElementById("unmute");
+
+  const volumeChangedClass = "volume-changed";
+
+  const containerBounds = container.getBoundingClientRect();
+
+  iframe.height = `${containerBounds.height}`;
+  iframe.width = `${(containerBounds.height * 16) / 9}`;
+
+  var tag = document.createElement("script");
+  tag.id = "iframe-demo";
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  var player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player(iframeId, {
+      playerVars: { fs: 0, modestbranding: 1, rel: 0 },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+      },
+    });
+
+    overlay.addEventListener("click", () => {
+      overlay.style.opacity = "0";
+      player.playVideo();
+      setTimeout(() => {
+        overlay.style.zIndex = "-1";
+      }, 200);
+    });
+  }
+  function onPlayerReady(event) {
+    event.target.setVolume(0);
+  }
+
+  // player status/event.data: unstarted = -1; ended = 0; playing = 1; paused = 2; buffering = 3; video cued = 5;
+  function onPlayerStateChange(event) {
+    const isPlaying = event.data === 1;
+    const isPaused = event.data === 2;
+
+    let volumeChanged = unmute.classList.contains(volumeChangedClass);
+    console.log("volumeChanged", volumeChanged);
+
+    let pollVolume = null;
+
+    function stopPoll() {
+      console.log("stopping poll");
+      if (pollVolume) {
+        clearInterval(pollVolume);
+      }
+    }
+
+    if (isPlaying) {
+      console.log("isPlaying", isPlaying);
+      pollVolume =
+        volumeChanged || pollVolume
+          ? null
+          : setInterval(() => {
+              console.log("POLLING VOL...");
+              const volume = player.getVolume();
+              if (volume) {
+                if (!unmute.classList.contains(volumeChangedClass)) {
+                  unmute.classList.add(volumeChangedClass);
+                  unmute.style.opacity = "0";
+                  unmute.style.zIndex = "-1";
+                }
+              }
+            }, 200);
+
+      if (volumeChanged) {
+        stopPoll();
+      }
+
+      if (!unmute.classList.contains(volumeChangedClass)) {
+        unmute.style.zIndex = "1";
+        unmute.style.opacity = 1;
+      }
+    }
+    if (isPaused) {
+      stopPoll();
+      unmute.style.opacity = "0";
+      unmute.style.zIndex = "-1";
+      overlay.style.zIndex = "1";
+      overlay.style.opacity = "1";
+    }
+  }
+</script>
