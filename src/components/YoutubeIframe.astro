@@ -15,6 +15,9 @@ const imgSrc = getThumbnailFromYoutubeId(id);
 const youtubeIframeParams =
   "?enablejsapi=1&modestbranding=1&rel=0&fs=0&color=white";
 
+// IMPROVEMENTS
+// - only show volume message on hover
+
 // NOTES
 // - iframe doesn't rerender by default on container size change
 // - can't programmatically play youtube video and have volume before first interaction
@@ -26,11 +29,13 @@ const youtubeIframeParams =
     src={iframeSrc + youtubeIframeParams}
     allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
     frameborder="0"></iframe>
-  <div id="overlay" class="overlay">
+  <div id="overlay-container" class="overlay-container">
     <img class="thumbnail" src={imgSrc} alt="" />
     <div class="playIcon"></div>
+    <div class="overlay"></div>
   </div>
   <div id="unmute" class="unmute">use controls to unmute</div>
+  <div id="close-button" class="close-button">close</div>
 </div>
 
 <style>
@@ -39,6 +44,16 @@ const youtubeIframeParams =
     width: 100%;
     height: 100%;
   }
+  .overlay-container {
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.2s ease-in-out;
+    cursor: pointer;
+  }
   .overlay {
     z-index: 1;
     position: absolute;
@@ -46,8 +61,9 @@ const youtubeIframeParams =
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(254, 254, 254, 0.5);
+    background-color: rgba(254, 254, 254, 0.3);
     transition: opacity 0.2s ease-in-out;
+    cursor: pointer;
   }
   .thumbnail {
     z-index: 1;
@@ -65,14 +81,29 @@ const youtubeIframeParams =
     top: 50%;
     transform: translate(-40%, -50%);
     border-style: solid;
-    border-color: transparent transparent transparent #202020;
+    border-color: transparent transparent transparent black;
     box-sizing: border-box;
-    width: 120px;
-    height: 120px;
-    border-width: 60px 0px 60px 120px;
+    width: 100px;
+    height: 100px;
+    border-width: 50px 0px 50px 100px;
+  }
+  .close-button {
+    z-index: -1;
+    position: absolute;
+    right: 20px;
+    top: 40%;
+    background-color: black;
+    color: white;
+    font-size: x-large;
+    text-transform: uppercase;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
   }
   .unmute {
-    z-index: -1;
+    /* z-index: 1; */
     position: absolute;
     left: 20px;
     bottom: 5%;
@@ -83,7 +114,6 @@ const youtubeIframeParams =
     border-radius: 3px;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    font-size: small;
   }
 </style>
 
@@ -91,10 +121,45 @@ const youtubeIframeParams =
   const container = document.getElementById("container");
   const iframeId = "iframe";
   const iframe = document.getElementById(iframeId);
-  const overlay = document.getElementById("overlay");
+  const overlay = document.getElementById("overlay-container");
   const unmute = document.getElementById("unmute");
+  const closeButton = document.getElementById("close-button");
 
   const volumeChangedClass = "volume-changed";
+
+  let iframeHovered = false;
+
+  iframe.addEventListener("mouseover", () => {
+    iframeHovered = true;
+    closeButton.style.opacity = "1";
+    closeButton.style.zIndex = "4";
+    unmute.style.opacity = "1";
+    unmute.style.zIndex = "4";
+  });
+  iframe.addEventListener("mouseleave", () => {
+    iframeHovered = false;
+    closeButton.style.opacity = "0";
+    closeButton.style.zIndex = "-1";
+    unmute.style.opacity = "0";
+    unmute.style.zIndex = "-1";
+  });
+  closeButton.addEventListener("mouseover", () => {
+    closeButton.style.opacity = "1";
+    closeButton.style.zIndex = "4";
+    unmute.style.opacity = "1";
+    unmute.style.zIndex = "4";
+  });
+
+  closeButton.addEventListener("click", () => {
+    player.pauseVideo();
+
+    closeButton.style.opacity = "0";
+    closeButton.style.zIndex = "-1";
+    unmute.style.opacity = "0";
+    unmute.style.zIndex = "-1";
+    overlay.style.zIndex = "1";
+    overlay.style.opacity = "1";
+  });
 
   const containerBounds = container.getBoundingClientRect();
 
@@ -118,11 +183,13 @@ const youtubeIframeParams =
     });
 
     overlay.addEventListener("click", () => {
-      overlay.style.opacity = "0";
-      player.playVideo();
       setTimeout(() => {
-        overlay.style.zIndex = "-1";
-      }, 200);
+        overlay.style.opacity = "0";
+        player.playVideo();
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+        }, 200);
+      }, 500);
     });
   }
   function onPlayerReady(event) {
@@ -135,24 +202,22 @@ const youtubeIframeParams =
     const isPaused = event.data === 2;
 
     let volumeChanged = unmute.classList.contains(volumeChangedClass);
-    console.log("volumeChanged", volumeChanged);
 
     let pollVolume = null;
 
     function stopPoll() {
-      console.log("stopping poll");
+      // console.log("stopping poll");
       if (pollVolume) {
         clearInterval(pollVolume);
       }
     }
 
     if (isPlaying) {
-      console.log("isPlaying", isPlaying);
       pollVolume =
         volumeChanged || pollVolume
           ? null
           : setInterval(() => {
-              console.log("POLLING VOL...");
+              // console.log("POLLING VOL...");
               const volume = player.getVolume();
               if (volume) {
                 if (!unmute.classList.contains(volumeChangedClass)) {
@@ -167,17 +232,14 @@ const youtubeIframeParams =
         stopPoll();
       }
 
-      if (!unmute.classList.contains(volumeChangedClass)) {
+      console.log("iframeHovered:", iframeHovered);
+      if (iframeHovered && !unmute.classList.contains(volumeChangedClass)) {
         unmute.style.zIndex = "1";
         unmute.style.opacity = 1;
       }
     }
     if (isPaused) {
       stopPoll();
-      unmute.style.opacity = "0";
-      unmute.style.zIndex = "-1";
-      overlay.style.zIndex = "1";
-      overlay.style.opacity = "1";
     }
   }
 </script>

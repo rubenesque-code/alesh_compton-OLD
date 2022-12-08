@@ -1,32 +1,25 @@
 ---
 import { Image } from "@astrojs/image/components";
-import {
-  getYoutubeEmbedUrlFromId,
-  getYoutubeVideoIdFromUrl,
-} from "../helpers/youtube";
+import { getYoutubeVideoIdFromUrl } from "../helpers/youtube";
 import type { LocalImage, YoutubeVideo } from "../types";
 import YoutubeIframe from "./YoutubeIframe.astro";
 
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
-// TODO: check responsiveness;
 // IMPROVEMENTS:
 // - image partially in view -> expanded doesn't look great because section of it not in view blinks in.
 // - pre-load next image (images are lazy loaded by default)
 // - background click to close
-// const youtubeUrl = "https://www.youtube.com/watch?v=t6Lj6hzrmtE&t=1s";
-// const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl);
-// const youtubeEmbedUrl = getYoutubeEmbedUrlFromId(youtubeId!);
 ---
 
 <div id="images-container" class="images-container">
   {
     media.map((item) =>
       item.type === "image" ? (
-        <Image class="image" src={item.url} alt="" format="avif" />
+        <Image class="media image" src={item.url} alt="" format="avif" />
       ) : (
-        <div class="iframe-container">
+        <div class="media iframe-container">
           <YoutubeIframe
             id={(function () {
               const youtubeId = getYoutubeVideoIdFromUrl(item.youtubeUrl);
@@ -43,12 +36,6 @@ const { media } = Astro.props;
 </div>
 
 <style>
-  .iframe-container {
-    width: auto;
-    height: 100%;
-    max-height: 1000px;
-    /* border: 2px solid blue; */
-  }
   .images-container {
     /* border: 1px solid red; */
     position: relative;
@@ -77,11 +64,18 @@ const { media } = Astro.props;
     color: white;
   }
   .image {
-    width: auto;
     max-height: 100%;
+  }
+  .media {
+    width: auto;
     cursor: pointer;
     /* transition: transform ease-in-out 0.5s; */
     transition: transform ease-in-out 0.5s, opacity ease-in-out 0.2s;
+  }
+  .iframe-container {
+    width: auto;
+    height: 100%;
+    max-height: 1000px;
   }
   .background {
     z-index: -1;
@@ -96,81 +90,82 @@ const { media } = Astro.props;
 
 <script>
   // HELPERS ______________________
-  const calculateImageTransform = (
-    image: HTMLImageElement
+  const calculateMediaTransform = (
+    media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
     const pageWidth = document.body.scrollWidth;
     const pageHeight = document.body.scrollHeight;
 
-    const initialImageWidth = image.getBoundingClientRect().width;
-    const initialImageHeight = image.getBoundingClientRect().height;
-
-    const initialImageLeft = image.getBoundingClientRect().left;
+    const mediaInitialBounds = media.getBoundingClientRect();
+    const initialWidth = mediaInitialBounds.width;
+    const initialHeight = mediaInitialBounds.height;
+    const initialLeft = mediaInitialBounds.left;
+    const initialTop = mediaInitialBounds.top;
 
     const imageOrientation: "landscape" | "portrait" =
-      initialImageWidth > initialImageHeight ? "landscape" : "portrait";
+      initialWidth > initialHeight ? "landscape" : "portrait";
 
     const scale: number =
       imageOrientation === "landscape"
-        ? (pageWidth * 0.95) / initialImageWidth
-        : (pageHeight * 0.95) / initialImageHeight;
+        ? (pageWidth * 0.95) / initialWidth
+        : (pageHeight * 0.95) / initialHeight;
 
-    const scaledWidth = initialImageWidth * scale;
-    const scaledHeight = initialImageHeight * scale;
+    const scaledWidth = initialWidth * scale;
+    const scaledHeight = initialHeight * scale;
 
-    const initialYTop = image.getBoundingClientRect().top;
-    const scaledYTopChange = (scaledHeight - initialImageHeight) / 2;
-    const scaledYPos = initialYTop - scaledYTopChange;
+    const scaledYTopChange = (scaledHeight - initialHeight) / 2;
+    const scaledYPos = initialTop - scaledYTopChange;
     const yDestination = (pageHeight - scaledHeight) / 2;
     const translateY = yDestination - scaledYPos;
 
     let translateX: number;
 
-    const imageInitialCenterLeft = initialImageLeft + initialImageWidth / 2;
+    const imageInitialCenterLeft = initialLeft + initialWidth / 2;
     const pageCenterLeft = pageWidth / 2;
     const transformDirection: "left" | "right" =
       imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
     const leftDestination = (pageWidth - scaledWidth) / 2;
 
     if (transformDirection === "right") {
-      image.style.transformOrigin = "left";
-      translateX = leftDestination - initialImageLeft;
+      media.style.transformOrigin = "left";
+      translateX = leftDestination - initialLeft;
     } else {
-      image.style.transformOrigin = "right";
-      const scaledWidthChange = scaledWidth - initialImageWidth;
-      const imageLeftAfterScale = initialImageLeft - scaledWidthChange;
+      media.style.transformOrigin = "right";
+      const scaledWidthChange = scaledWidth - initialWidth;
+      const imageLeftAfterScale = initialLeft - scaledWidthChange;
       translateX = leftDestination - imageLeftAfterScale;
     }
 
     return { scale, translate: { x: translateX, y: translateY } };
   };
 
-  const handleContractImage = (
-    image: HTMLImageElement,
-    imageIndex: number,
-    imagesContainer: HTMLElement,
+  const handleShrinkMediaElement = (
+    mediaElement: HTMLElement,
+    index: number,
+    mediaElementsContainer: HTMLElement,
+    mediaElements: HTMLElement[],
     background: HTMLElement,
     expandClass: string
   ) => {
-    image.classList.remove(expandClass);
+    mediaElement.classList.remove(expandClass);
 
-    image.style.transform = "translate(0px) scale(1)";
+    mediaElement.style.transform = "translate(0px) scale(1)";
 
     background.style.opacity = "0";
 
     setTimeout(() => {
-      imagesContainer.style.overflowX = "auto";
+      mediaElementsContainer.style.overflowX = "auto";
 
-      image.style.position = "static";
-      image.style.zIndex = "0";
+      mediaElement.style.position = "static";
+      mediaElement.style.zIndex = "0";
 
-      for (let j = 0; j < images.length; j++) {
-        const image = images[j];
-        if (j === imageIndex) {
+      for (let j = 0; j < mediaElements.length; j++) {
+        const mediaElement = mediaElements[j];
+        if (j === index) {
           continue;
         }
 
-        image.style.opacity = "1";
+        mediaElement.style.opacity = "1";
       }
 
       background.style.zIndex = "-1";
@@ -178,38 +173,39 @@ const { media } = Astro.props;
   };
 
   // ELEMENTS ______________________
-  const images = Array.from(
+  const mediaElementsContainer = document.getElementById("images-container");
+  const mediaElements = Array.from(
     document.getElementsByClassName(
-      "image"
+      "media"
     ) as HTMLCollectionOf<HTMLImageElement>
   );
   const background = document.getElementById("background");
-  const imagesContainer = document.getElementById("images-container");
 
   //
   const expandClass = "expand";
 
   //
-  for (let i = 0; i < images.length; i++) {
-    const image = images[i];
+  for (let i = 0; i < mediaElements.length; i++) {
+    const mediaElement = mediaElements[i];
 
-    if (imagesContainer && image && background) {
-      image.addEventListener("click", () => {
-        const classList = image.classList;
+    if (mediaElementsContainer && mediaElement && background) {
+      mediaElement.addEventListener("click", () => {
+        const classList = mediaElement.classList;
         const isExpanded = classList.contains(expandClass);
         if (isExpanded) {
-          handleContractImage(
-            image,
+          handleShrinkMediaElement(
+            mediaElement,
             i,
-            imagesContainer,
+            mediaElementsContainer,
+            mediaElements,
             background,
             expandClass
           );
         } else {
-          image.classList.add(expandClass);
+          mediaElement.classList.add(expandClass);
 
-          for (let j = 0; j < images.length; j++) {
-            const image = images[j];
+          for (let j = 0; j < mediaElements.length; j++) {
+            const image = mediaElements[j];
             if (j === i) {
               continue;
             }
@@ -218,20 +214,28 @@ const { media } = Astro.props;
             image.style.transitionDuration = "100";
           }
 
-          const { scale, translate } = calculateImageTransform(image);
+          const { scale, translate } = calculateMediaTransform(mediaElement);
 
-          image.style.zIndex = "3";
-          image.style.left = `${image.getBoundingClientRect().left}px`;
-          image.style.top = `${image.getBoundingClientRect().top}px`;
-          image.style.width = `${image.getBoundingClientRect().width}px`;
-          image.style.height = `${image.getBoundingClientRect().height}px`;
+          mediaElement.style.zIndex = "3";
+          mediaElement.style.left = `${
+            mediaElement.getBoundingClientRect().left
+          }px`;
+          mediaElement.style.top = `${
+            mediaElement.getBoundingClientRect().top
+          }px`;
+          mediaElement.style.width = `${
+            mediaElement.getBoundingClientRect().width
+          }px`;
+          mediaElement.style.height = `${
+            mediaElement.getBoundingClientRect().height
+          }px`;
 
           // time for other images to fade out
           setTimeout(() => {
-            imagesContainer.style.overflowX = "visible";
-            image.style.position = "fixed";
+            mediaElementsContainer.style.overflowX = "visible";
+            mediaElement.style.position = "fixed";
 
-            image.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+            mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
             background.style.zIndex = "2";
             background.style.opacity = "1";
