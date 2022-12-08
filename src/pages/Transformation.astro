@@ -37,15 +37,10 @@ const page = {
           )
         }
       </div>
-      <div id="images-container" class="images-container">
-        <Images srcs={page.images} />
-        <!--         {
-          page.images.map((imageSrc, i) => (
-            <MyImage src={imageSrc} index={i} alt="" format="avif" />
-          ))
-        } -->
-        <div class="images-spacer">helloo</div>
-      </div>
+      <Images
+        srcs={page.images}
+        page={{ description: page.description, title: page.title }}
+      />
     </div>
   </div>
   <Footer />
@@ -81,31 +76,6 @@ const page = {
     display: flex;
     flex-direction: column;
     margin-top: 1em;
-  }
-  .images-container {
-    /* border: 1px solid blue; */
-    display: flex;
-    align-items: flex-start;
-    gap: 1vw;
-    overflow-x: auto;
-    padding-bottom: 0.5em;
-  }
-  .images-container::-webkit-scrollbar {
-    height: 6px;
-  }
-  .images-container::-webkit-scrollbar-track {
-    background: rgb(249, 250, 251);
-    border-radius: 5px;
-  }
-  .images-container::-webkit-scrollbar-thumb {
-    background: rgb(209 213 219);
-    border-radius: 5px;
-  }
-  .images-container::-webkit-scrollbar-thumb:hover {
-    background: rgb(156 163 175);
-  }
-  .images-spacer {
-    color: white;
   }
 </style>
 

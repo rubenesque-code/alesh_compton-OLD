@@ -1,21 +1,82 @@
 ---
 import { Image } from "@astrojs/image/components";
 
-type Props = { srcs: string[] };
+type Props = { srcs: string[]; page: { title: string; description: string[] } };
 
-const { srcs } = Astro.props;
-// TODO: landscape image
+const { srcs, page } = Astro.props;
+// TODO: check responsiveness; background click to close
+// IMPROVEMENTS:
+// - image partially in view -> expanded doesn't look great because section of it not in view blinks in.
+// - pre-load next image (images are lazy loaded by default)
 ---
 
-{srcs.map((src) => <Image class="image" src={src} alt="" format="avif" />)}
-<div id="background" class="background"></div>
+<div id="images-container" class="images-container">
+  {srcs.map((src) => <Image class="image" src={src} alt="" format="avif" />)}
+  <div class="images-spacer">helloo</div>
+  <div id="cover" class="cover">
+    <div class="text-container">
+      <p class="text">
+        {page.title}
+      </p>
+      {
+        page.description && (
+          <p class="text description">
+            {page.description.map((sentence) => (
+              <span>{sentence}</span>
+            ))}
+          </p>
+        )
+      }
+    </div>
+  </div>
+  <div id="background" class="background"></div>
+</div>
 
 <style>
+  .text-container {
+    padding-left: 2.5vw;
+    margin-right: 58px;
+  }
+  .text {
+    width: 405px;
+  }
+  .description {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1em;
+  }
+  .images-container {
+    /* border: 1px solid blue; */
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    overflow-x: auto;
+    padding-bottom: 0.5em;
+  }
+  .images-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  .images-container::-webkit-scrollbar-track {
+    background: rgb(249, 250, 251);
+    border-radius: 5px;
+  }
+  .images-container::-webkit-scrollbar-thumb {
+    background: rgb(209 213 219);
+    border-radius: 5px;
+  }
+  .images-container::-webkit-scrollbar-thumb:hover {
+    background: rgb(156 163 175);
+  }
+  .images-spacer {
+    color: white;
+  }
   img {
     width: auto;
     max-height: 100%;
     cursor: pointer;
-    transition: transform ease-in-out 0.5s;
+    /* transition: transform ease-in-out 0.5s; */
+    transition: transform ease-in-out 0.5s, opacity ease-in-out 0.2s;
   }
   .expand {
     /* z-index: 2; */
@@ -26,12 +87,24 @@ const { srcs } = Astro.props;
     /* height: 90%; */
     /* object-fit: contain; */
   }
+  .cover {
+    position: absolute;
+    z-index: 4;
+    background-color: white;
+    transition: opacity ease-in-out 0.2s;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    /* border: 1px solid red; */
+  }
   .background {
     z-index: -1;
     /* background-color: rgba(244, 245, 246, 0.3); */
     position: fixed;
     inset: 0;
-    background-color: #ffffff;
+    background-color: white;
+    /* background-color: rgba(255, 255, 255, 0.5); */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' fill-opacity='1' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
     transition: opacity ease-in-out 0.5s;
     opacity: 0;
@@ -39,6 +112,55 @@ const { srcs } = Astro.props;
 </style>
 
 <script>
+  const calculateImageTransform = (
+    image: HTMLImageElement
+  ): { scale: number; translate: { x: number; y: number } } => {
+    const pageWidth = document.body.scrollWidth;
+    const pageHeight = document.body.scrollHeight;
+
+    const initialImageWidth = image.getBoundingClientRect().width;
+    const initialImageHeight = image.getBoundingClientRect().height;
+
+    const initialImageLeft = image.getBoundingClientRect().left;
+
+    const imageOrientation: "landscape" | "portrait" =
+      initialImageWidth > initialImageHeight ? "landscape" : "portrait";
+
+    const scale: number =
+      imageOrientation === "landscape"
+        ? (pageWidth * 0.9) / initialImageWidth
+        : (pageHeight * 0.9) / initialImageHeight;
+
+    const scaledWidth = initialImageWidth * scale;
+    const scaledHeight = initialImageHeight * scale;
+
+    const initialYTop = image.getBoundingClientRect().top;
+    const scaledYTopChange = (scaledHeight - initialImageHeight) / 2;
+    const scaledYPos = initialYTop - scaledYTopChange;
+    const yDestination = (pageHeight - scaledHeight) / 2;
+    const translateY = yDestination - scaledYPos;
+
+    let translateX: number;
+
+    const imageInitialCenterLeft = initialImageLeft + initialImageWidth / 2;
+    const pageCenterLeft = pageWidth / 2;
+    const transformDirection: "left" | "right" =
+      imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
+    const leftDestination = (pageWidth - scaledWidth) / 2;
+
+    if (transformDirection === "right") {
+      image.style.transformOrigin = "left";
+      translateX = leftDestination - initialImageLeft;
+    } else {
+      image.style.transformOrigin = "right";
+      const scaledWidthChange = scaledWidth - initialImageWidth;
+      const imageLeftAfterScale = initialImageLeft - scaledWidthChange;
+      translateX = leftDestination - imageLeftAfterScale;
+    }
+
+    return { scale, translate: { x: translateX, y: translateY } };
+  };
+
   const images = Array.from(
     document.getElementsByClassName(
       "image"
@@ -46,29 +168,34 @@ const { srcs } = Astro.props;
   );
   const background = document.getElementById("background");
 
-  // TODO: update other images too to stay fixed
-  // - image jumps at beginning and end of contraction
+  const overflowedImageCover = document.getElementById("cover");
+  const imagesContainer = document.getElementById("images-container");
+
+  if (overflowedImageCover && imagesContainer) {
+    overflowedImageCover.style.width = `${
+      imagesContainer.getBoundingClientRect().left
+    }px`;
+  }
+
   for (let i = 0; i < images.length; i++) {
     const image = images[i];
 
-    if (image && background) {
+    if (image && background && overflowedImageCover) {
+      const expandClass = "expand";
+
       image.addEventListener("click", () => {
         const classList = image.classList;
-        const expandClass = "expand";
         const isExpanded = classList.contains(expandClass);
         if (isExpanded) {
           image.classList.remove(expandClass);
+          background.classList.remove(expandClass);
 
           image.style.transform = "translate(0px) scale(1)";
 
-          for (let j = 0; j < images.length; j++) {
-            const image = images[j];
-            if (j === i) {
-              continue;
-            }
+          background.style.opacity = "0";
 
-            image.style.position = "static";
-          }
+          overflowedImageCover.style.zIndex = "4";
+          overflowedImageCover.style.opacity = "1";
 
           setTimeout(() => {
             if (image.parentElement) {
@@ -76,82 +203,21 @@ const { srcs } = Astro.props;
             }
             image.style.position = "static";
             image.style.zIndex = "0";
-          }, 550);
 
-          background.style.opacity = "0";
-          setTimeout(() => {
+            for (let j = 0; j < images.length; j++) {
+              const image = images[j];
+              if (j === i) {
+                continue;
+              }
+
+              image.style.opacity = "1";
+            }
+
             background.style.zIndex = "-1";
           }, 550);
         } else {
           image.classList.add(expandClass);
-
-          const pageWidth = document.body.scrollWidth;
-          const pageHeight = document.body.scrollHeight; // 1660
-
-          const initialImageWidth = image.getBoundingClientRect().width;
-          const imageHeight = image.getBoundingClientRect().height; // 1084
-
-          const initialImageLeft = image.getBoundingClientRect().left;
-
-          const imageOrientation =
-            initialImageWidth > imageHeight
-              ? "landscape"
-              : ("portrait" as const);
-
-          let scale: number;
-
-          let translateY: number;
-          let translateX: number;
-
-          if (imageOrientation === "landscape") {
-            const maxWidth = pageWidth * 0.9;
-            scale = maxWidth / initialImageWidth;
-
-            translateX = -100;
-            translateY = -100;
-
-            const xDestination = pageWidth - maxWidth;
-            const yDestination = (pageHeight - imageHeight * scale) / 2;
-          } else {
-            const maxHeight = pageHeight * 0.9;
-            scale = maxHeight / imageHeight;
-
-            const scaledWidth = initialImageWidth * scale;
-            const newHeight = imageHeight * scale;
-
-            const initialYTop = image.getBoundingClientRect().top;
-            const scaledYTopChange = (newHeight - imageHeight) / 2;
-            const scaledYPos = initialYTop - scaledYTopChange;
-            const yDestination = (pageHeight - newHeight) / 2;
-            translateY = yDestination - scaledYPos;
-
-            const imageInitialCenterLeft =
-              initialImageLeft + initialImageWidth / 2;
-            const pageCenterLeft = pageWidth / 2;
-            const transformDirection: "left" | "right" =
-              imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
-
-            const leftDestination = (pageWidth - scaledWidth) / 2;
-
-            if (transformDirection === "right") {
-              image.style.transformOrigin = "left";
-              translateX = leftDestination - initialImageLeft;
-            } else {
-              image.style.transformOrigin = "right";
-              const scaledWidthChange = scaledWidth - initialImageWidth;
-              const imageLeftAfterScale = initialImageLeft - scaledWidthChange;
-              translateX = leftDestination - imageLeftAfterScale;
-            }
-          }
-
-          if (image.parentElement) {
-            image.parentElement.style.overflowX = "visible";
-          }
-
-          // image.style.display = "absolute";
-          image.style.zIndex = "3";
-          image.style.left = `${initialImageLeft}px`;
-          image.style.top = `${image.getBoundingClientRect().top}px`;
+          background.classList.add(expandClass);
 
           for (let j = 0; j < images.length; j++) {
             const image = images[j];
@@ -159,19 +225,38 @@ const { srcs } = Astro.props;
               continue;
             }
 
-            image.style.zIndex = "2";
-            image.style.left = `${image.getBoundingClientRect().left}px`;
-            image.style.top = `${image.getBoundingClientRect().top}px`;
-            image.style.position = "fixed";
+            image.style.opacity = "0";
           }
 
-          image.style.position = "fixed";
-          image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+          const { scale, translate } = calculateImageTransform(image);
 
-          background.style.opacity = "1";
-          background.style.zIndex = "1";
+          image.style.zIndex = "3";
+          image.style.left = `${image.getBoundingClientRect().left}px`;
+          image.style.top = `${image.getBoundingClientRect().top}px`;
+
+          setTimeout(() => {
+            if (image.parentElement) {
+              image.parentElement.style.overflowX = "visible";
+            }
+
+            overflowedImageCover.style.opacity = "0";
+
+            setTimeout(() => {
+              // move below background so is all image and bg is clickable
+              overflowedImageCover.style.zIndex = "1";
+            }, 500);
+
+            image.style.position = "fixed";
+            image.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+
+            background.style.zIndex = "1";
+            background.style.opacity = "1";
+          }, 200);
         }
       });
+      /*       background.addEventListener("click", () => {
+
+      }) */
     }
   }
 </script>
