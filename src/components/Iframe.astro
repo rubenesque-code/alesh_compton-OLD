@@ -4,6 +4,9 @@ type Props = {
 };
 const { src } = Astro.props;
 
+const youtubeIframeParams =
+  "?enablejsapi=1&modestbranding=1&rel=0&fs=0&color=white";
+
 // NOTES
 // - iframe doesn't rerender by default on container size change
 // - can't programmatically play youtube video and have volume before first interaction
@@ -12,10 +15,9 @@ const { src } = Astro.props;
 <div id="container" class="container">
   <iframe
     id="iframe"
-    src={src}
-    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-    frameborder="0"
-    allowfullscreen></iframe>
+    src={src + youtubeIframeParams}
+    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
+    frameborder="0"></iframe>
   <div id="overlay" class="overlay"></div>
 </div>
 
@@ -57,7 +59,7 @@ const { src } = Astro.props;
   var player;
   function onYouTubeIframeAPIReady() {
     player = new YT.Player(iframeId, {
-      playerVars: { autoplay: 1, controls: 0, mute: 1 },
+      playerVars: { fs: 0, modestbranding: 1, rel: 0 },
       events: {
         onReady: onPlayerReady,
         onStateChange: onPlayerStateChange,
@@ -73,7 +75,6 @@ const { src } = Astro.props;
     });
   }
   function onPlayerReady(event) {
-    iframe.style.border = "2px solid red";
     event.target.setVolume(0);
     // event.target.playVideo();
     /*     setTimeout(() => {
@@ -102,8 +103,8 @@ const { src } = Astro.props;
   }
 
   function onPlayerStateChange(event) {
-    console.log(event);
-    const isPlaying = event.data === 1;
+    // console.log(event);
+    // const isPlaying = event.data === 1;
     const isPaused = event.data === 2;
 
     if (isPaused) {

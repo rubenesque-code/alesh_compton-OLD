@@ -30,10 +30,7 @@ const { media } = Astro.props;
           <Iframe
             src={(function () {
               const youtubeId = getYoutubeVideoIdFromUrl(item.youtubeUrl);
-              const youtubeEmbedUrl = getYoutubeEmbedUrlFromId({
-                id: youtubeId!,
-                autoplay: true,
-              });
+              const youtubeEmbedUrl = getYoutubeEmbedUrlFromId(youtubeId!);
 
               return youtubeEmbedUrl;
             })()}

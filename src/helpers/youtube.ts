@@ -11,17 +11,8 @@ export const getYoutubeVideoIdFromUrl = (url: string) => {
   return id;
 };
 
-export const getYoutubeEmbedUrlFromId = ({
-  id,
-  autoplay,
-}: {
-  id: string;
-  autoplay?: boolean;
-}) => {
-  const embedUrl = `https://www.youtube.com/embed/${id}${
-    autoplay ? "?enablejsapi=1" : ""
-  }`;
-  console.log("embedUrl:", embedUrl);
+export const getYoutubeEmbedUrlFromId = (id: string) => {
+  const embedUrl = `https://www.youtube.com/embed/${id}`;
 
   return embedUrl;
 };
