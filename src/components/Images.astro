@@ -4,47 +4,20 @@ import { Image } from "@astrojs/image/components";
 type Props = { srcs: string[]; page: { title: string; description: string[] } };
 
 const { srcs, page } = Astro.props;
-// TODO: check responsiveness; background click to close
+// TODO: check responsiveness;
 // IMPROVEMENTS:
 // - image partially in view -> expanded doesn't look great because section of it not in view blinks in.
 // - pre-load next image (images are lazy loaded by default)
+// - background click to close
 ---
 
 <div id="images-container" class="images-container">
   {srcs.map((src) => <Image class="image" src={src} alt="" format="avif" />)}
   <div class="images-spacer">helloo</div>
-  <div id="cover" class="cover">
-    <div class="text-container">
-      <p class="text">
-        {page.title}
-      </p>
-      {
-        page.description && (
-          <p class="text description">
-            {page.description.map((sentence) => (
-              <span>{sentence}</span>
-            ))}
-          </p>
-        )
-      }
-    </div>
-  </div>
   <div id="background" class="background"></div>
 </div>
 
 <style>
-  .text-container {
-    padding-left: 2.5vw;
-    margin-right: 58px;
-  }
-  .text {
-    width: 405px;
-  }
-  .description {
-    display: flex;
-    flex-direction: column;
-    margin-top: 1em;
-  }
   .images-container {
     /* border: 1px solid blue; */
     position: relative;
@@ -87,17 +60,6 @@ const { srcs, page } = Astro.props;
     /* height: 90%; */
     /* object-fit: contain; */
   }
-  .cover {
-    position: absolute;
-    /* z-index: 4; */
-    left: 0;
-    top: 0;
-    height: 100%;
-    background-color: white;
-    transform: translateX(-100%);
-    transition: opacity ease-in-out 0.3s;
-    /* border: 1px solid red; */
-  }
   .background {
     z-index: -1;
     /* background-color: rgba(244, 245, 246, 0.3); */
@@ -119,6 +81,8 @@ const { srcs, page } = Astro.props;
     const pageWidth = document.body.scrollWidth;
     const pageHeight = document.body.scrollHeight;
 
+    // const maxWidth =
+
     const initialImageWidth = image.getBoundingClientRect().width;
     const initialImageHeight = image.getBoundingClientRect().height;
 
@@ -129,8 +93,8 @@ const { srcs, page } = Astro.props;
 
     const scale: number =
       imageOrientation === "landscape"
-        ? (pageWidth * 0.9) / initialImageWidth
-        : (pageHeight * 0.9) / initialImageHeight;
+        ? (pageWidth * 0.95) / initialImageWidth
+        : (pageHeight * 0.95) / initialImageHeight;
 
     const scaledWidth = initialImageWidth * scale;
     const scaledHeight = initialImageHeight * scale;
@@ -162,6 +126,38 @@ const { srcs, page } = Astro.props;
     return { scale, translate: { x: translateX, y: translateY } };
   };
 
+  const handleContractImage = (
+    image: HTMLImageElement,
+    imageIndex: number,
+    imagesContainer: HTMLElement,
+    background: HTMLElement,
+    expandClass: string
+  ) => {
+    image.classList.remove(expandClass);
+
+    image.style.transform = "translate(0px) scale(1)";
+
+    background.style.opacity = "0";
+
+    setTimeout(() => {
+      imagesContainer.style.overflowX = "auto";
+
+      image.style.position = "static";
+      image.style.zIndex = "0";
+
+      for (let j = 0; j < images.length; j++) {
+        const image = images[j];
+        if (j === imageIndex) {
+          continue;
+        }
+
+        image.style.opacity = "1";
+      }
+
+      background.style.zIndex = "-1";
+    }, 550);
+  };
+
   // ELEMENTS ______________________
   const images = Array.from(
     document.getElementsByClassName(
@@ -169,57 +165,29 @@ const { srcs, page } = Astro.props;
     ) as HTMLCollectionOf<HTMLImageElement>
   );
   const background = document.getElementById("background");
-  const overflowedImageCover = document.getElementById("cover");
   const imagesContainer = document.getElementById("images-container");
 
   //
-  if (overflowedImageCover && imagesContainer) {
-    overflowedImageCover.style.width = `${
-      imagesContainer.getBoundingClientRect().left
-    }px`;
-  }
+  const expandClass = "expand";
 
   //
   for (let i = 0; i < images.length; i++) {
     const image = images[i];
 
-    if (imagesContainer && image && background && overflowedImageCover) {
-      const expandClass = "expand";
-
+    if (imagesContainer && image && background) {
       image.addEventListener("click", () => {
         const classList = image.classList;
         const isExpanded = classList.contains(expandClass);
         if (isExpanded) {
-          image.classList.remove(expandClass);
-          background.classList.remove(expandClass);
-
-          image.style.transform = "translate(0px) scale(1)";
-
-          background.style.opacity = "0";
-
-          overflowedImageCover.style.zIndex = "4";
-          overflowedImageCover.style.opacity = "1";
-
-          setTimeout(() => {
-            imagesContainer.style.overflowX = "auto";
-
-            image.style.position = "static";
-            image.style.zIndex = "0";
-
-            for (let j = 0; j < images.length; j++) {
-              const image = images[j];
-              if (j === i) {
-                continue;
-              }
-
-              image.style.opacity = "1";
-            }
-
-            background.style.zIndex = "-1";
-          }, 550);
+          handleContractImage(
+            image,
+            i,
+            imagesContainer,
+            background,
+            expandClass
+          );
         } else {
           image.classList.add(expandClass);
-          background.classList.add(expandClass);
 
           for (let j = 0; j < images.length; j++) {
             const image = images[j];
@@ -228,39 +196,29 @@ const { srcs, page } = Astro.props;
             }
 
             image.style.opacity = "0"; // 0.2s
+            image.style.transitionDuration = "100";
           }
 
           const { scale, translate } = calculateImageTransform(image);
 
-          overflowedImageCover.style.zIndex = "4";
           image.style.zIndex = "3";
           image.style.left = `${image.getBoundingClientRect().left}px`;
           image.style.top = `${image.getBoundingClientRect().top}px`;
+          image.style.width = `${image.getBoundingClientRect().width}px`;
+          image.style.height = `${image.getBoundingClientRect().height}px`;
 
           // time for other images to fade out
           setTimeout(() => {
             imagesContainer.style.overflowX = "visible";
             image.style.position = "fixed";
-            overflowedImageCover.style.opacity = "0";
 
-            // time for overflowed image to pop up and cover to fade out
-            setTimeout(() => {
-              image.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+            image.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
-              background.style.zIndex = "2";
-              background.style.opacity = "1";
-            }, 200);
-
-            setTimeout(() => {
-              // move below background so is all image and bg is clickable
-              overflowedImageCover.style.zIndex = "1";
-            }, 500);
-          }, 200);
+            background.style.zIndex = "2";
+            background.style.opacity = "1";
+          }, 150);
         }
       });
-      /*       background.addEventListener("click", () => {
-
-      }) */
     }
   }
 </script>
