@@ -9,6 +9,8 @@ import Footer from "../components/Footer.astro";
 type Props = Page;
 
 const page = Astro.props;
+
+// TODO: media swiper changes for phone
 ---
 
 <Layout pageTitle={page.title}>
@@ -54,12 +56,15 @@ const page = Astro.props;
     position: absolute;
     inset: 0;
     display: flex;
+    max-width: 95%;
   }
   .text-container {
     margin-right: 58px;
+    max-width: 100%;
   }
   .text {
     width: 405px;
+    max-width: 100%;
   }
   .description {
     display: flex;
@@ -70,6 +75,9 @@ const page = Astro.props;
     .body-inner-container {
       flex-direction: column;
       gap: 1em;
+    }
+    .text-container {
+      margin-right: 0;
     }
   }
 </style>
