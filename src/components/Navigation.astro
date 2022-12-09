@@ -33,41 +33,41 @@ const links: PageRoute[] = [
   </div>
   <div class="navigation-container-small">
     <p class="menu-button" id="menu-button">Menu</p>
-  </div>
-  <div id="nav-small-menu" class="nav-small-menu">
-    <div class="nav-small-links-container">
-      {
-        links.map((link) =>
-          typeof link === "string" ? (
-            <a href={link}>{link}</a>
-          ) : (
-            <a href={link.route}>{link.label}</a>
+    <div id="nav-small-menu" class="nav-small-menu">
+      <div class="nav-small-links-container">
+        {
+          links.map((link) =>
+            typeof link === "string" ? (
+              <a href={link}>{link}</a>
+            ) : (
+              <a href={link.route}>{link.label}</a>
+            )
           )
-        )
-      }
-    </div>
-    <div class="header-nav-social-links-container">
-      <div class="header-nav-social-link-container">
-        <a href="mailto:joshgordondublin@gmail.com"
-          >joshgordondublin@gmail.com</a
-        >
+        }
       </div>
-      <div class="header-nav-social-link-container">
-        <p>Instagram:</p>
-        <p>
-          <a href="https://www.instagram.com/joshuagord0n/" target="__blank"
-            >@joshuagord0n</a
+      <div class="header-nav-social-links-container">
+        <div class="header-nav-social-link-container">
+          <a href="mailto:joshgordondublin@gmail.com"
+            >joshgordondublin@gmail.com</a
           >
-          <span>&</span>
-          <a
-            href="https://www.instagram.com/joshua.gordon.is.a.baby/"
-            target="__blank">@joshua.gordon.is.a.baby</a
-          >
-        </p>
+        </div>
+        <div class="header-nav-social-link-container">
+          <p>Instagram:</p>
+          <p>
+            <a href="https://www.instagram.com/joshuagord0n/" target="__blank"
+              >@joshuagord0n</a
+            >
+            <span>&</span>
+            <a
+              href="https://www.instagram.com/joshua.gordon.is.a.baby/"
+              target="__blank">@joshua.gordon.is.a.baby</a
+            >
+          </p>
+        </div>
       </div>
-    </div>
-    <div>
-      <p class="nav-close-button" id="nav-close-button">Close</p>
+      <div>
+        <p class="nav-close-button" id="nav-close-button">Close</p>
+      </div>
     </div>
   </div>
 </div>
