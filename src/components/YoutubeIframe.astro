@@ -1,45 +1,60 @@
 ---
+import { Image } from "@astrojs/image/components";
 import {
   getThumbnailFromYoutubeId,
   getYoutubeEmbedUrlFromId,
 } from "../helpers/youtube";
+import type { VideoCoverImage } from "../types";
 
 type Props = {
   id: string;
-};
-const { id } = Astro.props;
+} & VideoCoverImage;
+
+const { id, coverImage } = Astro.props;
 
 const iframeSrc = getYoutubeEmbedUrlFromId(id);
-const imgSrc = getThumbnailFromYoutubeId(id);
+const youtubeThumbnailSrc = getThumbnailFromYoutubeId(id);
 
 const youtubeIframeParams =
   "?enablejsapi=1&modestbranding=1&rel=0&fs=0&color=white";
-
-// IMPROVEMENTS
-// - only show volume message on hover
 
 // NOTES
 // - iframe doesn't rerender by default on container size change
 // - can't programmatically play youtube video and have volume before first interaction
 ---
 
-<div id="container" class="container">
+<div id="iframe-container-2" class="iframe-container-2">
   <iframe
-    id="iframe"
+    id={id}
+    class="iframe"
     src={iframeSrc + youtubeIframeParams}
     allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
     frameborder="0"></iframe>
   <div id="overlay-container" class="overlay-container">
-    <img class="thumbnail" src={imgSrc} alt="" />
+    {
+      coverImage ? (
+        <Image
+          class="thumbnail coverImage"
+          alt=""
+          src={coverImage.url}
+          format="avif"
+          style={{
+            objectPosition: coverImage.position || "center",
+          }}
+        />
+      ) : (
+        <img class="thumbnail" src={youtubeThumbnailSrc} alt="" />
+      )
+    }
     <div class="playIcon"></div>
     <div class="overlay"></div>
   </div>
-  <div id="unmute" class="unmute">use controls to unmute</div>
+  <div id="unmute" class="unmute">use controls for volume</div>
   <div id="close-button" class="close-button">close</div>
 </div>
 
 <style>
-  .container {
+  .iframe-container-2 {
     position: relative;
     width: 100%;
     height: 100%;
@@ -116,130 +131,3 @@ const youtubeIframeParams =
     transition: opacity 0.2s ease-in-out;
   }
 </style>
-
-<script type="text/javascript">
-  const container = document.getElementById("container");
-  const iframeId = "iframe";
-  const iframe = document.getElementById(iframeId);
-  const overlay = document.getElementById("overlay-container");
-  const unmute = document.getElementById("unmute");
-  const closeButton = document.getElementById("close-button");
-
-  const volumeChangedClass = "volume-changed";
-
-  let iframeHovered = false;
-
-  iframe.addEventListener("mouseover", () => {
-    iframeHovered = true;
-    closeButton.style.opacity = "1";
-    closeButton.style.zIndex = "4";
-    unmute.style.opacity = "1";
-    unmute.style.zIndex = "4";
-  });
-  iframe.addEventListener("mouseleave", () => {
-    iframeHovered = false;
-    closeButton.style.opacity = "0";
-    closeButton.style.zIndex = "-1";
-    unmute.style.opacity = "0";
-    unmute.style.zIndex = "-1";
-  });
-  closeButton.addEventListener("mouseover", () => {
-    closeButton.style.opacity = "1";
-    closeButton.style.zIndex = "4";
-    unmute.style.opacity = "1";
-    unmute.style.zIndex = "4";
-  });
-
-  closeButton.addEventListener("click", () => {
-    player.pauseVideo();
-
-    closeButton.style.opacity = "0";
-    closeButton.style.zIndex = "-1";
-    unmute.style.opacity = "0";
-    unmute.style.zIndex = "-1";
-    overlay.style.zIndex = "1";
-    overlay.style.opacity = "1";
-  });
-
-  const containerBounds = container.getBoundingClientRect();
-
-  iframe.height = `${containerBounds.height}`;
-  iframe.width = `${(containerBounds.height * 16) / 9}`;
-
-  var tag = document.createElement("script");
-  tag.id = "iframe-demo";
-  tag.src = "https://www.youtube.com/iframe_api";
-  var firstScriptTag = document.getElementsByTagName("script")[0];
-  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-  var player;
-  function onYouTubeIframeAPIReady() {
-    player = new YT.Player(iframeId, {
-      playerVars: { fs: 0, modestbranding: 1, rel: 0 },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-      },
-    });
-
-    overlay.addEventListener("click", () => {
-      setTimeout(() => {
-        overlay.style.opacity = "0";
-        player.playVideo();
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-        }, 200);
-      }, 700);
-    });
-  }
-  function onPlayerReady(event) {
-    event.target.setVolume(0);
-  }
-
-  // player status/event.data: unstarted = -1; ended = 0; playing = 1; paused = 2; buffering = 3; video cued = 5;
-  function onPlayerStateChange(event) {
-    const isPlaying = event.data === 1;
-    const isPaused = event.data === 2;
-
-    let volumeChanged = unmute.classList.contains(volumeChangedClass);
-
-    let pollVolume = null;
-
-    function stopPoll() {
-      // console.log("stopping poll");
-      if (pollVolume) {
-        clearInterval(pollVolume);
-      }
-    }
-
-    if (isPlaying) {
-      pollVolume =
-        volumeChanged || pollVolume
-          ? null
-          : setInterval(() => {
-              // console.log("POLLING VOL...");
-              const volume = player.getVolume();
-              if (volume) {
-                if (!unmute.classList.contains(volumeChangedClass)) {
-                  unmute.classList.add(volumeChangedClass);
-                  unmute.style.opacity = "0";
-                  unmute.style.zIndex = "-1";
-                }
-              }
-            }, 200);
-
-      if (volumeChanged) {
-        stopPoll();
-      }
-
-      console.log("iframeHovered:", iframeHovered);
-      if (iframeHovered && !unmute.classList.contains(volumeChangedClass)) {
-        unmute.style.zIndex = "1";
-        unmute.style.opacity = 1;
-      }
-    }
-    if (isPaused) {
-      stopPoll();
-    }
-  }
-</script>

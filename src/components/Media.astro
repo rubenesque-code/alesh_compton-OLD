@@ -7,12 +7,9 @@ import YoutubeIframe from "./YoutubeIframe.astro";
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
-// IMPROVEMENTS:
-// - image partially in view -> expanded doesn't look great because section of it not in view blinks in.
-// - pre-load next image (images are lazy loaded by default)
 ---
 
-<div id="images-container" class="images-container">
+<div id="media-container" class="media-container">
   {
     media.map((item) =>
       item.type === "image" ? (
@@ -25,17 +22,18 @@ const { media } = Astro.props;
 
               return youtubeId!;
             })()}
+            coverImage={item.coverImage}
           />
         </div>
       )
     )
   }
-  <div class="images-spacer">helloo</div>
+  <div class="media-spacer">helloo</div>
   <div id="background" class="background"></div>
 </div>
 
 <style>
-  .images-container {
+  .media-container {
     /* border: 1px solid red; */
     position: relative;
     display: flex;
@@ -44,32 +42,31 @@ const { media } = Astro.props;
     overflow-x: auto;
     padding-bottom: 0.5em;
   }
-  .images-container::-webkit-scrollbar {
+  .media-container::-webkit-scrollbar {
     height: 6px;
   }
-  .images-container::-webkit-scrollbar-track {
+  .media-container::-webkit-scrollbar-track {
     background: rgb(249, 250, 251);
     border-radius: 5px;
   }
-  .images-container::-webkit-scrollbar-thumb {
+  .media-container::-webkit-scrollbar-thumb {
     background: rgb(209 213 219);
     border-radius: 5px;
     width: 40px;
   }
-  .images-container::-webkit-scrollbar-thumb:hover {
+  .media-container::-webkit-scrollbar-thumb:hover {
     background: rgb(156 163 175);
   }
-  .images-spacer {
+  .media-spacer {
     color: white;
-  }
-  .image {
-    max-height: 100%;
   }
   .media {
     width: auto;
     cursor: pointer;
-    /* transition: transform ease-in-out 0.5s; */
     transition: transform ease-in-out 0.5s, opacity ease-in-out 0.2s;
+  }
+  .image {
+    max-height: 100%;
   }
   .iframe-container {
     width: auto;
@@ -171,8 +168,55 @@ const { media } = Astro.props;
     }, 550);
   };
 
+  const handleExpandMediaElement = (
+    mediaElement: HTMLElement,
+    index: number,
+    mediaElementsContainer: HTMLElement,
+    mediaElements: HTMLElement[],
+    background: HTMLElement,
+    expandClass: string
+  ) => {
+    mediaElement.classList.add(expandClass);
+
+    for (let j = 0; j < mediaElements.length; j++) {
+      const image = mediaElements[j];
+      if (j === index) {
+        continue;
+      }
+
+      image.style.opacity = "0"; // 0.2s
+      image.style.transitionDuration = "100";
+    }
+
+    const { scale, translate } = calculateMediaTransform(mediaElement);
+
+    mediaElement.style.zIndex = "3";
+    mediaElement.style.left = `${mediaElement.getBoundingClientRect().left}px`;
+    mediaElement.style.top = `${mediaElement.getBoundingClientRect().top}px`;
+    mediaElement.style.width = `${
+      mediaElement.getBoundingClientRect().width
+    }px`;
+    mediaElement.style.height = `${
+      mediaElement.getBoundingClientRect().height
+    }px`;
+
+    // time for other media to fade out
+    setTimeout(() => {
+      mediaElementsContainer.style.overflowX = "visible";
+      mediaElement.style.position = "fixed";
+
+      mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+
+      background.style.zIndex = "2";
+      background.style.opacity = "1";
+    }, 150);
+  };
+
+  const determineIsExpanded = (mediaElement: HTMLElement): boolean =>
+    mediaElement.classList.contains(expandClass);
+
   // ELEMENTS ______________________
-  const mediaElementsContainer = document.getElementById("images-container");
+  const mediaElementsContainer = document.getElementById("media-container");
   const mediaElements = Array.from(
     document.getElementsByClassName(
       "media"
@@ -189,8 +233,7 @@ const { media } = Astro.props;
 
     if (mediaElementsContainer && mediaElement && background) {
       mediaElement.addEventListener("click", () => {
-        const classList = mediaElement.classList;
-        const isExpanded = classList.contains(expandClass);
+        const isExpanded = determineIsExpanded(mediaElement);
         if (isExpanded) {
           handleShrinkMediaElement(
             mediaElement,
@@ -201,46 +244,175 @@ const { media } = Astro.props;
             expandClass
           );
         } else {
-          mediaElement.classList.add(expandClass);
-
-          for (let j = 0; j < mediaElements.length; j++) {
-            const image = mediaElements[j];
-            if (j === i) {
-              continue;
-            }
-
-            image.style.opacity = "0"; // 0.2s
-            image.style.transitionDuration = "100";
-          }
-
-          const { scale, translate } = calculateMediaTransform(mediaElement);
-
-          mediaElement.style.zIndex = "3";
-          mediaElement.style.left = `${
-            mediaElement.getBoundingClientRect().left
-          }px`;
-          mediaElement.style.top = `${
-            mediaElement.getBoundingClientRect().top
-          }px`;
-          mediaElement.style.width = `${
-            mediaElement.getBoundingClientRect().width
-          }px`;
-          mediaElement.style.height = `${
-            mediaElement.getBoundingClientRect().height
-          }px`;
-
-          // time for other images to fade out
-          setTimeout(() => {
-            mediaElementsContainer.style.overflowX = "visible";
-            mediaElement.style.position = "fixed";
-
-            mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
-
-            background.style.zIndex = "2";
-            background.style.opacity = "1";
-          }, 150);
+          handleExpandMediaElement(
+            mediaElement,
+            i,
+            mediaElementsContainer,
+            mediaElements,
+            background,
+            expandClass
+          );
         }
       });
+    }
+  }
+
+  /*   if (background && mediaElementsContainer) {
+    background.addEventListener("click", () => {
+      for (let i = 0; i < mediaElements.length; i++) {
+        const mediaElement = mediaElements[i];
+        const isExpanded = determineIsExpanded(mediaElement);
+
+        if (isExpanded) {
+          handleShrinkMediaElement(
+            mediaElement,
+            i,
+            mediaElementsContainer,
+            mediaElements,
+            background,
+            expandClass
+          );
+        }
+        break;
+      }
+    });
+  } */
+</script>
+<script type="text/javascript">
+  // ELEMENTS
+  const iframes = Array.from(document.getElementsByClassName("iframe"));
+  const containers = Array.from(
+    document.getElementsByClassName("iframe-container-2")
+  );
+  const overlays = Array.from(
+    document.getElementsByClassName("overlay-container")
+  );
+  const unmutes = Array.from(document.getElementsByClassName("unmute"));
+  const closeButtons = Array.from(
+    document.getElementsByClassName("close-button")
+  );
+
+  //
+  for (let i = 0; i < iframes.length; i++) {
+    const iframe = iframes[i];
+    const container = containers[i];
+
+    const containerBounds = container.getBoundingClientRect();
+
+    iframe.height = `${containerBounds.height}`;
+    iframe.width = `${(containerBounds.height * 16) / 9}`;
+  }
+
+  var tag = document.createElement("script");
+  tag.id = "iframe-demo";
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  function onYouTubeIframeAPIReady() {
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
+      const overlay = overlays[i];
+      const unmute = unmutes[i];
+      const closeButton = closeButtons[i];
+
+      const player = new YT.Player(iframe.id, {
+        events: {
+          onReady: onPlayerReady,
+        },
+      });
+
+      function onPlayerReady(event) {
+        console.log("PLAYER READY");
+        event.target.setVolume(0);
+        overlay.addEventListener("click", () => {
+          setTimeout(() => {
+            overlay.style.opacity = "0";
+            player.playVideo();
+            setTimeout(() => {
+              overlay.style.zIndex = "-1";
+            }, 200);
+          }, 700);
+        });
+
+        iframe.addEventListener("mouseover", () => {
+          // iframeHovered = true;
+          closeButton.style.opacity = "1";
+          closeButton.style.zIndex = "4";
+          unmute.style.opacity = "1";
+          unmute.style.zIndex = "4";
+        });
+        iframe.addEventListener("mouseleave", () => {
+          // iframeHovered = false;
+          closeButton.style.opacity = "0";
+          closeButton.style.zIndex = "-1";
+          unmute.style.opacity = "0";
+          unmute.style.zIndex = "-1";
+        });
+        closeButton.addEventListener("mouseover", () => {
+          closeButton.style.opacity = "1";
+          closeButton.style.zIndex = "4";
+          unmute.style.opacity = "1";
+          unmute.style.zIndex = "4";
+        });
+
+        closeButton.addEventListener("click", () => {
+          player.pauseVideo();
+
+          closeButton.style.opacity = "0";
+          closeButton.style.zIndex = "-1";
+          unmute.style.opacity = "0";
+          unmute.style.zIndex = "-1";
+          overlay.style.zIndex = "1";
+          overlay.style.opacity = "1";
+        });
+      }
+
+      // player status/event.data: unstarted = -1; ended = 0; playing = 1; paused = 2; buffering = 3; video cued = 5;
+      /*     function onPlayerStateChange(event) {
+      const isPlaying = event.data === 1;
+      const isPaused = event.data === 2;
+
+      let volumeChanged = unmute.classList.contains(volumeChangedClass);
+
+      let pollVolume = null;
+
+      function stopPoll() {
+        // console.log("stopping poll");
+        if (pollVolume) {
+          clearInterval(pollVolume);
+        }
+      }
+
+      if (isPlaying) {
+        pollVolume =
+          volumeChanged || pollVolume
+            ? null
+            : setInterval(() => {
+                // console.log("POLLING VOL...");
+                const volume = player.getVolume();
+                if (volume) {
+                  if (!unmute.classList.contains(volumeChangedClass)) {
+                    unmute.classList.add(volumeChangedClass);
+                    unmute.style.opacity = "0";
+                    unmute.style.zIndex = "-1";
+                  }
+                }
+              }, 200);
+
+        if (volumeChanged) {
+          stopPoll();
+        }
+
+        if (iframeHovered && !unmute.classList.contains(volumeChangedClass)) {
+          unmute.style.zIndex = "1";
+          unmute.style.opacity = 1;
+        }
+      }
+      if (isPaused) {
+        stopPoll();
+      }
+    } */
     }
   }
 </script>
