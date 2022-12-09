@@ -41,9 +41,11 @@ const page = Astro.props;
 
 <style>
   .page-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-height: 100vh;
     overflow: hidden;
     padding-left: 2.5vw;
   }
@@ -72,7 +74,11 @@ const page = Astro.props;
     margin-top: 1em;
   }
   @media screen and (max-width: 900px) {
+    .page-container {
+      height: auto;
+    }
     .body-inner-container {
+      position: static;
       flex-direction: column;
       gap: 1em;
     }

@@ -15,8 +15,7 @@ const { id, coverImage } = Astro.props;
 const iframeSrc = getYoutubeEmbedUrlFromId(id);
 const youtubeThumbnailSrc = getThumbnailFromYoutubeId(id);
 
-const youtubeIframeParams =
-  "?enablejsapi=1&modestbranding=1&rel=0&fs=0&color=white";
+const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
 
 // NOTES
 // - iframe doesn't rerender by default on container size change
@@ -29,7 +28,8 @@ const youtubeIframeParams =
     class="iframe"
     src={iframeSrc + youtubeIframeParams}
     allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
-    frameborder="0"></iframe>
+    frameborder="0"
+    allowfullscreen></iframe>
   <div id="overlay-container" class="overlay-container">
     {
       coverImage ? (
