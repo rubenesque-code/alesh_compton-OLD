@@ -1,0 +1,22 @@
+---
+import image1 from "../images/butterfly/1.jpg";
+import { Image } from "@astrojs/image/components";
+---
+
+<div id="test-container" class="test-container">
+  <Image alt="" src={image1} />
+</div>
+<style>
+  .test-container {
+    border: 2px solid red;
+  }
+</style>
+
+<script>
+  const testContainer = document.getElementById(
+    "test-container"
+  ) as HTMLElement;
+  testContainer.addEventListener("click", () => {
+    testContainer.style.borderColor = "green";
+  });
+</script>
