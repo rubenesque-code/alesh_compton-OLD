@@ -20,3 +20,10 @@ export type Page = {
   description?: string | string[];
   media: (LocalImage | YoutubeVideo)[];
 };
+
+export type PageRoute =
+  | {
+      label: string;
+      route: string;
+    }
+  | string;

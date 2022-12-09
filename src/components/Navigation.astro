@@ -1,15 +1,164 @@
 ---
-const pageTitles = [""];
+import type { PageRoute } from "../types";
+
+const links: PageRoute[] = [
+  "Butterfly",
+  "Transformation",
+  {
+    label: "Diary Part 1",
+    route: "diary-part-1",
+  },
+  {
+    label: "Diary Part 2",
+    route: "diary-part-2",
+  },
+  "Krahang",
+  "Various Videos",
+  "The Wicked Shit",
+  "Various Stills",
+];
 ---
 
-<div class="container">
-  {pageTitles.map((pageTitle) => <a href={pageTitle}>{pageTitle}</a>)}
+<div>
+  <div class="navigation-container">
+    {
+      links.map((link) =>
+        typeof link === "string" ? (
+          <a href={link}>{link}</a>
+        ) : (
+          <a href={link.route}>{link.label}</a>
+        )
+      )
+    }
+  </div>
+  <div class="navigation-container-small">
+    <p class="menu-button" id="menu-button">Menu</p>
+  </div>
+  <div id="nav-small-menu" class="nav-small-menu">
+    <div class="nav-small-links-container">
+      {
+        links.map((link) =>
+          typeof link === "string" ? (
+            <a href={link}>{link}</a>
+          ) : (
+            <a href={link.route}>{link.label}</a>
+          )
+        )
+      }
+    </div>
+    <div class="header-nav-social-links-container">
+      <div class="header-nav-social-link-container">
+        <a href="mailto:joshgordondublin@gmail.com"
+          >joshgordondublin@gmail.com</a
+        >
+      </div>
+      <div class="header-nav-social-link-container">
+        <p>Instagram:</p>
+        <p>
+          <a href="https://www.instagram.com/joshuagord0n/" target="__blank"
+            >@joshuagord0n</a
+          >
+          <span>&</span>
+          <a
+            href="https://www.instagram.com/joshua.gordon.is.a.baby/"
+            target="__blank">@joshua.gordon.is.a.baby</a
+          >
+        </p>
+      </div>
+    </div>
+    <div>
+      <p class="nav-close-button" id="nav-close-button">Close</p>
+    </div>
+  </div>
 </div>
 
 <style>
-  .container {
-    display: inline-flex;
+  .header-nav-social-link-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .header-nav-social-links-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+  .navigation-container {
+    display: flex;
     align-items: center;
     gap: 1vw;
+    flex-wrap: wrap;
+  }
+  .navigation-container-small {
+    display: none;
+  }
+  @media screen and (max-width: 600px) {
+    .navigation-container {
+      display: none;
+    }
+    .navigation-container-small {
+      display: block;
+    }
+    .menu-button {
+      cursor: pointer;
+    }
+    .nav-small-menu {
+      z-index: -1;
+      position: fixed;
+      inset: 0;
+      transition: opacity 0.5s ease-in-out;
+      background-color: white;
+      display: flex;
+      flex-direction: column;
+      gap: 4em;
+      padding-left: 1em;
+      opacity: 0;
+    }
+    .nav-small-links-container {
+      margin-top: 4em;
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    .nav-close-button {
+      cursor: pointer;
+    }
   }
 </style>
+
+<script>
+  // ELEMENTS
+  const menuButton = document.getElementById("menu-button") as HTMLElement;
+  const menu = document.getElementById("nav-small-menu") as HTMLElement;
+  const closeButton = document.getElementById(
+    "nav-close-button"
+  ) as HTMLElement;
+  const header = document.getElementById("header") as HTMLElement;
+
+  menu.style.top = `${header.getBoundingClientRect().height}px`;
+
+  // HELPERS
+  const openMenu = () => {
+    menu.classList.add("open");
+    menu.style.zIndex = "2";
+    menu.style.opacity = "1";
+  };
+  const closeMenu = () => {
+    menu.classList.remove("open");
+    menu.style.opacity = "0";
+    setTimeout(() => {
+      menu.style.zIndex = "-1";
+    }, 500);
+  };
+
+  menuButton.addEventListener("click", () => {
+    if (menu.classList.contains("open")) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+  closeButton.addEventListener("click", () => {
+    closeMenu();
+  });
+</script>

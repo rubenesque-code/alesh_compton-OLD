@@ -1,0 +1,37 @@
+ADD PAGE
+--------
+CREATE FILE
+- Create new pages in the 'pages' folder.
+- You can copy and paste another page.
+- Rename the file.
+  - the file name will also be the route name (what appears in the browser's url bar).
+  - it's not a good idea to use spaces; use '-' instead.
+
+ADD DATA
+- Add data for the page.
+  - change the title and description.
+  - add image.
+    - you need to add any images to the 'images' folder.
+    - make sure you get the import path correct.
+      - follow the format already there.
+  - add youtube video.
+    - simply add the url string copied from the browser url bar. The code will do the rest.
+    - you can optionally add a cover image if you want.
+      - you can also optonally add a position for the cover image.
+        - either "top", "center" or "bottom".
+
+ADD PAGE TO NAVIGATION
+- Add the page to the navigation file (Navigation.astro in components folder)
+- if the route (which is the file name) is the same as the page title:
+  - e.g. "Butterfly".
+  - simply add a string ("Butterfly") to the 'links' array. 
+- if the route (which is the file name) is the not the same as the page title:
+  - e.g. Diary Part 1.
+  - add an object (surrounded by {}) with a label and route.
+- links in the array must be seperated by a comma.
+- you can reorder the array however you want.
+
+ADD FONT
+--------
+- add font to public/fonts
+- copy the format in styles/global.css

@@ -1,4 +1,30 @@
+/* @font-face {
+  font-family: "RobotoMonoReg";
+  src: url("/fonts/RobotoMono-Regular.ttf") format("ttf");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+} */
+@font-face {
+  font-family: "RobotoMonoLight";
+  src: url("/fonts/RobotoMono-Light.ttf") format("ttf");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
+}
+
+body {
+  font-family: "RobotoMonoLight", sans-serif;
+  font-size: smaller;
+}
+
+a,
+a:visited {
+  color: black;
+  text-decoration: none;
 }
