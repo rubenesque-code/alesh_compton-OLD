@@ -1,10 +1,9 @@
 ---
-import { homePage, nonHomePages } from "../data/pages";
+const pageTitles = [""];
 ---
 
 <div class="container">
-  <a href="/">{homePage.title}</a>
-  {nonHomePages.map((page) => <a href={page.title}>{page.title}</a>)}
+  {pageTitles.map((pageTitle) => <a href={pageTitle}>{pageTitle}</a>)}
 </div>
 
 <style>
