@@ -1,12 +1,75 @@
 ---
 import Layout from "./Layout.astro";
 
-export type Props = {
-  title: string;
-  description: string[];
-};
+import type { Page } from "../types";
+import Header from "../components/Header.astro";
+import Media from "../components/MediaOld.astro";
+import Footer from "../components/Footer.astro";
 
-const { title, de } = Astro.props;
+type Props = Page;
+
+const page = Astro.props;
 ---
 
-<Layout pageTitle={title} />
+<Layout pageTitle={page.title}>
+  <div class="page-container">
+    <Header />
+    <div class="body-outer-container">
+      <div class="body-inner-container">
+        <div class="text-container">
+          <p class="text">
+            {page.title}
+          </p>
+          {
+            page.description && (
+              <p class="text description">
+                {typeof page.description === "string"
+                  ? page.description
+                  : page.description.map((sentence) => <span>{sentence}</span>)}
+              </p>
+            )
+          }
+        </div>
+        <Media media={page.media} />
+      </div>
+    </div>
+    <Footer />
+  </div>
+</Layout>
+
+<style>
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding-left: 2.5vw;
+  }
+  .body-outer-container {
+    flex-grow: 1;
+    height: 100%;
+    position: relative;
+  }
+  .body-inner-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+  .text-container {
+    margin-right: 58px;
+  }
+  .text {
+    width: 405px;
+  }
+  .description {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1em;
+  }
+  @media screen and (max-width: 600px) {
+    .body-inner-container {
+      flex-direction: column;
+      gap: 1em;
+    }
+  }
+</style>

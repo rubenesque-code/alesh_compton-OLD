@@ -2,7 +2,7 @@
 import { Image } from "@astrojs/image/components";
 import { getYoutubeVideoIdFromUrl } from "../helpers/youtube";
 import type { LocalImage, YoutubeVideo } from "../types";
-import YoutubeIframe from "./YoutubeIframe.astro";
+import YoutubeIframe from "./IframeOld.astro";
 
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
@@ -39,7 +39,6 @@ const { media } = Astro.props;
     align-items: flex-start;
     gap: 1vw;
     overflow-x: auto;
-    overflow-y: hidden;
     padding-bottom: 0.5em;
   }
   .media-container::-webkit-scrollbar {
@@ -94,6 +93,7 @@ const { media } = Astro.props;
     target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
 
     function scrolled(e: { preventDefault: () => void }) {
+      // console.log("SCROLLED");
       e.preventDefault(); // disable default scrolling
 
       var delta = normalizeWheelDelta(e);
@@ -150,8 +150,6 @@ const { media } = Astro.props;
 </script>
 
 <script>
-  // SCALE AND TRANSLATE MEDIA ELEMENTS
-
   // HELPERS ______________________
   const calculateMediaTransform = (
     media: HTMLElement
@@ -279,13 +277,15 @@ const { media } = Astro.props;
     }, 150);
   };
 
-  const checkIsExpanded = (mediaElement: HTMLElement): boolean =>
+  const determineIsExpanded = (mediaElement: HTMLElement): boolean =>
     mediaElement.classList.contains(expandClass);
 
   // ELEMENTS ______________________
   const mediaElementsContainer = document.getElementById("media-container");
   const mediaElements = Array.from(
-    document.getElementsByClassName("media") as HTMLCollectionOf<HTMLElement>
+    document.getElementsByClassName(
+      "media"
+    ) as HTMLCollectionOf<HTMLImageElement>
   );
   const background = document.getElementById("background");
 
@@ -298,7 +298,7 @@ const { media } = Astro.props;
 
     if (mediaElementsContainer && mediaElement && background) {
       mediaElement.addEventListener("click", () => {
-        const isExpanded = checkIsExpanded(mediaElement);
+        const isExpanded = determineIsExpanded(mediaElement);
         if (isExpanded) {
           handleShrinkMediaElement(
             mediaElement,
@@ -344,8 +344,6 @@ const { media } = Astro.props;
   } */
 </script>
 <script type="text/javascript">
-  // YOUTUBE IFRAME
-
   // ELEMENTS
   const iframes = Array.from(document.getElementsByClassName("iframe"));
   const containers = Array.from(
@@ -390,6 +388,7 @@ const { media } = Astro.props;
       });
 
       function onPlayerReady(event) {
+        console.log("PLAYER READY");
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
           setTimeout(() => {
