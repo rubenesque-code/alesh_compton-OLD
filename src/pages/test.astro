@@ -17,6 +17,10 @@ import { Image } from "@astrojs/image/components";
     "test-container"
   ) as HTMLElement;
   testContainer.addEventListener("click", () => {
-    testContainer.style.borderColor = "green";
+    if (testContainer.style.borderColor === "red") {
+      testContainer.style.borderColor = "green";
+    } else {
+      testContainer.style.borderColor = "red";
+    }
   });
 </script>
