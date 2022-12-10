@@ -156,7 +156,9 @@ const { media } = Astro.props;
 </script>
 
 <script>
-  // HELPERS ______________________
+  // MEDIA TRANSFORM______________
+
+  // HELPERS
   const calculateMediaTransform = (
     media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
@@ -350,6 +352,8 @@ const { media } = Astro.props;
   } */
 </script>
 <script type="text/javascript">
+  // YOUTUBE IFRAME_________________
+
   // ELEMENTS
   const iframes = Array.from(document.getElementsByClassName("iframe"));
   const containers = Array.from(
@@ -382,10 +386,25 @@ const { media } = Astro.props;
 
   function onYouTubeIframeAPIReady() {
     for (let i = 0; i < iframes.length; i++) {
+      // Elements
       const iframe = iframes[i];
       const overlay = overlays[i];
       const unmute = unmutes[i];
       const closeButton = closeButtons[i];
+
+      // Helpers
+      const showIframeHelperOverlays = () => {
+        closeButton.style.opacity = "1";
+        closeButton.style.zIndex = "4";
+        unmute.style.opacity = "1";
+        unmute.style.zIndex = "4";
+      };
+      const hideIframeHelperOverlays = () => {
+        closeButton.style.opacity = "0";
+        closeButton.style.zIndex = "-1";
+        unmute.style.opacity = "0";
+        unmute.style.zIndex = "-1";
+      };
 
       const player = new YT.Player(iframe.id, {
         events: {
@@ -394,9 +413,9 @@ const { media } = Astro.props;
       });
 
       function onPlayerReady(event) {
-        console.log("PLAYER READY");
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
+          // time for transform
           setTimeout(() => {
             overlay.style.opacity = "0";
             player.playVideo();
@@ -407,33 +426,22 @@ const { media } = Astro.props;
         });
 
         iframe.addEventListener("mouseover", () => {
-          // iframeHovered = true;
-          closeButton.style.opacity = "1";
-          closeButton.style.zIndex = "4";
-          unmute.style.opacity = "1";
-          unmute.style.zIndex = "4";
+          showIframeHelperOverlays();
         });
         iframe.addEventListener("mouseleave", () => {
-          // iframeHovered = false;
-          closeButton.style.opacity = "0";
-          closeButton.style.zIndex = "-1";
-          unmute.style.opacity = "0";
-          unmute.style.zIndex = "-1";
+          hideIframeHelperOverlays();
         });
         closeButton.addEventListener("mouseover", () => {
-          closeButton.style.opacity = "1";
-          closeButton.style.zIndex = "4";
-          unmute.style.opacity = "1";
-          unmute.style.zIndex = "4";
+          showIframeHelperOverlays();
+        });
+        unmute.addEventListener("mouseover", () => {
+          showIframeHelperOverlays();
         });
 
         closeButton.addEventListener("click", () => {
           player.pauseVideo();
 
-          closeButton.style.opacity = "0";
-          closeButton.style.zIndex = "-1";
-          unmute.style.opacity = "0";
-          unmute.style.zIndex = "-1";
+          hideIframeHelperOverlays();
           overlay.style.zIndex = "1";
           overlay.style.opacity = "1";
         });

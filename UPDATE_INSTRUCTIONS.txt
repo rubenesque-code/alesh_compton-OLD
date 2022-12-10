@@ -19,6 +19,7 @@ ADD DATA
     - you can optionally add a cover image if you want.
       - you can also optonally add a position for the cover image.
         - either "top", "center" or "bottom".
+    - IMPORTANT: if you add the same video twice on the same page it won't work.
 
 ADD PAGE TO NAVIGATION
 - Add the page to the navigation file (Navigation.astro in components folder)
@@ -28,6 +29,7 @@ ADD PAGE TO NAVIGATION
 - if the route (which is the file name) is the not the same as the page title:
   - e.g. Diary Part 1.
   - add an object (surrounded by {}) with a label and route.
+  - this is true for the home page which must have a route of "/".
 - links in the array must be seperated by a comma.
 - you can reorder the array however you want.
 

@@ -1,0 +1,61 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout pageTitle="page not found">
+  <div class="page-container">
+    <div>
+      <h1>Page not found</h1>
+      <p class="back-to-site">Back to site</p>
+      <div class="social-links-container">
+        <div class="social-link-container">
+          <a href="mailto:joshgordondublin@gmail.com"
+            >joshgordondublin@gmail.com</a
+          >
+        </div>
+        <div class="social-link-container">
+          <p>Instagram:</p>
+          <p>
+            <a href="https://www.instagram.com/joshuagord0n/" target="__blank"
+              >@joshuagord0n</a
+            >
+            <span>&</span>
+            <a
+              href="https://www.instagram.com/joshua.gordon.is.a.baby/"
+              target="__blank">@joshua.gordon.is.a.baby</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .page-container {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+  }
+  h1 {
+    font-size: large;
+  }
+  .back-to-site {
+    cursor: pointer;
+    margin-top: 1.5em;
+  }
+  .back-to-site:hover {
+    text-decoration: underline;
+  }
+  .social-links-container {
+    margin-top: 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+  .social-link-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+</style>
