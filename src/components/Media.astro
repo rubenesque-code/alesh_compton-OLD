@@ -92,6 +92,7 @@ const { media } = Astro.props;
 </style>
 
 <script>
+  // MEDIA CONTAINER HORIZONTAL SCROLL_________________
   function SmoothScroll(target: HTMLElement, speed: number, smooth: number) {
     let moving = false;
     let pos = target.scrollLeft;
@@ -164,8 +165,10 @@ const { media } = Astro.props;
   const calculateMediaTransform = (
     media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
-    const pageWidth = document.body.scrollWidth;
-    const pageHeight = document.body.scrollHeight;
+    const pageWidth = window.innerWidth;
+    console.log("pageWidth", pageWidth);
+    const pageHeight = window.innerHeight;
+    console.log("pageHeight", pageHeight);
 
     const mediaInitialBounds = media.getBoundingClientRect();
     const initialWidth = mediaInitialBounds.width;
@@ -178,8 +181,8 @@ const { media } = Astro.props;
 
     const scale: number =
       imageOrientation === "landscape"
-        ? (pageWidth * 0.95) / initialWidth
-        : (pageHeight * 0.95) / initialHeight;
+        ? pageWidth / initialWidth
+        : pageHeight / initialHeight;
 
     const scaledWidth = initialWidth * scale;
     const scaledHeight = initialHeight * scale;
@@ -259,7 +262,7 @@ const { media } = Astro.props;
         continue;
       }
 
-      image.style.opacity = "0"; // 0.2s
+      image.style.opacity = "0";
       image.style.transitionDuration = "100";
     }
 
