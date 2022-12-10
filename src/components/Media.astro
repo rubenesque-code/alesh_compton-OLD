@@ -403,6 +403,7 @@ const { media } = Astro.props;
     for (let i = 0; i < iframes.length; i++) {
       // Elements
       const iframe = iframes[i];
+      const container = containers[i];
       const overlay = overlays[i];
       const unmute = unmutes[i];
       const closeButton = closeButtons[i];
@@ -459,6 +460,18 @@ const { media } = Astro.props;
           hideIframeHelperOverlays();
           overlay.style.zIndex = "2";
           overlay.style.opacity = "1";
+        });
+
+        document.addEventListener("click", (event) => {
+          if (!container.contains(event.target)) {
+            console.log(closeButton.style.opacity);
+            const overlaysAreShowing = closeButton.style.opacity > 0;
+            if (overlaysAreShowing) {
+              hideIframeHelperOverlays();
+            } else {
+              showIframeHelperOverlays();
+            }
+          }
         });
       }
 

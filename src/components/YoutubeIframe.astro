@@ -114,7 +114,7 @@ const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
     border-width: 70px 0px 70px 140px;
   }
   .close-button {
-    z-index: -1;
+    z-index: 1;
     position: absolute;
     right: 20px;
     top: 30%;
@@ -143,6 +143,9 @@ const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
   }
   @media screen and (max-width: 600px) {
     .unmute {
+      opacity: 1;
+    }
+    .close-button {
       opacity: 1;
     }
   }
