@@ -139,18 +139,23 @@ const links: PageRoute[] = [
   const header = document.getElementById("header") as HTMLElement;
 
   menu.style.top = `${header.getBoundingClientRect().height}px`;
+  menu.style.height = `${
+    window.innerHeight - header.getBoundingClientRect().height
+  }px`;
 
   // HELPERS
   const openMenu = () => {
     menu.classList.add("open");
     menu.style.zIndex = "2";
     menu.style.opacity = "1";
+    document.body.style.overflow = "hidden";
   };
   const closeMenu = () => {
     menu.classList.remove("open");
     menu.style.opacity = "0";
     setTimeout(() => {
       menu.style.zIndex = "-1";
+      document.body.style.overflow = "auto";
     }, 500);
   };
 

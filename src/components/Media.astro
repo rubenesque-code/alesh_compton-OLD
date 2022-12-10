@@ -380,11 +380,11 @@ const { media } = Astro.props;
     iframe.height = `${containerBounds.height}`;
     iframe.width = `${(containerBounds.height * 16) / 9}`;
 
-    new ResizeObserver(() => {
+    /*     new ResizeObserver(() => {
       const iframeHegiht = container.height;
       iframe.height = iframeHegiht;
       iframe.width = (iframeHegiht * 16) / 9;
-    }).observe(container);
+    }).observe(container); */
   }
 
   var tag = document.createElement("script");
