@@ -42,6 +42,6 @@ SEO
 -------
 - add a site description in /layouts/Layout.astro
   - inside of the meta tag in then content string. 
-    - currently is "Joshua Gordon portfolio."
+    - currently is "Joshua Gordon is a photographer and a director currently based in London, United Kingdom."
   - this appears in search engines.
   - info: https://developers.google.com/search/docs/appearance/snippet#:~:text=A%20meta%20description%20tag%20generally,what%20they're%20looking%20for.
