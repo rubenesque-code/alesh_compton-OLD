@@ -13,7 +13,13 @@ const { media } = Astro.props;
   {
     media.map((item) =>
       item.type === "image" ? (
-        <Image class="media image" src={item.url} alt="" format="avif" />
+        <Image
+          loading="eager"
+          class="media image"
+          src={item.url}
+          alt=""
+          format="avif"
+        />
       ) : (
         <div class="media iframe-outer-container">
           <YoutubeIframe
