@@ -37,3 +37,11 @@ ADD FONT
 --------
 - add font to public/fonts
 - copy the format in styles/global.css
+
+SEO
+-------
+- add a site description in /layouts/Layout.astro
+  - inside of the meta tag in then content string. 
+    - currently is "Joshua Gordon portfolio."
+  - this appears in search engines.
+  - info: https://developers.google.com/search/docs/appearance/snippet#:~:text=A%20meta%20description%20tag%20generally,what%20they're%20looking%20for.
