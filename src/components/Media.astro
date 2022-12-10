@@ -166,9 +166,7 @@ const { media } = Astro.props;
     media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
     const pageWidth = window.innerWidth;
-    console.log("pageWidth", pageWidth);
     const pageHeight = window.innerHeight;
-    console.log("pageHeight", pageHeight);
 
     const mediaInitialBounds = media.getBoundingClientRect();
     const initialWidth = mediaInitialBounds.width;
@@ -181,8 +179,8 @@ const { media } = Astro.props;
 
     const scale: number =
       imageOrientation === "landscape"
-        ? pageWidth / initialWidth
-        : pageHeight / initialHeight;
+        ? (pageWidth * 0.98) / initialWidth
+        : (pageHeight * 0.98) / initialHeight;
 
     const scaledWidth = initialWidth * scale;
     const scaledHeight = initialHeight * scale;
@@ -381,6 +379,12 @@ const { media } = Astro.props;
 
     iframe.height = `${containerBounds.height}`;
     iframe.width = `${(containerBounds.height * 16) / 9}`;
+
+    new ResizeObserver(() => {
+      const iframeHegiht = container.height;
+      iframe.height = iframeHegiht;
+      iframe.width = (iframeHegiht * 16) / 9;
+    }).observe(container);
   }
 
   var tag = document.createElement("script");
