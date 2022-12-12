@@ -96,9 +96,13 @@ const iframeId = "iframe-test";
               console.log("---------------------");
               console.log("SETTING VOL...");
               console.log("PRE SET VOL", player.getVolume());
-              player.setVolume(100);
-              console.log("POST SET VOL", player.getVolume());
-              console.log("--------------------");
+              setTimeout(() => {
+                player.setVolume(100);
+                setTimeout(() => {
+                  console.log("POST SET VOL", player.getVolume());
+                  console.log("--------------------");
+                }, 500);
+              }, 200);
             }
           }
         }
