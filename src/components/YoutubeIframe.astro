@@ -61,7 +61,7 @@ const youtubeIframeParams =
   <div id="close-button" class="close-button">close</div>
 </div>
 
-<style>
+<style is:global>
   .iframe-inner-container {
     position: relative;
     width: 100%;
@@ -118,11 +118,11 @@ const youtubeIframeParams =
   .close-button {
     z-index: 1;
     position: absolute;
-    right: 20px;
+    right: 5%;
     top: 30%;
+    font-size: large;
     background-color: black;
     color: white;
-    font-size: x-large;
     text-transform: uppercase;
     padding: 0.2em 0.5em;
     border-radius: 3px;
@@ -133,8 +133,10 @@ const youtubeIframeParams =
   .unmute {
     z-index: 1;
     position: absolute;
-    left: 20px;
-    bottom: 30%;
+    left: 5%;
+    bottom: 40%;
+    max-width: calc(95%);
+    white-space: wrap;
     text-transform: uppercase;
     background-color: black;
     color: white;
@@ -142,5 +144,7 @@ const youtubeIframeParams =
     border-radius: 3px;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
+    cursor: default;
+    pointer-events: none;
   }
 </style>

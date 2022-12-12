@@ -32,7 +32,7 @@ const { media } = Astro.props;
   <div id="background" class="background"></div>
 </div>
 
-<style>
+<style is:global>
   .media-container {
     position: relative;
     display: flex;
@@ -225,6 +225,26 @@ const { media } = Astro.props;
 
     background.style.opacity = "0";
 
+    const childNodes = Array.from(mediaElement.childNodes).filter(
+      (node) => node.nodeName === "DIV"
+    ) as HTMLElement[];
+    const iframeContainer = childNodes.filter((node) =>
+      node.classList.contains("iframe-inner-container")
+    )[0];
+    const isIframe = Boolean(iframeContainer);
+
+    if (isIframe && iframeContainer) {
+      const volMessage = iframeContainer.getElementsByClassName(
+        "unmute"
+      )[0] as HTMLElement;
+      const closeButton = iframeContainer.getElementsByClassName(
+        "unmute"
+      )[0] as HTMLElement;
+
+      volMessage.style.transform = `scale(0)`;
+      closeButton.style.transform = `scale(0)`;
+    }
+
     setTimeout(() => {
       mediaElementsContainer.style.overflowX = "auto";
 
@@ -276,14 +296,25 @@ const { media } = Astro.props;
       mediaElement.getBoundingClientRect().height
     }px`;
 
-    const volMessage = Array.from(document.getElementsByClassName("unmute"))[
-      index
-    ] as HTMLElement;
-    const closeButton = Array.from(
-      document.getElementsByClassName("close-button")
-    )[index] as HTMLElement;
-    volMessage.style.transform = `scale(${1 / scale})`;
-    closeButton.style.transform = `scale(${1 / scale})`;
+    const childNodes = Array.from(mediaElement.childNodes).filter(
+      (node) => node.nodeName === "DIV"
+    ) as HTMLElement[];
+    const iframeContainer = childNodes.filter((node) =>
+      node.classList.contains("iframe-inner-container")
+    )[0];
+    const isIframe = Boolean(iframeContainer);
+
+    if (isIframe && iframeContainer) {
+      const volMessage = iframeContainer.getElementsByClassName(
+        "unmute"
+      )[0] as HTMLElement;
+      const closeButton = iframeContainer.getElementsByClassName(
+        "close-button"
+      )[0] as HTMLElement;
+
+      volMessage.style.transform = `scale(${1 / scale})`;
+      closeButton.style.transform = `scale(${1 / scale})`;
+    }
 
     // time for other media elements to fade out
     setTimeout(() => {
@@ -301,13 +332,18 @@ const { media } = Astro.props;
     mediaElement.classList.contains(expandClass);
 
   // ELEMENTS ______________________
-  const mediaElementsContainer = document.getElementById("media-container");
+  const mediaElementsContainer = document.getElementById(
+    "media-container"
+  ) as HTMLElement;
   const mediaElements = Array.from(
-    document.getElementsByClassName(
-      "media"
-    ) as HTMLCollectionOf<HTMLImageElement>
+    document.getElementsByClassName("media") as HTMLCollectionOf<HTMLElement>
   );
-  const background = document.getElementById("background");
+  const closeButtons = Array.from(
+    document.getElementsByClassName(
+      "close-button"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+  const background = document.getElementById("background") as HTMLElement;
 
   //
   const expandClass = "expand";
@@ -315,31 +351,46 @@ const { media } = Astro.props;
   //
   for (let i = 0; i < mediaElements.length; i++) {
     const mediaElement = mediaElements[i];
+    const closeButton = closeButtons[i];
 
-    if (mediaElementsContainer && mediaElement && background) {
-      mediaElement.addEventListener("click", () => {
-        const isExpanded = determineIsExpanded(mediaElement);
-        if (isExpanded) {
-          handleShrinkMediaElement(
-            mediaElement,
-            i,
-            mediaElementsContainer,
-            mediaElements,
-            background,
-            expandClass
-          );
-        } else {
-          handleExpandMediaElement(
-            mediaElement,
-            i,
-            mediaElementsContainer,
-            mediaElements,
-            background,
-            expandClass
-          );
-        }
-      });
-    }
+    // THIS IS WRONG - should only add close functionality to close button
+    mediaElement.addEventListener("click", () => {
+      const inInitialPosition = !determineIsExpanded(mediaElement);
+
+      if (inInitialPosition) {
+        handleExpandMediaElement(
+          mediaElement,
+          i,
+          mediaElementsContainer,
+          mediaElements,
+          background,
+          expandClass
+        );
+      } else {
+        handleShrinkMediaElement(
+          mediaElement,
+          i,
+          mediaElementsContainer,
+          mediaElements,
+          background,
+          expandClass
+        );
+      }
+    });
+    /*     closeButton.addEventListener("click", () => {
+      const isExpanded = !determineIsExpanded(mediaElement);
+
+      if (isExpanded) {
+        handleShrinkMediaElement(
+          mediaElement,
+          i,
+          mediaElementsContainer,
+          mediaElements,
+          background,
+          expandClass
+        );
+      }
+    }); */
   }
 </script>
 
@@ -410,8 +461,10 @@ const { media } = Astro.props;
       const hideIframeHelperOverlays = () => {
         closeButton.style.opacity = "0";
         closeButton.style.zIndex = "-1";
-        volMessage.style.opacity = "0";
-        volMessage.style.zIndex = "-1";
+        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+          volMessage.style.opacity = "0";
+          volMessage.style.zIndex = "-1";
+        }
       };
 
       const player = new YT.Player(iframe.id, {

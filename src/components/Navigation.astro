@@ -2,10 +2,7 @@
 import type { PageRoute } from "../types";
 
 const links: PageRoute[] = [
-  {
-    label: "Butterfly",
-    route: "/",
-  },
+  "Butterfly",
   "Transformation",
   {
     label: "Diary Part 1",
@@ -25,11 +22,13 @@ const links: PageRoute[] = [
 <div>
   <div class="navigation-container">
     {
-      links.map((link) =>
-        typeof link === "string" ? (
-          <a href={link}>{link}</a>
+      links.map((link, i) =>
+        i === 0 ? (
+          <a href={"/"}>{link}</a>
+        ) : typeof link === "string" ? (
+          <a href={"/" + link}>{link}</a>
         ) : (
-          <a href={link.route}>{link.label}</a>
+          <a href={"/" + link.route}>{link.label}</a>
         )
       )
     }

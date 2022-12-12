@@ -29,7 +29,7 @@ ADD PAGE TO NAVIGATION
 - if the route (which is the file name) is the not the same as the page title:
   - e.g. Diary Part 1.
   - add an object (surrounded by {}) with a label and route.
-  - this is true for the home page which must have a route of "/".
+- the above is true for all pages but the home page which must only have a string.
 - links in the array must be seperated by a comma.
 - you can reorder the array however you want.
 
