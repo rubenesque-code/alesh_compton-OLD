@@ -272,6 +272,20 @@ const { media } = Astro.props;
     background: HTMLElement,
     expandClass: string
   ) => {
+    const childNodes = Array.from(mediaElement.childNodes).filter(
+      (node) => node.nodeName === "DIV"
+    ) as HTMLElement[];
+    const iframeContainer = childNodes.filter((node) =>
+      node.classList.contains("iframe-inner-container")
+    )[0];
+    const isIframe = Boolean(iframeContainer);
+
+    if (isIframe) {
+      if (!mediaElement.classList.contains("player-ready")) {
+        return;
+      }
+    }
+
     mediaElement.classList.add(expandClass);
 
     for (let j = 0; j < mediaElements.length; j++) {
@@ -295,14 +309,6 @@ const { media } = Astro.props;
     mediaElement.style.height = `${
       mediaElement.getBoundingClientRect().height
     }px`;
-
-    const childNodes = Array.from(mediaElement.childNodes).filter(
-      (node) => node.nodeName === "DIV"
-    ) as HTMLElement[];
-    const iframeContainer = childNodes.filter((node) =>
-      node.classList.contains("iframe-inner-container")
-    )[0];
-    const isIframe = Boolean(iframeContainer);
 
     if (isIframe && iframeContainer) {
       const volMessage = iframeContainer.getElementsByClassName(
@@ -377,20 +383,6 @@ const { media } = Astro.props;
         );
       }
     });
-    /*     closeButton.addEventListener("click", () => {
-      const isExpanded = !determineIsExpanded(mediaElement);
-
-      if (isExpanded) {
-        handleShrinkMediaElement(
-          mediaElement,
-          i,
-          mediaElementsContainer,
-          mediaElements,
-          background,
-          expandClass
-        );
-      }
-    }); */
   }
 </script>
 
@@ -400,6 +392,9 @@ const { media } = Astro.props;
   // ELEMENTS
   const mediaElementsContainer = document.getElementById("media-container");
   const iframes = Array.from(document.getElementsByClassName("iframe"));
+  const outerContainers = Array.from(
+    document.getElementsByClassName("iframe-outer-container")
+  );
   const containers = Array.from(
     document.getElementsByClassName("iframe-inner-container")
   );
@@ -427,6 +422,7 @@ const { media } = Astro.props;
   for (let i = 0; i < iframes.length; i++) {
     const iframe = iframes[i];
     const container = containers[i];
+    // const outerContainer = outerContainers[i];
 
     const containerBounds = container.getBoundingClientRect();
 
@@ -444,7 +440,7 @@ const { media } = Astro.props;
     for (let i = 0; i < iframes.length; i++) {
       // Elements
       const iframe = iframes[i];
-      // const container = containers[i];
+      const outerContainer = outerContainers[i];
       const overlay = overlays[i];
       const volMessage = volMessages[i];
       const closeButton = closeButtons[i];
@@ -475,6 +471,7 @@ const { media } = Astro.props;
       });
 
       function onPlayerReady(event) {
+        outerContainer.classList.add("player-ready");
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
           // time for transform
