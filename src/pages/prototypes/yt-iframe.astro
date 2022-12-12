@@ -50,7 +50,13 @@ const iframeId = "iframe-test";
   const iframeClickFlag = "iframe-clicked";
 
   // HELPERS
-  const checkIframeClicked = () => iframe.classList.contains(iframeClickFlag);
+  function checkIsTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  }
 
   var tag = document.createElement("script");
   tag.id = "iframe-demo";
@@ -74,27 +80,30 @@ const iframeId = "iframe-test";
       });
     }
 
-    const iframeWindow = player.getIframe().contentWindow;
+    if (checkIsTouchDevice()) {
+      console.log("I am touch device");
+      const iframeWindow = player.getIframe().contentWindow;
 
-    window.addEventListener("message", function (event) {
-      if (event.source === iframeWindow) {
-        var data = JSON.parse(event.data);
-        console.log("data", data);
+      window.addEventListener("message", function (event) {
+        if (event.source === iframeWindow) {
+          var data = JSON.parse(event.data);
+          console.log("data", data);
 
-        if (data.event === "infoDelivery" && data.info && data.info.volume) {
-          const volChangedFlag = "vol-changed-programmatically";
-          if (!iframe.classList.contains(volChangedFlag)) {
-            // only want to set to 100 once
-            iframe.classList.add(volChangedFlag);
-            // setTimeout(() => {
-            console.log("SETTING VOL...");
-            player.setVolume(100);
-            // }, 200);
+          if (data.event === "infoDelivery" && data.info && data.info.volume) {
+            const volChangedFlag = "vol-changed-programmatically";
+            if (!iframe.classList.contains(volChangedFlag)) {
+              // only want to set to 100 once
+              iframe.classList.add(volChangedFlag);
+              console.log("SETTING VOL...");
+              console.log("current vol:", player.getVolume());
+
+              player.setVolume(100);
+            }
           }
         }
-      }
-    });
+      });
+    }
 
-    function onStateChange(event) {}
+    // function onStateChange(event) {}
   }
 </script>
