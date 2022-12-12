@@ -443,19 +443,8 @@ const { media } = Astro.props;
           player.pauseVideo();
 
           hideIframeHelperOverlays();
-          overlay.style.zIndex = "2";
+          overlay.style.zIndex = "5";
           overlay.style.opacity = "1";
-        });
-
-        document.addEventListener("click", (event) => {
-          if (!container.contains(event.target)) {
-            const overlaysAreShowing = closeButton.style.opacity > 0;
-            if (overlaysAreShowing) {
-              hideIframeHelperOverlays();
-            } else {
-              showIframeHelperOverlays();
-            }
-          }
         });
 
         if (checkIsTouchDevice()) {
