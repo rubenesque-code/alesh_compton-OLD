@@ -165,8 +165,8 @@ const { media } = Astro.props;
   const calculateMediaTransform = (
     media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
-    const pageWidth = window.innerWidth;
-    const pageHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
 
     const mediaInitialBounds = media.getBoundingClientRect();
     const initialWidth = mediaInitialBounds.width;
@@ -179,24 +179,24 @@ const { media } = Astro.props;
 
     const scale: number =
       imageOrientation === "landscape"
-        ? (pageWidth * 0.98) / initialWidth
-        : (pageHeight * 0.98) / initialHeight;
+        ? (windowWidth * 0.98) / initialWidth
+        : (windowHeight * 0.98) / initialHeight;
 
     const scaledWidth = initialWidth * scale;
     const scaledHeight = initialHeight * scale;
 
     const scaledYTopChange = (scaledHeight - initialHeight) / 2;
     const scaledYPos = initialTop - scaledYTopChange;
-    const yDestination = (pageHeight - scaledHeight) / 2;
+    const yDestination = (windowHeight - scaledHeight) / 2;
     const translateY = yDestination - scaledYPos;
 
     let translateX: number;
 
     const imageInitialCenterLeft = initialLeft + initialWidth / 2;
-    const pageCenterLeft = pageWidth / 2;
+    const pageCenterLeft = windowWidth / 2;
     const transformDirection: "left" | "right" =
       imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
-    const leftDestination = (pageWidth - scaledWidth) / 2;
+    const leftDestination = (windowWidth - scaledWidth) / 2;
 
     if (transformDirection === "right") {
       media.style.transformOrigin = "left";
@@ -276,7 +276,7 @@ const { media } = Astro.props;
       mediaElement.getBoundingClientRect().height
     }px`;
 
-    // time for other media to fade out
+    // time for other media elements to fade out
     setTimeout(() => {
       mediaElementsContainer.style.overflowX = "visible";
       mediaElement.style.position = "fixed";
@@ -332,32 +332,13 @@ const { media } = Astro.props;
       });
     }
   }
-
-  /*   if (background && mediaElementsContainer) {
-    background.addEventListener("click", () => {
-      for (let i = 0; i < mediaElements.length; i++) {
-        const mediaElement = mediaElements[i];
-        const isExpanded = determineIsExpanded(mediaElement);
-
-        if (isExpanded) {
-          handleShrinkMediaElement(
-            mediaElement,
-            i,
-            mediaElementsContainer,
-            mediaElements,
-            background,
-            expandClass
-          );
-        }
-        break;
-      }
-    });
-  } */
 </script>
+
 <script type="text/javascript">
   // YOUTUBE IFRAME_________________
 
   // ELEMENTS
+  const mediaElementsContainer = document.getElementById("media-container");
   const iframes = Array.from(document.getElementsByClassName("iframe"));
   const containers = Array.from(
     document.getElementsByClassName("iframe-inner-container")
@@ -365,10 +346,22 @@ const { media } = Astro.props;
   const overlays = Array.from(
     document.getElementsByClassName("overlay-container")
   );
-  const unmutes = Array.from(document.getElementsByClassName("unmute"));
+  const volMessages = Array.from(document.getElementsByClassName("unmute"));
   const closeButtons = Array.from(
     document.getElementsByClassName("close-button")
   );
+
+  // CONSTANTS
+  const volChangedFlag = "vol-changed-programmatically";
+
+  // HELPERS
+  function checkIsTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  }
 
   //
   for (let i = 0; i < iframes.length; i++) {
@@ -379,12 +372,6 @@ const { media } = Astro.props;
 
     iframe.height = `${containerBounds.height}`;
     iframe.width = `${(containerBounds.height * 16) / 9}`;
-
-    /*     new ResizeObserver(() => {
-      const iframeHegiht = container.height;
-      iframe.height = iframeHegiht;
-      iframe.width = (iframeHegiht * 16) / 9;
-    }).observe(container); */
   }
 
   var tag = document.createElement("script");
@@ -393,35 +380,29 @@ const { media } = Astro.props;
   var firstScriptTag = document.getElementsByTagName("script")[0];
   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-  function checkIsTouchDevice() {
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      navigator.msMaxTouchPoints > 0
-    );
-  }
-
   function onYouTubeIframeAPIReady() {
     for (let i = 0; i < iframes.length; i++) {
       // Elements
       const iframe = iframes[i];
       const container = containers[i];
       const overlay = overlays[i];
-      const unmute = unmutes[i];
+      const volMessage = volMessages[i];
       const closeButton = closeButtons[i];
 
       // Helpers
       const showIframeHelperOverlays = () => {
         closeButton.style.opacity = "1";
         closeButton.style.zIndex = "4";
-        unmute.style.opacity = "1";
-        unmute.style.zIndex = "4";
+        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+          volMessage.style.opacity = "1";
+          volMessage.style.zIndex = "4";
+        }
       };
       const hideIframeHelperOverlays = () => {
         closeButton.style.opacity = "0";
         closeButton.style.zIndex = "-1";
-        unmute.style.opacity = "0";
-        unmute.style.zIndex = "-1";
+        volMessage.style.opacity = "0";
+        volMessage.style.zIndex = "-1";
       };
 
       const player = new YT.Player(iframe.id, {
@@ -454,7 +435,7 @@ const { media } = Astro.props;
         closeButton.addEventListener("mouseover", () => {
           showIframeHelperOverlays();
         });
-        unmute.addEventListener("mouseover", () => {
+        volMessage.addEventListener("mouseover", () => {
           showIframeHelperOverlays();
         });
 
@@ -468,7 +449,6 @@ const { media } = Astro.props;
 
         document.addEventListener("click", (event) => {
           if (!container.contains(event.target)) {
-            console.log(closeButton.style.opacity);
             const overlaysAreShowing = closeButton.style.opacity > 0;
             if (overlaysAreShowing) {
               hideIframeHelperOverlays();
@@ -478,7 +458,6 @@ const { media } = Astro.props;
           }
         });
 
-        // TODO: CAN ADD RM VOL MESSAGE BELOW
         if (checkIsTouchDevice()) {
           const iframeWindow = player.getIframe().contentWindow;
 
@@ -491,14 +470,16 @@ const { media } = Astro.props;
                 data.info &&
                 data.info.volume
               ) {
-                const volChangedFlag = "vol-changed-programmatically";
-                if (!iframe.classList.contains(volChangedFlag)) {
+                if (
+                  !mediaElementsContainer.classList.contains(volChangedFlag)
+                ) {
                   // only want to set to 100 once
-                  iframe.classList.add(volChangedFlag);
+                  mediaElementsContainer.classList.add(volChangedFlag);
                   setTimeout(() => {
                     player.setVolume(100);
-                    setTimeout(() => {}, 500);
                   }, 200);
+                  volMessage.style.opacity = 0;
+                  volMessage.style.zIndex = "-1";
                 }
               }
             }
