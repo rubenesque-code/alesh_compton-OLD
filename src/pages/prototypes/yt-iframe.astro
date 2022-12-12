@@ -87,17 +87,18 @@ const iframeId = "iframe-test";
       window.addEventListener("message", function (event) {
         if (event.source === iframeWindow) {
           var data = JSON.parse(event.data);
-          console.log("data", data);
 
           if (data.event === "infoDelivery" && data.info && data.info.volume) {
             const volChangedFlag = "vol-changed-programmatically";
             if (!iframe.classList.contains(volChangedFlag)) {
               // only want to set to 100 once
               iframe.classList.add(volChangedFlag);
+              console.log("---------------------");
               console.log("SETTING VOL...");
-              console.log("current vol:", player.getVolume());
-
+              console.log("PRE SET VOL", player.getVolume());
               player.setVolume(100);
+              console.log("POST SET VOL", player.getVolume());
+              console.log("--------------------");
             }
           }
         }
