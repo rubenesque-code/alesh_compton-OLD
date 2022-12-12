@@ -1,0 +1,100 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
+const src = "https://www.youtube.com/embed/QLW1FmWB_5I";
+const iframeId = "iframe-test";
+
+// NOTES
+// - removed allow string fro iframe ( allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;")
+// - when no interaction, setting volume causes pause
+---
+
+<Layout pageTitle="basic yt">
+  <div class="prototype-yt-iframe-container" id="prototype-yt-iframe-container">
+    <iframe
+      id={iframeId}
+      width="800"
+      height="500"
+      src={src + youtubeIframeParams}></iframe>
+    <div
+      class="prototype-yt-iframe-play-button"
+      id="prototype-yt-iframe-play-button"
+    >
+      PLAY
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .prototype-yt-iframe-container {
+    position: relative;
+  }
+  .prototype-yt-iframe-play-button {
+    z-index: 1;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: white;
+    padding: 2em;
+  }
+</style>
+
+<script type="text/javascript">
+  // ELEMENTS
+  const iframe = document.getElementById("iframe-test");
+  const container = document.getElementById("prototype-yt-iframe-container");
+  const playButton = document.getElementById("prototype-yt-iframe-play-button");
+
+  // CONSTANTS
+  const iframeClickFlag = "iframe-clicked";
+
+  // HELPERS
+  const checkIframeClicked = () => iframe.classList.contains(iframeClickFlag);
+
+  var tag = document.createElement("script");
+  tag.id = "iframe-demo";
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  function onYouTubeIframeAPIReady() {
+    const player = new YT.Player(iframe.id, {
+      events: {
+        onReady,
+        // onStateChange,
+      },
+    });
+
+    function onReady(event) {
+      event.target.setVolume(0);
+
+      playButton.addEventListener("click", () => {
+        player.playVideo();
+      });
+    }
+
+    const iframeWindow = player.getIframe().contentWindow;
+
+    window.addEventListener("message", function (event) {
+      if (event.source === iframeWindow) {
+        var data = JSON.parse(event.data);
+        console.log("data", data);
+
+        if (data.event === "infoDelivery" && data.info && data.info.volume) {
+          const volChangedFlag = "vol-changed-programmatically";
+          if (!iframe.classList.contains(volChangedFlag)) {
+            // only want to set to 100 once
+            iframe.classList.add(volChangedFlag);
+            // setTimeout(() => {
+            console.log("SETTING VOL...");
+            player.setVolume(100);
+            // }, 200);
+          }
+        }
+      }
+    });
+
+    function onStateChange(event) {}
+  }
+</script>
