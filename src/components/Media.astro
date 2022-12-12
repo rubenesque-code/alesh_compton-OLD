@@ -276,6 +276,15 @@ const { media } = Astro.props;
       mediaElement.getBoundingClientRect().height
     }px`;
 
+    const volMessage = Array.from(document.getElementsByClassName("unmute"))[
+      index
+    ] as HTMLElement;
+    const closeButton = Array.from(
+      document.getElementsByClassName("close-button")
+    )[index] as HTMLElement;
+    volMessage.style.transform = `scale(${1 / scale})`;
+    closeButton.style.transform = `scale(${1 / scale})`;
+
     // time for other media elements to fade out
     setTimeout(() => {
       mediaElementsContainer.style.overflowX = "visible";
@@ -384,7 +393,7 @@ const { media } = Astro.props;
     for (let i = 0; i < iframes.length; i++) {
       // Elements
       const iframe = iframes[i];
-      const container = containers[i];
+      // const container = containers[i];
       const overlay = overlays[i];
       const volMessage = volMessages[i];
       const closeButton = closeButtons[i];
@@ -409,7 +418,6 @@ const { media } = Astro.props;
         playerVars: { controls: 1 },
         events: {
           onReady: onPlayerReady,
-          // onStateChange: onPlayerStateChange,
         },
       });
 
@@ -447,87 +455,32 @@ const { media } = Astro.props;
           overlay.style.opacity = "1";
         });
 
-        if (checkIsTouchDevice()) {
-          const iframeWindow = player.getIframe().contentWindow;
+        const iframeWindow = player.getIframe().contentWindow;
 
-          window.addEventListener("message", function (event) {
-            if (event.source === iframeWindow) {
-              var data = JSON.parse(event.data);
+        window.addEventListener("message", function (event) {
+          if (event.source === iframeWindow) {
+            var data = JSON.parse(event.data);
 
-              if (
-                data.event === "infoDelivery" &&
-                data.info &&
-                data.info.volume
-              ) {
-                if (
-                  !mediaElementsContainer.classList.contains(volChangedFlag)
-                ) {
-                  // only want to set to 100 once
-                  mediaElementsContainer.classList.add(volChangedFlag);
+            if (
+              data.event === "infoDelivery" &&
+              data.info &&
+              data.info.volume
+            ) {
+              if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+                // only want to set to 100 once
+                mediaElementsContainer.classList.add(volChangedFlag);
+                if (checkIsTouchDevice()) {
                   setTimeout(() => {
                     player.setVolume(100);
                   }, 200);
-                  volMessage.style.opacity = 0;
-                  volMessage.style.zIndex = "-1";
                 }
+                volMessage.style.opacity = 0;
+                volMessage.style.zIndex = "-1";
               }
             }
-          });
-        }
+          }
+        });
       }
-
-      /*       function onPlayerStateChange(event) {
-        console.log("event", event);
-
-        const isTouchDevice = checkIsTouchDevice();
-        console.log("isTouchDevice", isTouchDevice);
-      } */
-
-      // player status/event.data: unstarted = -1; ended = 0; playing = 1; paused = 2; buffering = 3; video cued = 5;
-      /*     function onPlayerStateChange(event) {
-      const isPlaying = event.data === 1;
-      const isPaused = event.data === 2;
-
-      let volumeChanged = unmute.classList.contains(volumeChangedClass);
-
-      let pollVolume = null;
-
-      function stopPoll() {
-        // console.log("stopping poll");
-        if (pollVolume) {
-          clearInterval(pollVolume);
-        }
-      }
-
-      if (isPlaying) {
-        pollVolume =
-          volumeChanged || pollVolume
-            ? null
-            : setInterval(() => {
-                // console.log("POLLING VOL...");
-                const volume = player.getVolume();
-                if (volume) {
-                  if (!unmute.classList.contains(volumeChangedClass)) {
-                    unmute.classList.add(volumeChangedClass);
-                    unmute.style.opacity = "0";
-                    unmute.style.zIndex = "-1";
-                  }
-                }
-              }, 200);
-
-        if (volumeChanged) {
-          stopPoll();
-        }
-
-        if (iframeHovered && !unmute.classList.contains(volumeChangedClass)) {
-          unmute.style.zIndex = "1";
-          unmute.style.opacity = 1;
-        }
-      }
-      if (isPaused) {
-        stopPoll();
-      }
-    } */
     }
   }
 </script>
