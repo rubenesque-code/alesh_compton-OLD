@@ -24,7 +24,6 @@ const { media } = Astro.props;
           <YoutubeIframe
             id={(function () {
               const youtubeId = getYoutubeVideoIdFromUrl(item.youtubeUrl);
-
               return youtubeId!;
             })()}
             coverImage={item.coverImage}
@@ -70,8 +69,6 @@ const { media } = Astro.props;
     width: auto;
     cursor: pointer;
     transition: transform ease-in-out 0.5s, opacity ease-in-out 0.2s;
-    /* border: 1px solid blue; */
-    height: 100%;
   }
   .image {
     max-height: 100%;
@@ -96,51 +93,31 @@ const { media } = Astro.props;
     .media-container {
       height: 60vh;
     }
-    .media {
-      max-width: 100%;
-      height: 100%;
-      /* overflow-y: hidden; */
-      /* border: 1px solid blue; */
-    }
-    .media > Picture {
-      /* border: 1px solid red; */
-      overflow-y: hidden;
-      height: 100%;
-      max-height: 100%;
-    }
   }
 </style>
 
-<script type="text/javascript">
+<script>
   // MEDIA CONTAINER HORIZONTAL SCROLL_________________
-  function SmoothScroll(target, speed, smooth) {
+  function SmoothScroll(target: HTMLElement, speed: number, smooth: number) {
     let moving = false;
     let pos = target.scrollLeft;
     let frame = target;
-
     target.addEventListener("mousewheel", scrolled, { passive: false });
     target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
-
-    function scrolled(e) {
+    function scrolled(e: { preventDefault: () => void }) {
       e.preventDefault(); // disable default scrolling
-
       var delta = normalizeWheelDelta(e);
-
       pos += -delta * speed;
       pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
-
       if (!moving) update();
-
       // HANDLE PRELOAD NEXT MEDIA
       const images = document.querySelectorAll(
         "img.original-size-img, img.iframe-img"
-      );
+      ) as unknown as HTMLCollectionOf<HTMLImageElement>;
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         const rect = image.getBoundingClientRect();
-
         const isNearViewport = rect.left - rect.width < window.innerWidth;
-
         if (isNearViewport) {
           if (image.loading === "lazy") {
             image.loading = "eager";
@@ -148,8 +125,11 @@ const { media } = Astro.props;
         }
       }
     }
-
-    function normalizeWheelDelta(e) {
+    function normalizeWheelDelta(e: {
+      preventDefault?: () => void;
+      detail?: any;
+      wheelDelta?: any;
+    }) {
       if (e.detail) {
         if (e.wheelDelta)
           return (e.wheelDelta / e.detail / 40) * (e.detail > 0 ? 1 : -1);
@@ -157,33 +137,27 @@ const { media } = Astro.props;
         else return -e.detail / 3; // Firefox
       } else return e.wheelDelta / 120; // IE,Safari,Chrome
     }
-
     function update() {
       moving = true;
-
       var delta = (pos - target.scrollLeft) / smooth;
-
       target.scrollLeft += delta;
-
       if (Math.abs(delta) > 0.5) requestFrame(update);
       else moving = false;
     }
-
     var requestFrame = (function () {
       // requestAnimationFrame cross browser
       return (
         window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
+        // window.webkitRequestAnimationFrame ||
+        // window.mozRequestAnimationFrame ||
+        // window.oRequestAnimationFrame ||
+        // window.msRequestAnimationFrame ||
         function (func) {
           window.setTimeout(func, 1000 / 50);
         }
       );
     })();
   }
-
   const mediaContainer = document.getElementById("media-container");
   if (mediaContainer) {
     SmoothScroll(mediaContainer, 120, 12);
@@ -192,44 +166,35 @@ const { media } = Astro.props;
 
 <script>
   // MEDIA TRANSFORM______________
-
   // HELPERS
   const calculateMediaTransform = (
     media: HTMLElement
   ): { scale: number; translate: { x: number; y: number } } => {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-
     const mediaInitialBounds = media.getBoundingClientRect();
     const initialWidth = mediaInitialBounds.width;
     const initialHeight = mediaInitialBounds.height;
     const initialLeft = mediaInitialBounds.left;
     const initialTop = mediaInitialBounds.top;
-
     const imageOrientation: "landscape" | "portrait" =
       initialWidth > initialHeight ? "landscape" : "portrait";
-
     const scale: number =
       imageOrientation === "landscape"
         ? (windowWidth * 0.98) / initialWidth
         : (windowHeight * 0.98) / initialHeight;
-
     const scaledWidth = initialWidth * scale;
     const scaledHeight = initialHeight * scale;
-
     const scaledYTopChange = (scaledHeight - initialHeight) / 2;
     const scaledYPos = initialTop - scaledYTopChange;
     const yDestination = (windowHeight - scaledHeight) / 2;
     const translateY = yDestination - scaledYPos;
-
     let translateX: number;
-
     const imageInitialCenterLeft = initialLeft + initialWidth / 2;
     const pageCenterLeft = windowWidth / 2;
     const transformDirection: "left" | "right" =
       imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
     const leftDestination = (windowWidth - scaledWidth) / 2;
-
     if (transformDirection === "right") {
       media.style.transformOrigin = "left";
       translateX = leftDestination - initialLeft;
@@ -239,10 +204,8 @@ const { media } = Astro.props;
       const imageLeftAfterScale = initialLeft - scaledWidthChange;
       translateX = leftDestination - imageLeftAfterScale;
     }
-
     return { scale, translate: { x: translateX, y: translateY } };
   };
-
   const handleShrinkMediaElement = (
     mediaElement: HTMLElement,
     index: number,
@@ -252,11 +215,8 @@ const { media } = Astro.props;
     expandClass: string
   ) => {
     mediaElement.classList.remove(expandClass);
-
     mediaElement.style.transform = "translate(0px) scale(1)";
-
     background.style.opacity = "0";
-
     const childNodes = Array.from(mediaElement.childNodes).filter(
       (node) => node.nodeName === "DIV"
     ) as HTMLElement[];
@@ -264,7 +224,6 @@ const { media } = Astro.props;
       node.classList.contains("iframe-inner-container")
     )[0];
     const isIframe = Boolean(iframeContainer);
-
     if (isIframe && iframeContainer) {
       const volMessage = iframeContainer.getElementsByClassName(
         "unmute"
@@ -272,35 +231,27 @@ const { media } = Astro.props;
       const closeButton = iframeContainer.getElementsByClassName(
         "unmute"
       )[0] as HTMLElement;
-
       volMessage.style.transform = `scale(0)`;
       closeButton.style.transform = `scale(0)`;
     }
-
     setTimeout(() => {
       const isLastMediaElement = index === mediaElements.length - 1;
       if (isLastMediaElement) {
         mediaElementsContainer.style.paddingRight = "0px";
       }
-
       mediaElementsContainer.style.overflowX = "auto";
-
       mediaElement.style.position = "static";
       mediaElement.style.zIndex = "0";
-
       for (let j = 0; j < mediaElements.length; j++) {
         const mediaElement = mediaElements[j];
         if (j === index) {
           continue;
         }
-
         mediaElement.style.opacity = "1";
       }
-
       background.style.zIndex = "-1";
     }, 550);
   };
-
   const handleExpandMediaElement = (
     mediaElement: HTMLElement,
     index: number,
@@ -316,27 +267,21 @@ const { media } = Astro.props;
       node.classList.contains("iframe-inner-container")
     )[0];
     const isIframe = Boolean(iframeContainer);
-
     if (isIframe) {
       if (!mediaElement.classList.contains("player-ready")) {
         return;
       }
     }
-
     mediaElement.classList.add(expandClass);
-
     for (let j = 0; j < mediaElements.length; j++) {
       const image = mediaElements[j];
       if (j === index) {
         continue;
       }
-
       image.style.opacity = "0";
       image.style.transitionDuration = "100";
     }
-
     const { scale, translate } = calculateMediaTransform(mediaElement);
-
     mediaElement.style.zIndex = "3";
     mediaElement.style.left = `${mediaElement.getBoundingClientRect().left}px`;
     mediaElement.style.top = `${mediaElement.getBoundingClientRect().top}px`;
@@ -346,7 +291,6 @@ const { media } = Astro.props;
     mediaElement.style.height = `${
       mediaElement.getBoundingClientRect().height
     }px`;
-
     if (isIframe && iframeContainer) {
       const volMessage = iframeContainer.getElementsByClassName(
         "unmute"
@@ -354,31 +298,28 @@ const { media } = Astro.props;
       const closeButton = iframeContainer.getElementsByClassName(
         "close-button"
       )[0] as HTMLElement;
-
       volMessage.style.transform = `scale(${1 / scale})`;
       closeButton.style.transform = `scale(${1 / scale})`;
     }
-
     const isLastMediaElement = index === mediaElements.length - 1;
     if (isLastMediaElement) {
-      mediaElementsContainer.style.paddingRight = `${4000}px`;
+      const rightOverflow =
+        mediaElement.getBoundingClientRect().right - window.innerWidth;
+      if (rightOverflow) {
+        mediaElementsContainer.style.paddingRight = `${4000}px`;
+      }
     }
-
     // time for other media elements to fade out
     setTimeout(() => {
       mediaElementsContainer.style.overflowX = "visible";
       mediaElement.style.position = "fixed";
-
       mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
-
       background.style.zIndex = "2";
       background.style.opacity = "1";
     }, 150);
   };
-
   const determineIsExpanded = (mediaElement: HTMLElement): boolean =>
     mediaElement.classList.contains(expandClass);
-
   // ELEMENTS ______________________
   const mediaElementsContainer = document.getElementById(
     "media-container"
@@ -392,18 +333,14 @@ const { media } = Astro.props;
     ) as HTMLCollectionOf<HTMLElement>
   );
   const background = document.getElementById("background") as HTMLElement;
-
   //
   const expandClass = "expand";
-
   //
   for (let i = 0; i < mediaElements.length; i++) {
     const mediaElement = mediaElements[i];
-
     // THIS IS WRONG - should only add close functionality to close button
     mediaElement.addEventListener("click", () => {
       const inInitialPosition = !determineIsExpanded(mediaElement);
-
       if (inInitialPosition) {
         handleExpandMediaElement(
           mediaElement,
@@ -429,7 +366,6 @@ const { media } = Astro.props;
 
 <script type="text/javascript">
   // YOUTUBE IFRAME_________________
-
   // ELEMENTS
   const mediaElementsContainer = document.getElementById("media-container");
   const iframes = Array.from(document.getElementsByClassName("iframe"));
@@ -449,10 +385,8 @@ const { media } = Astro.props;
   const loadingMessages = Array.from(
     document.getElementsByClassName("player-loading")
   );
-
   // CONSTANTS
   const volChangedFlag = "vol-changed-programmatically";
-
   // HELPERS
   function checkIsTouchDevice() {
     return (
@@ -461,25 +395,20 @@ const { media } = Astro.props;
       navigator.msMaxTouchPoints > 0
     );
   }
-
   //
   for (let i = 0; i < iframes.length; i++) {
     const iframe = iframes[i];
     const container = containers[i];
     // const outerContainer = outerContainers[i];
-
     const containerBounds = container.getBoundingClientRect();
-
     iframe.height = `${containerBounds.height}`;
     iframe.width = `${(containerBounds.height * 16) / 9}`;
   }
-
   var tag = document.createElement("script");
   tag.id = "iframe-demo";
   tag.src = "https://www.youtube.com/iframe_api";
   var firstScriptTag = document.getElementsByTagName("script")[0];
   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
   function onYouTubeIframeAPIReady() {
     for (let i = 0; i < iframes.length; i++) {
       // Elements
@@ -489,7 +418,6 @@ const { media } = Astro.props;
       const volMessage = volMessages[i];
       const closeButton = closeButtons[i];
       const loadingMessage = loadingMessages[i];
-
       // Helpers
       const showIframeHelperOverlays = () => {
         closeButton.style.opacity = "1";
@@ -507,7 +435,6 @@ const { media } = Astro.props;
           volMessage.style.zIndex = "-1";
         }
       };
-
       iframe.addEventListener("mouseover", () => {
         showIframeHelperOverlays();
       });
@@ -520,22 +447,18 @@ const { media } = Astro.props;
       volMessage.addEventListener("mouseover", () => {
         showIframeHelperOverlays();
       });
-
       const player = new YT.Player(iframe.id, {
         playerVars: { controls: 1 },
         events: {
           onReady: onPlayerReady,
         },
       });
-
       function onPlayerReady(event) {
         outerContainer.classList.add("player-ready");
         loadingMessage.style.opacity = "0";
-
         setTimeout(() => {
           loadingMessage.style.zIndex = "-1";
         }, 200);
-
         overlay.style.cursor = "pointer";
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
@@ -548,21 +471,16 @@ const { media } = Astro.props;
             }, 200);
           }, 700);
         });
-
         closeButton.addEventListener("click", () => {
           player.pauseVideo();
-
           hideIframeHelperOverlays();
           overlay.style.zIndex = "5";
           overlay.style.opacity = "1";
         });
-
         const iframeWindow = player.getIframe().contentWindow;
-
         window.addEventListener("message", function (event) {
           if (event.source === iframeWindow) {
             var data = JSON.parse(event.data);
-
             if (
               data.event === "infoDelivery" &&
               data.info &&
@@ -589,25 +507,19 @@ const { media } = Astro.props;
   }
 </script>
 
+<script type="text/javascript">
+  window.addEventListener("orientationchange", () => {
+    location.reload();
+  });
+</script>
+
 <script>
-  // SCRIPT ISNT LOADING IN DEV TOOLS RESPONSIVE CHECKER??
   const images = document.getElementsByClassName(
     "original-size-img"
   ) as HTMLCollectionOf<HTMLElement>;
   for (let i = 0; i < images.length; i++) {
     const image = images[i];
-    if (window.innerWidth >= 900) {
-      image.style.width = "";
-      image.style.maxWidth = "";
-    } else {
-      // console.log("HELLO");
-      // image.style.border = "2px solid green";
-      image.style.width = "auto";
-      image.style.height = "100%";
-      image.style.maxWidth = "";
-      image.style.maxHeight = "100%";
-      // image.style.width = "auto";
-    }
+    image.style.width = "";
   }
 </script>
 
@@ -626,10 +538,4 @@ const { media } = Astro.props;
       image.style.transform = `translateY(-${yPos}%)`;
     }
   }
-</script>
-
-<script type="text/javascript">
-  window.addEventListener("orientationchange", () => {
-    location.reload();
-  });
 </script>
