@@ -9,9 +9,9 @@ import image from "@astrojs/image";
 export default defineConfig({
   integrations: [
     sitemap(),
-    /*     image({
+    image({
       serviceEntryPoint: "@astrojs/image/sharp",
-    }), */
+    }),
     astroImageTools,
   ],
   site: "https://joshua-gordon.netlify.app/",
