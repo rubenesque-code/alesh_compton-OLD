@@ -563,14 +563,16 @@ const { media } = Astro.props;
               data.info &&
               data.info.volume
             ) {
-              if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
-                // only want to set to 100 once
-                mediaElementsContainer.classList.add(volChangedFlag);
-                if (checkIsTouchDevice()) {
+              if (checkIsTouchDevice()) {
+                if (Number(data.info.volume) !== 100) {
                   setTimeout(() => {
                     player.setVolume(100);
                   }, 200);
                 }
+              }
+              if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+                // only want to set to 100 once
+                mediaElementsContainer.classList.add(volChangedFlag);
                 volMessage.style.opacity = 0;
                 volMessage.style.zIndex = "-1";
               }
