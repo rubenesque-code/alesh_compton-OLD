@@ -6,6 +6,7 @@ CREATE FILE
 - Rename the file.
   - the file name will also be the route name (what appears in the browser's url bar).
   - it's not a good idea to use spaces; use '-' instead.
+- The home page's file is always pages/index.astro
 
 ADD DATA
 - Add data for the page.
