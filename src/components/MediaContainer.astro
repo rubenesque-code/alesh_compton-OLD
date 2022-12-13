@@ -1,0 +1,119 @@
+<div id="media-container" class="media-container">
+  <slot />
+  <div class="media-spacer">helloo</div>
+</div>
+
+<style is:global>
+  .media-container {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5em;
+    /* border: 1px solid red; */
+  }
+  .media-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  .media-container::-webkit-scrollbar-track {
+    background: rgb(249, 250, 251);
+    border-radius: 5px;
+  }
+  .media-container::-webkit-scrollbar-thumb {
+    background: rgb(209 213 219);
+    border-radius: 5px;
+    width: 40px;
+  }
+  .media-container::-webkit-scrollbar-thumb:hover {
+    background: rgb(156 163 175);
+  }
+  .media-spacer {
+    color: white;
+  }
+  @media screen and (max-width: 900px) {
+    .media-container {
+      height: 60vh;
+    }
+  }
+</style>
+
+<script type="text/javascript">
+  // MEDIA CONTAINER HORIZONTAL SCROLL_________________
+  function SmoothScroll(target, speed, smooth) {
+    let moving = false;
+    let pos = target.scrollLeft;
+    let frame = target;
+
+    target.addEventListener("mousewheel", scrolled, { passive: false });
+    target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
+
+    function scrolled(e) {
+      e.preventDefault(); // disable default scrolling
+
+      var delta = normalizeWheelDelta(e);
+
+      pos += -delta * speed;
+      pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
+
+      if (!moving) update();
+
+      // HANDLE PRELOAD NEXT MEDIA
+      const images = document.querySelectorAll(
+        "img.original-size-img, img.iframe-img"
+      );
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const rect = image.getBoundingClientRect();
+
+        const isNearViewport = rect.left - rect.width < window.innerWidth;
+
+        if (isNearViewport) {
+          if (image.loading === "lazy") {
+            image.loading = "eager";
+          }
+        }
+      }
+    }
+
+    function normalizeWheelDelta(e) {
+      if (e.detail) {
+        if (e.wheelDelta)
+          return (e.wheelDelta / e.detail / 40) * (e.detail > 0 ? 1 : -1);
+        // Opera
+        else return -e.detail / 3; // Firefox
+      } else return e.wheelDelta / 120; // IE,Safari,Chrome
+    }
+
+    function update() {
+      moving = true;
+
+      var delta = (pos - target.scrollLeft) / smooth;
+
+      target.scrollLeft += delta;
+
+      if (Math.abs(delta) > 0.5) requestFrame(update);
+      else moving = false;
+    }
+
+    var requestFrame = (function () {
+      // requestAnimationFrame cross browser
+      return (
+        window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (func) {
+          window.setTimeout(func, 1000 / 50);
+        }
+      );
+    })();
+  }
+
+  const mediaContainer = document.getElementById("media-container");
+  if (mediaContainer) {
+    SmoothScroll(mediaContainer, 120, 12);
+  }
+</script>

@@ -3,6 +3,10 @@ import Page from "../layouts/Page.astro";
 
 import type { Page as PageType } from "../types";
 
+import image1 from "../images/butterfly/1.jpg";
+import image2 from "../images/butterfly/2.jpg";
+import image3 from "../images/butterfly/3.jpg";
+
 const pageData: PageType = {
   title: "Transformation",
   description: [
@@ -14,7 +18,8 @@ const pageData: PageType = {
       youtubeUrl:
         "https://www.youtube.com/watch?v=jSimbyS_YlA&list=PLF81F43D94E579525&index=2",
       coverImage: {
-        url: "/src/images/butterfly/1.jpg",
+        url: image1,
+        // url: "/src/images/butterfly/1.jpg",
         position: 20,
       },
     },
@@ -22,10 +27,12 @@ const pageData: PageType = {
       type: "youtube-video",
       youtubeUrl: "https://www.youtube.com/watch?v=QLW1FmWB_5I",
       coverImage: {
-        url: "/src/images/butterfly/2.jpg",
+        url: image2,
+        // url: "/src/images/butterfly/2.jpg",
       },
     },
-    { type: "image", url: "/src/images/butterfly/2.jpg" },
+    { type: "image", url: image3 },
+    // { type: "image", url: "/src/images/butterfly/2.jpg" },
     {
       type: "youtube-video",
       youtubeUrl: "https://www.youtube.com/watch?v=t6Lj6hzrmtE",

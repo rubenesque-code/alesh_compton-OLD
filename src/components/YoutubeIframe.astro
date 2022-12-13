@@ -3,8 +3,10 @@ import {
   getThumbnailFromYoutubeId,
   getYoutubeEmbedUrlFromId,
 } from "../helpers/youtube";
-import type { VideoCoverImage } from "../types";
 import MyImage from "./MyImage.astro";
+import { Image } from "@astrojs/image/components";
+
+import type { VideoCoverImage } from "../types";
 
 type Props = {
   id: string;
@@ -27,11 +29,17 @@ const youtubeIframeParams =
 <div id="iframe-inner-container" class="iframe-inner-container">
   <iframe id={id} class="iframe" src={iframeSrc + youtubeIframeParams}></iframe>
   <div id="overlay-container" class="overlay-container">
-    <MyImage
-      src={coverImage?.url || youtubeThumbnailSrc}
-      yPosition={coverImage?.position}
-      type="iframe-img"
-    />
+    {
+      coverImage ? (
+        <Image
+          src={coverImage?.url || youtubeThumbnailSrc}
+          class="youtube-thumbnail"
+          alt=""
+        />
+      ) : (
+        <img class="youtube-thumbnail" src={youtubeThumbnailSrc} alt="" />
+      )
+    }
     <div class="playIcon"></div>
   </div>
   <div id="unmute" class="unmute">
@@ -112,6 +120,11 @@ const youtubeIframeParams =
 </div>
 
 <style is:global>
+  .youtube-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
   .iframe-inner-container {
     position: relative;
     width: 100%;
