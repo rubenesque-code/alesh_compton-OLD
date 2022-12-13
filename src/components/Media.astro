@@ -254,7 +254,7 @@ const { media } = Astro.props;
 
     const isLastMediaElement = index === mediaElements.length - 1;
     if (isLastMediaElement) {
-      mediaElementsContainer.style.paddingRight = `${4000}px`;
+      // mediaElementsContainer.style.paddingRight = `${4000}px`;
     }
 
     // time for other media elements to fade out
@@ -290,6 +290,7 @@ const { media } = Astro.props;
   const expandClass = "expand";
 
   //
+
   for (let i = 0; i < mediaElements.length; i++) {
     const mediaElement = mediaElements[i];
 
