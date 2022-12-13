@@ -394,7 +394,6 @@ const { media } = Astro.props;
   //
   for (let i = 0; i < mediaElements.length; i++) {
     const mediaElement = mediaElements[i];
-    const closeButton = closeButtons[i];
 
     // THIS IS WRONG - should only add close functionality to close button
     mediaElement.addEventListener("click", () => {
@@ -442,6 +441,9 @@ const { media } = Astro.props;
   const closeButtons = Array.from(
     document.getElementsByClassName("close-button")
   );
+  const loadingMessages = Array.from(
+    document.getElementsByClassName("player-loading")
+  );
 
   // CONSTANTS
   const volChangedFlag = "vol-changed-programmatically";
@@ -481,6 +483,7 @@ const { media } = Astro.props;
       const overlay = overlays[i];
       const volMessage = volMessages[i];
       const closeButton = closeButtons[i];
+      const loadingMessage = loadingMessages[i];
 
       // Helpers
       const showIframeHelperOverlays = () => {
@@ -522,6 +525,12 @@ const { media } = Astro.props;
 
       function onPlayerReady(event) {
         outerContainer.classList.add("player-ready");
+        loadingMessage.style.opacity = "0";
+
+        setTimeout(() => {
+          loadingMessage.style.zIndex = "-1";
+        }, 200);
+
         overlay.style.cursor = "pointer";
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
@@ -591,6 +600,7 @@ const { media } = Astro.props;
 
 <script>
   // Handle position since not working with `Picture` component
+  // could have done below with a wrapping div and style prop
   const images = document.getElementsByClassName(
     "iframe-img"
   ) as HTMLCollectionOf<HTMLElement>;

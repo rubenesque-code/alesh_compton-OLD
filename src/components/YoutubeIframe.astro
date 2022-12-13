@@ -27,22 +27,88 @@ const youtubeIframeParams =
 <div id="iframe-inner-container" class="iframe-inner-container">
   <iframe id={id} class="iframe" src={iframeSrc + youtubeIframeParams}></iframe>
   <div id="overlay-container" class="overlay-container">
-    <>
-      <div class="thumbnail">
-        <MyImage
-          src={coverImage?.url || youtubeThumbnailSrc}
-          yPosition={coverImage?.position}
-          type="iframe-img"
-        />
-      </div>
-      <div class="playIcon"></div>
-    </>
+    <MyImage
+      src={coverImage?.url || youtubeThumbnailSrc}
+      yPosition={coverImage?.position}
+      type="iframe-img"
+    />
+    <div class="playIcon"></div>
   </div>
-  <div id="unmute" class="unmute">use controls for volume</div>
-  <div id="close-button" class="close-button">close</div>
-  <!--   <div id="player-loading" class="player-loading">
-    Loading...
-  </div> -->
+  <div id="unmute" class="unmute">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      fill="#FFFFFF"
+      viewBox="0 0 256 256"
+      ><rect width="256" height="256" fill="none"></rect><path
+        d="M218.9,77.1a71.9,71.9,0,0,1,0,101.8"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></path><path
+        d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></path><line
+        x1="80"
+        y1="88"
+        x2="80"
+        y2="168"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></line><path
+        d="M190.6,105.4a31.9,31.9,0,0,1,0,45.2"
+        fill="#FFFFFF"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></path>
+    </svg>
+    <span> use controls for volume</span>
+  </div>
+  <div id="close-button" class="close-button">
+    <span> close</span>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      fill="#FFFFFF"
+      viewBox="0 0 256 256"
+      ><rect width="256" height="256" fill="none"></rect><circle
+        cx="128"
+        cy="128"
+        r="96"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-miterlimit="10"
+        stroke-width="16"></circle><line
+        x1="160"
+        y1="96"
+        x2="96"
+        y2="160"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></line><line
+        x1="160"
+        y1="160"
+        x2="96"
+        y2="96"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="16"></line>
+    </svg>
+  </div>
+  <div id="player-loading" class="player-loading">Loading...</div>
 </div>
 
 <style is:global>
@@ -64,14 +130,6 @@ const youtubeIframeParams =
     background-color: rgba(254, 254, 254, 0.3);
     cursor: wait;
   }
-  .thumbnail {
-    z-index: 1;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-  }
   .playIcon {
     z-index: 6;
     position: absolute;
@@ -92,8 +150,9 @@ const youtubeIframeParams =
   .close-button {
     z-index: 1;
     position: absolute;
-    right: 5%;
-    top: 30%;
+    left: 50%;
+    top: 20%;
+    transform: translateX(-50%);
     font-size: large;
     background-color: black;
     color: white;
@@ -103,12 +162,16 @@ const youtubeIframeParams =
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
   }
   .unmute {
     z-index: 1;
     position: absolute;
-    left: 5%;
-    bottom: 40%;
+    top: 70%;
+    left: 50%;
+    transform: translateX(-50%);
     max-width: calc(95%);
     white-space: wrap;
     text-transform: uppercase;
@@ -120,5 +183,19 @@ const youtubeIframeParams =
     transition: opacity 0.2s ease-in-out;
     cursor: default;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .player-loading {
+    z-index: 6;
+    position: absolute;
+    left: 2%;
+    top: 2%;
+    background-color: black;
+    color: white;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    transition: opacity 0.2s ease-in-out;
   }
 </style>
