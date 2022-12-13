@@ -108,7 +108,6 @@ const { media } = Astro.props;
     target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
 
     function scrolled(e: { preventDefault: () => void }) {
-      // console.log("SCROLLED");
       e.preventDefault(); // disable default scrolling
 
       var delta = normalizeWheelDelta(e);
@@ -117,6 +116,23 @@ const { media } = Astro.props;
       pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
 
       if (!moving) update();
+
+      // HANDLE PRELOAD NEXT MEDIA
+      const images = document.querySelectorAll(
+        "img.original-size-img, img.iframe-img"
+      ) as unknown as HTMLCollectionOf<HTMLImageElement>;
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const rect = image.getBoundingClientRect();
+
+        const isNearViewport = rect.left - rect.width < window.innerWidth;
+
+        if (isNearViewport) {
+          if (image.loading === "lazy") {
+            image.loading = "eager";
+          }
+        }
+      }
     }
 
     function normalizeWheelDelta(e: {
@@ -252,6 +268,11 @@ const { media } = Astro.props;
     }
 
     setTimeout(() => {
+      const isLastMediaElement = index === mediaElements.length - 1;
+      if (isLastMediaElement) {
+        mediaElementsContainer.style.paddingRight = "0px";
+      }
+
       mediaElementsContainer.style.overflowX = "auto";
 
       mediaElement.style.position = "static";
@@ -326,6 +347,16 @@ const { media } = Astro.props;
 
       volMessage.style.transform = `scale(${1 / scale})`;
       closeButton.style.transform = `scale(${1 / scale})`;
+    }
+
+    const isLastMediaElement = index === mediaElements.length - 1;
+    if (isLastMediaElement) {
+      const rightOverflow =
+        mediaElement.getBoundingClientRect().right - window.innerWidth;
+
+      if (rightOverflow) {
+        mediaElementsContainer.style.paddingRight = `${4000}px`;
+      }
     }
 
     // time for other media elements to fade out
@@ -469,6 +500,19 @@ const { media } = Astro.props;
         }
       };
 
+      iframe.addEventListener("mouseover", () => {
+        showIframeHelperOverlays();
+      });
+      iframe.addEventListener("mouseleave", () => {
+        hideIframeHelperOverlays();
+      });
+      closeButton.addEventListener("mouseover", () => {
+        showIframeHelperOverlays();
+      });
+      volMessage.addEventListener("mouseover", () => {
+        showIframeHelperOverlays();
+      });
+
       const player = new YT.Player(iframe.id, {
         playerVars: { controls: 1 },
         events: {
@@ -478,6 +522,7 @@ const { media } = Astro.props;
 
       function onPlayerReady(event) {
         outerContainer.classList.add("player-ready");
+        overlay.style.cursor = "pointer";
         event.target.setVolume(0);
         overlay.addEventListener("click", () => {
           // time for transform
@@ -488,19 +533,6 @@ const { media } = Astro.props;
               overlay.style.zIndex = "-1";
             }, 200);
           }, 700);
-        });
-
-        iframe.addEventListener("mouseover", () => {
-          showIframeHelperOverlays();
-        });
-        iframe.addEventListener("mouseleave", () => {
-          hideIframeHelperOverlays();
-        });
-        closeButton.addEventListener("mouseover", () => {
-          showIframeHelperOverlays();
-        });
-        volMessage.addEventListener("mouseover", () => {
-          showIframeHelperOverlays();
         });
 
         closeButton.addEventListener("click", () => {
