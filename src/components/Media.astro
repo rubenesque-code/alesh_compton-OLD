@@ -1,19 +1,24 @@
 ---
-import { Image } from "@astrojs/image/components";
 import { getYoutubeVideoIdFromUrl } from "../helpers/youtube";
 import type { LocalImage, YoutubeVideo } from "../types";
+import MyImage from "./MyImage.astro";
 import YoutubeIframe from "./YoutubeIframe.astro";
 
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
+
+// NOTES
+// - in script below, in order to remove width set by `Picture`, removed auto
 ---
 
 <div id="media-container" class="media-container">
   {
     media.map((item) =>
       item.type === "image" ? (
-        <Image class="media image" src={item.url} alt="" format="avif" />
+        <div class="media image">
+          <MyImage src={item.url} type="image-img" />
+        </div>
       ) : (
         <div class="media iframe-outer-container">
           <YoutubeIframe
@@ -41,6 +46,7 @@ const { media } = Astro.props;
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.5em;
+    /* border: 1px solid red; */
   }
   .media-container::-webkit-scrollbar {
     height: 6px;
@@ -539,4 +545,30 @@ const { media } = Astro.props;
   window.addEventListener("orientationchange", () => {
     location.reload();
   });
+</script>
+
+<script>
+  const images = document.getElementsByClassName(
+    "original-size-img"
+  ) as HTMLCollectionOf<HTMLElement>;
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+    image.style.width = "";
+  }
+</script>
+
+<script>
+  // Handle position since not working with `Picture` component
+  const images = document.getElementsByClassName(
+    "iframe-img"
+  ) as HTMLCollectionOf<HTMLElement>;
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+    const objPos = getComputedStyle(image).objectPosition;
+    const regexMatches = objPos.match(/\d+(?=\%)/g);
+    if (regexMatches) {
+      const yPos = regexMatches[1];
+      image.style.transform = `translateY(-${yPos}%)`;
+    }
+  }
 </script>

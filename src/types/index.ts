@@ -6,7 +6,7 @@ export type LocalImage = {
 export type VideoCoverImage = {
   coverImage?: {
     url: string;
-    position?: "top" | "center" | "bottom";
+    position?: number;
   };
 };
 

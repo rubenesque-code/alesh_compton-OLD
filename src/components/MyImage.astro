@@ -1,0 +1,25 @@
+---
+// @ts-ignore: Unreachable code error
+import { Picture } from "astro-imagetools/components";
+
+type Props = {
+  src: string;
+  type: "iframe-img" | "image-img";
+  yPosition?: number;
+};
+
+const { src, type, yPosition = 0 } = Astro.props;
+---
+
+<Picture
+  sizes=""
+  attributes={{
+    img: { class: type === "image-img" ? "original-size-img" : "iframe-img" },
+  }}
+  src={src}
+  alt=""
+  format="avif"
+  layout="fullWidth"
+  objectFit="cover"
+  objectPosition={`50% ${yPosition}%`}
+/>

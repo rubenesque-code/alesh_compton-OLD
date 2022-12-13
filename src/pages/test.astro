@@ -1,10 +1,11 @@
 ---
-import image1 from "../images/butterfly/1.jpg";
-import { Image } from "@astrojs/image/components";
+// import image1 from "/src/images/butterfly/1.jpg";
+// @ts-ignore: Unreachable code error
+import { Picture } from "astro-imagetools/components";
 ---
 
 <div id="test-container" class="test-container">
-  <Image alt="" src={image1} />
+  <Picture alt="" src="/src/images/butterfly/1.jpg" format="avif" />
 </div>
 <style>
   .test-container {

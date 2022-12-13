@@ -1,10 +1,10 @@
 ---
-import { Image } from "@astrojs/image/components";
 import {
   getThumbnailFromYoutubeId,
   getYoutubeEmbedUrlFromId,
 } from "../helpers/youtube";
 import type { VideoCoverImage } from "../types";
+import MyImage from "./MyImage.astro";
 
 type Props = {
   id: string;
@@ -25,37 +25,18 @@ const youtubeIframeParams =
 ---
 
 <div id="iframe-inner-container" class="iframe-inner-container">
-  <iframe
-    id={id}
-    class="iframe"
-    src={iframeSrc + youtubeIframeParams}
-    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
-    frameborder="0"></iframe>
+  <iframe id={id} class="iframe" src={iframeSrc + youtubeIframeParams}></iframe>
   <div id="overlay-container" class="overlay-container">
-    {
-      coverImage ? (
-        <>
-          <Image
-            class="thumbnail coverImage"
-            alt=""
-            src={coverImage.url}
-            format="avif"
-            style={{
-              objectPosition: coverImage.position || "center",
-            }}
-            background="rgb(100, 100, 100)"
-            placeholder="blurred"
-          />
-          <div class="playIcon" />
-        </>
-      ) : (
-        <>
-          <img class="thumbnail" src={youtubeThumbnailSrc} alt="" />
-          <div class="playIcon playIcon-large" />
-        </>
-      )
-    }
-    <div class="overlay"></div>
+    <>
+      <div class="thumbnail">
+        <MyImage
+          src={coverImage?.url || youtubeThumbnailSrc}
+          yPosition={coverImage?.position}
+          type="iframe-img"
+        />
+      </div>
+      <div class="playIcon"></div>
+    </>
   </div>
   <div id="unmute" class="unmute">use controls for volume</div>
   <div id="close-button" class="close-button">close</div>
@@ -77,16 +58,7 @@ const youtubeIframeParams =
     height: 100%;
     transition: opacity 0.2s ease-in-out;
     cursor: pointer;
-  }
-  .overlay {
-    z-index: 2;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
     background-color: rgba(254, 254, 254, 0.3);
-    transition: opacity 0.2s ease-in-out;
     cursor: pointer;
   }
   .thumbnail {
@@ -96,7 +68,6 @@ const youtubeIframeParams =
     top: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
   }
   .playIcon {
     z-index: 6;
