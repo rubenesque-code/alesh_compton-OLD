@@ -1,10 +1,6 @@
 ---
 import Page from "../layouts/Page.astro";
 
-// import image1 from "../images/butterfly/1.jpg";
-// import image2 from "../images/butterfly/2.jpg";
-// import image3 from "../images/butterfly/3.jpg";
-// import image4 from "../images/butterfly/4.jpg";
 import type { Page as PageType } from "../types";
 
 const pageData: PageType = {
@@ -22,21 +18,18 @@ const pageData: PageType = {
         position: 20,
       },
     },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://www.youtube.com/watch?v=QLW1FmWB_5I",
+      coverImage: {
+        url: "/src/images/butterfly/2.jpg",
+      },
+    },
     { type: "image", url: "/src/images/butterfly/2.jpg" },
     {
       type: "youtube-video",
       youtubeUrl: "https://www.youtube.com/watch?v=t6Lj6hzrmtE",
     },
-    /*     {
-      type: "youtube-video",
-      youtubeUrl: "https://www.youtube.com/watch?v=QLW1FmWB_5I",
-      coverImage: {
-        url: image2,
-        position: "top",
-      },
-    }, */
-    // { type: "image", url: image1 },
-    // { type: "image", url: image4 },
   ],
 };
 ---
