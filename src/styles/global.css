@@ -22,3 +22,19 @@ a:visited {
   color: black;
   text-decoration: none;
 }
+
+html::-webkit-scrollbar {
+  height: 4px;
+}
+html::-webkit-scrollbar-track {
+  background: rgb(249, 250, 251);
+  border-radius: 5px;
+}
+html::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219);
+  border-radius: 5px;
+  width: 40px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}
