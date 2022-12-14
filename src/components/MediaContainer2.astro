@@ -4,41 +4,43 @@
 // - within scroll handler, also handles preload next image
 ---
 
-<div id="media-container" class="media-container">
+<div id="media-container-2" class="media-container-2">
   <slot />
   <div class="media-spacer">helloo</div>
 </div>
 
 <style is:global>
-  .media-container {
+  .media-container-2 {
     position: relative;
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.5em;
-    /* border: 1px solid blue; */
-    margin-left: 30vw;
+    border: 2px solid blue;
   }
-  .media-container::-webkit-scrollbar {
+  .media-container-2::-webkit-scrollbar {
     height: 6px;
   }
-  .media-container::-webkit-scrollbar-track {
+  .media-container-2::-webkit-scrollbar-track {
     background: rgb(249, 250, 251);
     border-radius: 5px;
   }
-  .media-container::-webkit-scrollbar-thumb {
+  .media-container-2::-webkit-scrollbar-thumb {
     background: rgb(209 213 219);
     border-radius: 5px;
     width: 40px;
   }
-  .media-container::-webkit-scrollbar-thumb:hover {
+  .media-container-2::-webkit-scrollbar-thumb:hover {
     background: rgb(156 163 175);
   }
   .media-spacer {
     color: white;
   }
   @media screen and (max-width: 900px) {
-    .media-container {
-      height: 60vh;
+    .media-container-2 {
+      flex-grow: 1;
+      /* height: 100%; */
+      min-height: 60vh;
+      max-height: 90vh;
     }
   }
 </style>
@@ -116,7 +118,7 @@
     })();
   }
 
-  const mediaContainer = document.getElementById("media-container");
+  const mediaContainer = document.getElementById("media-container-2");
   if (mediaContainer) {
     SmoothScroll(mediaContainer, 120, 12);
   }
