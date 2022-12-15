@@ -216,7 +216,6 @@ const { media } = Astro.props;
   const mediaElements = mediaContainer.getElementsByClassName(
     "media-transform"
   ) as HTMLCollectionOf<HTMLElement>;
-  console.log("mediaElements", mediaElements);
   const background = document.getElementById("background") as HTMLElement;
 
   //
@@ -231,7 +230,7 @@ const { media } = Astro.props;
         // fix position of clicked element and those following; go from right to left; if left to right, container collapses and elements move; only need to fix elements after the clicked on one.
         for (let j = mediaElements.length - 1; j >= i; j--) {
           const mediaElement = mediaElements[j];
-          const zIndex = j === i ? 10 : 1;
+          const zIndex = j === i ? 10 : 0;
 
           // image fixed so can be shown outside of its container which needs overflow hidden
           fixElementPositionBeforeTransform(mediaElement, zIndex);
@@ -433,50 +432,48 @@ const { media } = Astro.props;
 
         const playerIsReady =
           transformContainer.classList.contains(playerReadyFlag);
+        const isExpanding = !transformContainer.classList.contains(expandClass);
 
-        const isExpanded = transformContainer.classList.contains(expandClass);
-
-        if (isExpanded && !playerIsReady) {
-          hideLoading();
-          // time for loading transition
-          setTimeout(() => {
-            loadingMessage.style.transform = "";
-            loadingMessage.style.width = "auto";
-            loadingMessage.style.height = "auto";
-          }, 200);
+        if (isExpanding) {
           // time for transform transition (handled in another script)
           setTimeout(() => {
-            overlay.style.pointerEvents = "auto";
+            if (playerIsReady) {
+              inverseScale({ element: iframe });
+              inverseScale({
+                element: closeButton,
+                keepBounds: true,
+                transformOrigin: "right top",
+              });
+              inverseScale({ element: volumeMessage, keepBounds: true });
+
+              hideOverlay(overlay);
+              // wait for overlay transition
+              setTimeout(() => {
+                overlay.style.pointerEvents = "auto";
+                player.playVideo();
+              }, 250);
+            } else {
+              inverseScale({ element: loadingMessage, keepBounds: true });
+              showLoading();
+              overlay.style.pointerEvents = "auto";
+            }
           }, 500);
-
-          return;
-        }
-
-        // time for transform transition (handled in another script)
-        setTimeout(() => {
-          inverseScale({ element: iframe });
-          inverseScale({ element: loadingMessage, keepBounds: true });
-          inverseScale({
-            element: closeButton,
-            keepBounds: true,
-            transformOrigin: "right top",
-          });
-          inverseScale({ element: volumeMessage, keepBounds: true });
-
-          //
+        } else {
+          // if clicked on when already expanded
           if (!playerIsReady) {
-            showLoading();
-            overlay.style.pointerEvents = "auto";
-          } else {
-            hideOverlay(overlay);
-            // wait for overlay transition
+            hideLoading();
+            setTimeout(() => {
+              loadingMessage.style.transform = "";
+              loadingMessage.style.width = "auto";
+              loadingMessage.style.height = "auto";
+            }, 200);
+            // time for transform transition (handled in another script)
             setTimeout(() => {
               overlay.style.pointerEvents = "auto";
-              player.playVideo();
-              // showIframeHelperOverlays();
-            }, 250);
+            }, 500);
           }
-        }, 500);
+          // if is expanded and player is ready: handled in onReady function below.
+        }
       });
 
       closeButton.addEventListener("click", () => {
@@ -490,7 +487,7 @@ const { media } = Astro.props;
 
         // wait for contracting transformation transition
         setTimeout(() => {
-          // revert to uninversed scale
+          // revert to uninversed scale;
           iframe.style.transform = "";
           iframe.style.width = "100%";
           iframe.style.height = "100%";
@@ -506,6 +503,7 @@ const { media } = Astro.props;
       });
 
       iframe.addEventListener("mouseover", () => {
+        console.log("iframe moused over");
         if (!isTransitionedToExpand) {
           return;
         }
@@ -579,4 +577,10 @@ const { media } = Astro.props;
       }
     }
   }
+</script>
+
+<script type="text/javascript">
+  window.addEventListener("orientationchange", () => {
+    location.reload();
+  });
 </script>
