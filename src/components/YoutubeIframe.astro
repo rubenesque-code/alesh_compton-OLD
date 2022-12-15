@@ -15,8 +15,6 @@ type Props = {
 const { id, coverImage } = Astro.props;
 
 const iframeSrc = getYoutubeEmbedUrlFromId(id);
-console.log(iframeSrc);
-
 const youtubeThumbnailSrc = getThumbnailFromYoutubeId(id);
 
 const youtubeIframeParams =

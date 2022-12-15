@@ -1,5 +1,5 @@
 ---
-import Page from "../layouts/Page.astro";
+import Page from "../layouts/NewPage.astro";
 
 import type { Page as PageType } from "../types";
 
@@ -15,12 +15,10 @@ const pageData: PageType = {
   media: [
     {
       type: "youtube-video",
-      youtubeUrl:
-        "https://www.youtube.com/watch?v=jSimbyS_YlA&list=PLF81F43D94E579525&index=2",
+      youtubeUrl: "https://www.youtube.com/watch?v=jSimbyS_YlA",
       coverImage: {
         url: image1,
-        // url: "/src/images/butterfly/1.jpg",
-        position: 20,
+        yPosition: 20,
       },
     },
     {
@@ -28,11 +26,9 @@ const pageData: PageType = {
       youtubeUrl: "https://www.youtube.com/watch?v=QLW1FmWB_5I",
       coverImage: {
         url: image2,
-        // url: "/src/images/butterfly/2.jpg",
       },
     },
     { type: "image", url: image3 },
-    // { type: "image", url: "/src/images/butterfly/2.jpg" },
     {
       type: "youtube-video",
       youtubeUrl: "https://www.youtube.com/watch?v=t6Lj6hzrmtE",

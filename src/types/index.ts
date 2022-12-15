@@ -6,7 +6,7 @@ export type LocalImage = {
 export type VideoCoverImage = {
   coverImage?: {
     url: string;
-    position?: number;
+    yPosition?: number;
   };
 };
 
@@ -17,7 +17,7 @@ export type YoutubeVideo = {
 
 export type Page = {
   title: string;
-  description?: string | string[];
+  description?: string[];
   media: (LocalImage | YoutubeVideo)[];
 };
 

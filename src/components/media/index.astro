@@ -1,0 +1,581 @@
+---
+import { Image } from "@astrojs/image/components";
+
+import MediaContainer from "../../components/media/Container.astro";
+import Background from "../../components/media/Background.astro";
+import YoutubeIframe from "../video/YoutubeIframe.astro";
+import type { LocalImage, YoutubeVideo } from "../../types";
+
+type Props = { media: (LocalImage | YoutubeVideo)[] };
+
+const { media } = Astro.props;
+
+// TODO
+// - if iframe loading and click on cover image agani, loading message and wait cursor remains; also loading message isnt uscaled.
+
+// NOTES
+// - only point of the duplication is to keep the width of the container when image content translated
+// - seems like the hidden images won't be loaded
+
+// CHECK
+// iframe is scaled correctly. Check transform origin to counteract translate works across all devices, etc; position iframe moves from.
+// can click on close iframe if iframe takes up whole screen (on touch screen)?
+---
+
+<MediaContainer>
+  <div class="media-inner">
+    {
+      media.map((mediaElement) =>
+        mediaElement.type === "image" ? (
+          <Image
+            class="image-img-duplicate hide"
+            src={mediaElement.url}
+            alt=""
+          />
+        ) : (
+          <div class="iframe-duplicate hide" />
+        )
+      )
+    }
+    <div class="visible-media">
+      {
+        media.map((mediaElement) =>
+          mediaElement.type === "image" ? (
+            <Image
+              class="image-img media-transform"
+              src={mediaElement.url}
+              alt=""
+            />
+          ) : (
+            <YoutubeIframe {...mediaElement} />
+          )
+        )
+      }
+      <Background />
+    </div>
+  </div>
+</MediaContainer>
+
+<style is:global>
+  .media-transform {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity ease-in 0.3s, transform ease-in-out 0.5s;
+  }
+</style>
+
+<style>
+  .media-inner {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    height: 100%;
+  }
+  .visible-media {
+    z-index: 1;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    background: white;
+  }
+  .image-img {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity ease-in 0.3s, transform ease-in-out 0.5s;
+    max-height: 100%;
+  }
+  .test-image-duplicate {
+    max-height: 100%;
+  }
+  .iframe-duplicate {
+    height: 100%;
+    max-height: 1000px;
+    aspect-ratio: 16 / 9;
+  }
+  .hide {
+    visibility: hidden;
+  }
+</style>
+
+<script>
+  // TRANSITION MEDIA OPACITY (hacky but should be okay since images are local)
+  // _________________________________
+
+  const mediaContainer = document.getElementById("media-container")!;
+  const media = mediaContainer.getElementsByClassName(
+    "media-transform"
+  ) as HTMLCollectionOf<HTMLElement>;
+
+  // avoid image flashing in
+  for (let i = 0; i < media.length; i++) {
+    const image = media[i];
+    image.style.opacity = "1";
+  }
+</script>
+
+<script>
+  // MEDIA TRANSFORM: scale and translate to fill most of page and center.
+  // _________________________________
+
+  // CONSTANTS
+  const expandClass = "expand";
+  const isTransitionedToExpand = "is-expanded";
+
+  // HELPERS
+  const getWindowWidth = () =>
+    window.innerWidth && document.documentElement.clientWidth
+      ? Math.min(window.innerWidth, document.documentElement.clientWidth)
+      : window.innerWidth ||
+        document.documentElement.clientWidth ||
+        document.getElementsByTagName("body")[0].clientWidth;
+
+  const getWindowHeight = () =>
+    window.innerHeight && document.documentElement.clientHeight
+      ? Math.min(window.innerHeight, document.documentElement.clientHeight)
+      : window.innerHeight ||
+        document.documentElement.clientHeight ||
+        document.getElementsByTagName("body")[0].clientHeight;
+
+  const calculateMediaTransform = (
+    media: HTMLElement
+  ): { scale: number; translate: { x: number; y: number } } => {
+    const windowWidth = getWindowWidth();
+    const windowHeight = getWindowHeight();
+
+    const mediaInitialBounds = media.getBoundingClientRect();
+    const initialWidth = mediaInitialBounds.width;
+    const initialHeight = mediaInitialBounds.height;
+    const initialLeft = mediaInitialBounds.left;
+    const initialTop = mediaInitialBounds.top;
+
+    const maxWidth = windowWidth * 0.98;
+    const maxHeight = windowHeight * 0.98;
+
+    let scale: number;
+    let scaledWidth: number;
+    let scaledHeight: number;
+
+    const attemptedWidthScale = maxWidth / initialWidth;
+    const attemtedWidthScaleHeight = initialHeight * attemptedWidthScale;
+    if (attemtedWidthScaleHeight < maxHeight) {
+      scale = attemptedWidthScale;
+      scaledWidth = maxWidth;
+      scaledHeight = attemtedWidthScaleHeight;
+    } else {
+      scale = maxHeight / initialHeight;
+      scaledHeight = maxHeight;
+      scaledWidth = initialWidth * scale;
+    }
+
+    const scaledYTopChange = (scaledHeight - initialHeight) / 2;
+    const scaledYPos = initialTop - scaledYTopChange;
+    const yDestination = (windowHeight - scaledHeight) / 2;
+    const translateY = yDestination - scaledYPos;
+
+    let translateX: number;
+
+    const imageInitialCenterLeft = initialLeft + initialWidth / 2;
+    const pageCenterLeft = windowWidth / 2;
+    const transformDirection: "left" | "right" =
+      imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
+    const leftDestination = (windowWidth - scaledWidth) / 2;
+
+    if (transformDirection === "right") {
+      media.style.transformOrigin = "left";
+      translateX = leftDestination - initialLeft;
+    } else {
+      media.style.transformOrigin = "right";
+      const scaledWidthChange = scaledWidth - initialWidth;
+      const imageLeftAfterScale = initialLeft - scaledWidthChange;
+      translateX = leftDestination - imageLeftAfterScale;
+    }
+
+    return { scale, translate: { x: translateX, y: translateY } };
+  };
+
+  const fixElementPositionBeforeTransform = (
+    element: HTMLElement,
+    zIndex: number
+  ) => {
+    element.style.zIndex = `${zIndex}`;
+    element.style.left = `${element.getBoundingClientRect().left}px`;
+    element.style.top = `${element.getBoundingClientRect().top}px`;
+    element.style.width = `${element.getBoundingClientRect().width}px`;
+    element.style.height = `${element.getBoundingClientRect().height}px`;
+
+    element.style.position = "fixed";
+  };
+
+  // ELEMENTS
+  const mediaContainer = document.getElementById("media-container")!;
+  const mediaElements = mediaContainer.getElementsByClassName(
+    "media-transform"
+  ) as HTMLCollectionOf<HTMLElement>;
+  console.log("mediaElements", mediaElements);
+  const background = document.getElementById("background") as HTMLElement;
+
+  //
+  for (let i = 0; i < mediaElements.length; i++) {
+    const mediaElement = mediaElements[i];
+    mediaElement.addEventListener("click", () => {
+      if (!mediaElement.classList.contains(expandClass)) {
+        mediaElement.classList.add(expandClass);
+
+        const { scale, translate } = calculateMediaTransform(mediaElement);
+
+        // fix position of clicked element and those following; go from right to left; if left to right, container collapses and elements move; only need to fix elements after the clicked on one.
+        for (let j = mediaElements.length - 1; j >= i; j--) {
+          const mediaElement = mediaElements[j];
+          const zIndex = j === i ? 10 : 1;
+
+          // image fixed so can be shown outside of its container which needs overflow hidden
+          fixElementPositionBeforeTransform(mediaElement, zIndex);
+        }
+
+        mediaContainer.style.overflowX = "hidden";
+
+        mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+
+        // behind transformed image; in front of rest
+        background.style.zIndex = "2";
+        background.style.opacity = "1";
+
+        // time for transform transition
+        setTimeout(() => {
+          mediaElement.classList.add(isTransitionedToExpand);
+        }, 500);
+      } else {
+        mediaElement.classList.remove(expandClass);
+        mediaElement.classList.remove(isTransitionedToExpand);
+
+        mediaElement.style.transform = "translate(0px) scale(1)";
+
+        background.style.opacity = "0";
+        setTimeout(() => {
+          background.style.zIndex = "-1";
+        }, 200);
+        // wait for contract transition
+        setTimeout(() => {
+          mediaContainer.style.overflowX = "auto";
+
+          // unfix position of media elements to right
+          for (let j = mediaElements.length - 1; j >= i; j--) {
+            const mediaElement = mediaElements[j];
+            const elementType = mediaElement.classList.contains(
+              "iframe-container"
+            )
+              ? "iframe"
+              : "image";
+
+            console.log("elementType", elementType);
+
+            if (elementType === "iframe") {
+              mediaElement.style.width = "";
+              mediaElement.style.height = "100%";
+              mediaElement.style.position = "relative";
+            } else {
+              mediaElement.style.width = "";
+              mediaElement.style.height = "";
+              mediaElement.style.position = "static";
+            }
+            mediaElement.style.left = "";
+            mediaElement.style.top = "";
+            mediaElement.style.zIndex = "0";
+          }
+        }, 500);
+      }
+    });
+  }
+</script>
+
+<script type="text/javascript">
+  // YOUTUBE IFRAME: set up youtube iframe api; create player instances; add element listeners that need access to player.
+  // _________________________________
+
+  // create script for youtube api
+  var tag = document.createElement("script");
+  tag.id = "iframe-demo";
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  //
+  function onYouTubeIframeAPIReady() {
+    // CONSTANTS
+    const playerReadyFlag = "player-ready";
+    const expandClass = "expand";
+    const isTransitionedToExpand = "is-expanded";
+    const volChangedFlag = "vol-changed-programmatically";
+
+    // HELPERS
+
+    function inverseScale({ element, keepBounds, transformOrigin }) {
+      const scale = element.getBoundingClientRect().width / element.offsetWidth;
+      const reverseScale = 1 / scale;
+
+      element.style.transformOrigin = transformOrigin
+        ? transformOrigin
+        : "left top";
+      element.style.transform = `scale(${reverseScale})`;
+
+      if (keepBounds) {
+        return;
+      }
+
+      element.style.width = `${
+        element.getBoundingClientRect().width * scale
+      }px`;
+      element.style.height = `${
+        element.getBoundingClientRect().height * scale
+      }px`;
+    }
+
+    function checkIsTouchDevice() {
+      return (
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+      );
+    }
+
+    // ELEMENTS
+    const mediaElementsContainer = document.getElementById("media-container");
+    const iframes = Array.from(document.getElementsByClassName("iframe"));
+    const transformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+    const overlays = Array.from(
+      document.getElementsByClassName("iframe-overlay")
+    );
+    const loadingMessages = Array.from(
+      document.getElementsByClassName("player-loading")
+    );
+    const closeButtons = Array.from(
+      document.getElementsByClassName("close-button")
+    );
+    const volumeMessages = Array.from(
+      document.getElementsByClassName("volume-message")
+    );
+
+    //
+    for (let i = 0; i < iframes.length; i++) {
+      // ELEMENTS
+      const iframe = iframes[i];
+      const transformContainer = transformContainers[i];
+      const overlay = overlays[i];
+      const loadingMessage = loadingMessages[i];
+      const closeButton = closeButtons[i];
+      const volumeMessage = volumeMessages[i];
+
+      // CONSTANTS
+      const isExpanded = transformContainer.classList.contains(expandClass);
+
+      // HELPERS
+      function showOverlay() {
+        overlay.style.opacity = "1";
+        overlay.style.zIndex = "2";
+      }
+      function hideOverlay() {
+        overlay.style.opacity = "0";
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+        }, 200);
+      }
+      function showLoading() {
+        loadingMessage.style.zIndex = "10";
+        loadingMessage.style.opacity = "1";
+        transformContainer.style.cursor = "wait";
+      }
+      function hideLoading() {
+        loadingMessage.style.opacity = "0";
+        loadingMessage.style.zIndex = "-1";
+        transformContainer.style.cursor = "pointer";
+      }
+      function showVolume() {
+        volumeMessage.style.opacity = "1";
+        volumeMessage.style.zIndex = "1";
+      }
+      function hideVolume() {
+        volumeMessage.style.opacity = "0";
+        volumeMessage.style.zIndex = "-1";
+      }
+      const showIframeHelperOverlays = () => {
+        closeButton.style.opacity = "1";
+        closeButton.style.zIndex = "1";
+        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+          showVolume();
+        }
+      };
+      const hideIframeHelperOverlays = () => {
+        closeButton.style.opacity = "0";
+        closeButton.style.zIndex = "-1";
+        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+          hideVolume();
+        }
+      };
+
+      const player = new YT.Player(iframe.id, {
+        events: {
+          onReady,
+        },
+      });
+
+      // overlay is a child of transform container so transform will occur when overlay clicked on.
+      overlay.addEventListener("click", () => {
+        // prevent click on overlay again until transform transition finished
+        overlay.style.pointerEvents = "none";
+
+        const playerIsReady =
+          transformContainer.classList.contains(playerReadyFlag);
+
+        const isExpanded = transformContainer.classList.contains(expandClass);
+
+        if (isExpanded && !playerIsReady) {
+          hideLoading();
+          // time for loading transition
+          setTimeout(() => {
+            loadingMessage.style.transform = "";
+            loadingMessage.style.width = "auto";
+            loadingMessage.style.height = "auto";
+          }, 200);
+          // time for transform transition (handled in another script)
+          setTimeout(() => {
+            overlay.style.pointerEvents = "auto";
+          }, 500);
+
+          return;
+        }
+
+        // time for transform transition (handled in another script)
+        setTimeout(() => {
+          inverseScale({ element: iframe });
+          inverseScale({ element: loadingMessage, keepBounds: true });
+          inverseScale({
+            element: closeButton,
+            keepBounds: true,
+            transformOrigin: "right top",
+          });
+          inverseScale({ element: volumeMessage, keepBounds: true });
+
+          //
+          if (!playerIsReady) {
+            showLoading();
+            overlay.style.pointerEvents = "auto";
+          } else {
+            hideOverlay(overlay);
+            // wait for overlay transition
+            setTimeout(() => {
+              overlay.style.pointerEvents = "auto";
+              player.playVideo();
+              // showIframeHelperOverlays();
+            }, 250);
+          }
+        }, 500);
+      });
+
+      closeButton.addEventListener("click", () => {
+        // closeButton is a child of transform-container so transform will occur when closeButton is clicked on
+        // closeButton is not a child of overlay
+
+        hideIframeHelperOverlays();
+        showOverlay();
+
+        player.pauseVideo();
+
+        // wait for contracting transformation transition
+        setTimeout(() => {
+          // revert to uninversed scale
+          iframe.style.transform = "";
+          iframe.style.width = "100%";
+          iframe.style.height = "100%";
+
+          closeButton.style.transform = "";
+          closeButton.style.width = "auto";
+          closeButton.style.height = "auto";
+
+          volumeMessage.style.transform = "";
+          volumeMessage.style.width = "auto";
+          volumeMessage.style.height = "auto";
+        }, 500);
+      });
+
+      iframe.addEventListener("mouseover", () => {
+        if (!isTransitionedToExpand) {
+          return;
+        }
+        showIframeHelperOverlays();
+      });
+      iframe.addEventListener("mouseleave", () => {
+        hideIframeHelperOverlays();
+      });
+      closeButton.addEventListener("mouseover", () => {
+        if (!isTransitionedToExpand) {
+          return;
+        }
+        showIframeHelperOverlays();
+      });
+      volumeMessage.addEventListener("mouseover", () => {
+        if (!isTransitionedToExpand) {
+          return;
+        }
+        showIframeHelperOverlays();
+      });
+
+      function onReady(event) {
+        transformContainer.classList.add(playerReadyFlag);
+
+        // have to set vol to 0 otherwise can't play programmatically due to browser security
+        event.target.setVolume(0);
+
+        if (isExpanded) {
+          const timeOut = transformContainer.classList.contains(
+            isTransitionedToExpand
+          )
+            ? 0
+            : 500;
+          setTimeout(() => {
+            hideLoading();
+            hideOverlay(overlay);
+            // time for hide overlay
+            setTimeout(() => {
+              event.target.playVideo();
+            }, 250);
+          }, timeOut);
+        }
+
+        window.addEventListener("message", function (event) {
+          const iframeWindow = player.getIframe().contentWindow;
+
+          if (event.source === iframeWindow) {
+            var data = JSON.parse(event.data);
+
+            if (
+              data.event === "infoDelivery" &&
+              data.info &&
+              data.info.volume
+            ) {
+              if (checkIsTouchDevice()) {
+                if (Number(data.info.volume) !== 100) {
+                  setTimeout(() => {
+                    player.setVolume(100);
+                  }, 200);
+                }
+              }
+              if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+                // only want to set to 100 once
+                mediaElementsContainer.classList.add(volChangedFlag);
+                volumeMessage.style.opacity = 0;
+                volumeMessage.style.zIndex = "-1";
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+</script>
