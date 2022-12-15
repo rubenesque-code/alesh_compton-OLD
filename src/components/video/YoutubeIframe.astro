@@ -1,5 +1,6 @@
 ---
 import { Image } from "@astrojs/image/components";
+
 import {
   getThumbnailFromYoutubeId,
   getYoutubeEmbedUrlFromId,
@@ -11,10 +12,10 @@ import CloseIcon from "./CloseIcon.astro";
 import PlayIcon from "./PlayIcon.astro";
 import VolumeIcon from "./VolumeIcon.astro";
 
-type Props = YoutubeVideo;
+type Props = { imageLoading: "lazy" | "eager" } & YoutubeVideo;
 
 // TODO: try remove controls param below
-const { youtubeUrl, coverImage } = Astro.props;
+const { youtubeUrl, coverImage, imageLoading } = Astro.props;
 
 const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl)!;
 const youtubeEmbedSrc = getYoutubeEmbedUrlFromId(youtubeId);
@@ -41,6 +42,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
           style={{
             objectPosition: `50% ${coverImageYPosition}%`,
           }}
+          loading={imageLoading}
         />
       ) : (
         <Image
@@ -52,6 +54,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
           style={{
             objectPosition: `50% ${coverImageYPosition}%`,
           }}
+          loading={imageLoading}
         />
       )
     }

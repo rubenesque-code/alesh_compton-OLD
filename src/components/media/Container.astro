@@ -67,15 +67,18 @@
       pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
 
       // HANDLE PRELOAD NEXT MEDIA
+      const visibleContainer = document.getElementById("visible-media");
       const images = Array.from(
-        document.getElementsByClassName("image-img")
+        visibleContainer.getElementsByTagName("img")
       ).filter((image) => image.loading === "lazy");
 
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         const rect = image.getBoundingClientRect();
+        console.log("rect", rect);
 
         const isNearViewport = rect.left - rect.width < window.innerWidth;
+        console.log("isNearViewport", isNearViewport);
 
         if (isNearViewport) {
           image.loading = "eager";

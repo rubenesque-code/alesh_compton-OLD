@@ -10,9 +10,6 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// TODO
-// - if iframe loading and click on cover image agani, loading message and wait cursor remains; also loading message isnt uscaled.
-
 // NOTES
 // - only point of the duplication is to keep the width of the container when image content translated
 // - seems like the hidden images won't be loaded
@@ -37,17 +34,21 @@ const { media } = Astro.props;
         )
       )
     }
-    <div class="visible-media">
+    <div class="visible-media" id="visible-media">
       {
-        media.map((mediaElement) =>
+        media.map((mediaElement, i) =>
           mediaElement.type === "image" ? (
             <Image
               class="image-img media-transform"
               src={mediaElement.url}
               alt=""
+              loading={i === 0 ? "eager" : "lazy"}
             />
           ) : (
-            <YoutubeIframe {...mediaElement} />
+            <YoutubeIframe
+              {...mediaElement}
+              imageLoading={i === 0 ? "eager" : "lazy"}
+            />
           )
         )
       }
