@@ -57,14 +57,6 @@ const { media } = Astro.props;
   </div>
 </MediaContainer>
 
-<style is:global>
-  .media-transform {
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity ease-in 0.3s, transform ease-in-out 0.5s;
-  }
-</style>
-
 <style>
   .media-inner {
     position: relative;
@@ -83,13 +75,15 @@ const { media } = Astro.props;
     gap: 1vw;
     background: white;
   }
-  .image-img {
+  .media-transform {
     cursor: pointer;
     opacity: 0;
-    transition: opacity ease-in 0.3s, transform ease-in-out 0.5s;
+    transition: opacity ease-in 0.3s, transform ease-in-out;
+  }
+  .image-img {
     max-height: 100%;
   }
-  .test-image-duplicate {
+  .image-img-duplicate {
     max-height: 100%;
   }
   .iframe-duplicate {
@@ -113,8 +107,8 @@ const { media } = Astro.props;
 
   // avoid image flashing in
   for (let i = 0; i < media.length; i++) {
-    const image = media[i];
-    image.style.opacity = "1";
+    const mediaElement = media[i];
+    mediaElement.style.opacity = "1";
   }
 </script>
 
@@ -141,9 +135,7 @@ const { media } = Astro.props;
         document.documentElement.clientHeight ||
         document.getElementsByTagName("body")[0].clientHeight;
 
-  const calculateMediaTransform = (
-    media: HTMLElement
-  ): { scale: number; translate: { x: number; y: number } } => {
+  const calculateMediaTransform = (media: HTMLElement) => {
     const windowWidth = getWindowWidth();
     const windowHeight = getWindowHeight();
 
@@ -195,7 +187,12 @@ const { media } = Astro.props;
       translateX = leftDestination - imageLeftAfterScale;
     }
 
-    return { scale, translate: { x: translateX, y: translateY } };
+    const totalLeft =
+      initialLeft > leftDestination
+        ? initialLeft - leftDestination
+        : leftDestination - initialLeft;
+
+    return { scale, translate: { x: translateX, y: translateY }, totalLeft };
   };
 
   const fixElementPositionBeforeTransform = (
@@ -225,7 +222,9 @@ const { media } = Astro.props;
       if (!mediaElement.classList.contains(expandClass)) {
         mediaElement.classList.add(expandClass);
 
-        const { scale, translate } = calculateMediaTransform(mediaElement);
+        const { scale, translate, totalLeft } =
+          calculateMediaTransform(mediaElement);
+        console.log("totalLeft", totalLeft);
 
         // fix position of clicked element and those following; go from right to left; if left to right, container collapses and elements move; only need to fix elements after the clicked on one.
         for (let j = mediaElements.length - 1; j >= i; j--) {
@@ -238,6 +237,15 @@ const { media } = Astro.props;
 
         mediaContainer.style.overflowX = "hidden";
 
+        const transitionDuration = totalLeft / 1.4;
+
+        mediaElement.style.transitionDuration = `${
+          transitionDuration < 400
+            ? 400
+            : transitionDuration > 700
+            ? 700
+            : transitionDuration
+        }ms`;
         mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
         // behind transformed image; in front of rest
