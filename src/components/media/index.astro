@@ -503,7 +503,7 @@ const { media } = Astro.props;
       });
 
       iframe.addEventListener("mouseover", () => {
-        console.log("iframe moused over");
+        console.log("IFRAME MOUSED OVER");
         if (!isTransitionedToExpand) {
           return;
         }
@@ -539,6 +539,11 @@ const { media } = Astro.props;
             : 500;
           setTimeout(() => {
             hideLoading();
+            setTimeout(() => {
+              loadingMessage.style.transform = "";
+              loadingMessage.style.width = "auto";
+              loadingMessage.style.height = "auto";
+            }, 200);
             hideOverlay(overlay);
             // time for hide overlay
             setTimeout(() => {

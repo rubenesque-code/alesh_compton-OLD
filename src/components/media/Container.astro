@@ -40,7 +40,7 @@
       flex-grow: 1;
       /* height: 100%; */
       min-height: 60vh;
-      max-height: 90vh;
+      max-height: 80vh;
     }
   }
 </style>
@@ -75,10 +75,8 @@
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         const rect = image.getBoundingClientRect();
-        console.log("rect", rect);
 
         const isNearViewport = rect.left - rect.width < window.innerWidth;
-        console.log("isNearViewport", isNearViewport);
 
         if (isNearViewport) {
           image.loading = "eager";
