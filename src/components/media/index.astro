@@ -241,6 +241,7 @@ const { media } = Astro.props;
         mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
         // behind transformed image; in front of rest
+        background.style.position = "fixed";
         background.style.zIndex = "5";
         background.style.opacity = "1";
 
@@ -257,6 +258,7 @@ const { media } = Astro.props;
         background.style.opacity = "0";
         setTimeout(() => {
           background.style.zIndex = "-1";
+          background.style.position = "static";
         }, 200);
         // wait for contract transition
         setTimeout(() => {
