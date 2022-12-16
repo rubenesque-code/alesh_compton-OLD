@@ -1,10 +1,11 @@
 ---
 import { Image } from "@astrojs/image/components";
 
-import MediaContainer from "../../components/media/Container.astro";
-import Background from "../../components/media/Background.astro";
-import YoutubeIframe from "../video/YoutubeIframe.astro";
-import type { LocalImage, YoutubeVideo } from "../../types";
+import MediaContainer from "~components/media/Container.astro";
+import Background from "~components/media/Background.astro";
+import YoutubeIframe from "~components/video/YoutubeIframe.astro";
+
+import type { LocalImage, YoutubeVideo } from "~types/index";
 
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 

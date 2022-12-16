@@ -5,12 +5,13 @@ import {
   getThumbnailFromYoutubeId,
   getYoutubeEmbedUrlFromId,
   getYoutubeVideoIdFromUrl,
-} from "../../helpers/youtube";
+} from "~helpers/youtube";
 
-import type { YoutubeVideo } from "../../types";
 import CloseIcon from "./CloseIcon.astro";
 import PlayIcon from "./PlayIcon.astro";
 import VolumeIcon from "./VolumeIcon.astro";
+
+import type { YoutubeVideo } from "../../types";
 
 type Props = { imageLoading: "lazy" | "eager" } & YoutubeVideo;
 

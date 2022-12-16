@@ -12,27 +12,27 @@ ADD DATA
 - Add data for the page.
   - change the title and description.
   - add image.
-    - you need to add any images to the 'images' folder.
+    - you need to add any images to the /src/images folder.
     - make sure you get the import path correct.
       - follow the format already there.
   - add youtube video.
     - simply add the url string copied from the browser url bar. The code will do the rest.
     - you can optionally add a cover image if you want.
       - you can also optonally add a position for the cover image.
-        - either "top", "center" or "bottom".
     - IMPORTANT: if you add the same video twice on the same page it won't work.
 
 ADD PAGE TO NAVIGATION
-- Add the page to the navigation file (Navigation.astro in components folder)
+- Add the page to the /src/componets/PageLinks.astro file 
 - if the route (which is the file name) is the same as the page title:
   - e.g. "Butterfly".
   - simply add a string ("Butterfly") to the 'links' array. 
 - if the route (which is the file name) is the not the same as the page title:
   - e.g. Diary Part 1.
   - add an object (surrounded by {}) with a label and route.
+  - you MUST do this if there are spaces in the title.
 - the above is true for all pages but the home page which must only have a string.
 - links in the array must be seperated by a comma.
-- you can reorder the array however you want.
+- you can reorder the array however you want to reorder the links as they appear on the navigation panel.
 
 ADD FONT
 --------
