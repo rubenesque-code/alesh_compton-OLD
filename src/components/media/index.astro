@@ -29,6 +29,7 @@ const { media } = Astro.props;
             class="image-img-duplicate hide"
             src={mediaElement.url}
             alt=""
+            format="avif"
           />
         ) : (
           <div class="iframe-duplicate hide" />
@@ -44,6 +45,7 @@ const { media } = Astro.props;
               src={mediaElement.url}
               alt=""
               loading={i === 0 ? "eager" : "lazy"}
+              format="avif"
             />
           ) : (
             <YoutubeIframe
@@ -319,294 +321,301 @@ const { media } = Astro.props;
 <script type="text/javascript">
   // YOUTUBE IFRAME: set up youtube iframe api; create player instances; add element listeners that need access to player.
   // _________________________________
+  const iframes = document.getElementsByClassName("iframe");
 
-  // create script for youtube api
-  var tag = document.createElement("script");
-  tag.id = "iframe-demo";
-  tag.src = "https://www.youtube.com/iframe_api";
-  var firstScriptTag = document.getElementsByTagName("script")[0];
-  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-  //
-  function onYouTubeIframeAPIReady() {
-    // CONSTANTS
-    const playerReadyFlag = "player-ready";
-    const expandClass = "expand";
-    const isTransitionedToExpand = "is-expanded";
-    const volChangedFlag = "vol-changed-programmatically";
-
-    // HELPERS
-
-    function inverseScale({ element, keepBounds, transformOrigin }) {
-      const scale = element.getBoundingClientRect().width / element.offsetWidth;
-      const reverseScale = 1 / scale;
-
-      element.style.transformOrigin = transformOrigin
-        ? transformOrigin
-        : "left top";
-      element.style.transform = `scale(${reverseScale})`;
-
-      if (keepBounds) {
-        return;
-      }
-
-      element.style.width = `${
-        element.getBoundingClientRect().width * scale
-      }px`;
-      element.style.height = `${
-        element.getBoundingClientRect().height * scale
-      }px`;
-    }
-
-    function checkIsTouchDevice() {
-      return (
-        "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0
-      );
-    }
-
-    // ELEMENTS
-    const mediaElementsContainer = document.getElementById("media-container");
-    const iframes = Array.from(document.getElementsByClassName("iframe"));
-    const transformContainers = Array.from(
-      document.getElementsByClassName("iframe-container media-transform")
-    );
-    const overlays = Array.from(
-      document.getElementsByClassName("iframe-overlay")
-    );
-    const loadingMessages = Array.from(
-      document.getElementsByClassName("player-loading")
-    );
-    const closeButtons = Array.from(
-      document.getElementsByClassName("close-button")
-    );
-    const volumeMessages = Array.from(
-      document.getElementsByClassName("volume-message")
-    );
+  if (iframes.length) {
+    // create script for youtube api
+    var tag = document.createElement("script");
+    tag.id = "iframe-demo";
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
     //
-    for (let i = 0; i < iframes.length; i++) {
-      // ELEMENTS
-      const iframe = iframes[i];
-      const transformContainer = transformContainers[i];
-      const overlay = overlays[i];
-      const loadingMessage = loadingMessages[i];
-      const closeButton = closeButtons[i];
-      const volumeMessage = volumeMessages[i];
+    function onYouTubeIframeAPIReady() {
+      // CONSTANTS
+      const playerReadyFlag = "player-ready";
+      const expandClass = "expand";
+      const isTransitionedToExpand = "is-expanded";
+      const volChangedFlag = "vol-changed-programmatically";
 
       // HELPERS
-      function showOverlay() {
-        overlay.style.opacity = "1";
-        overlay.style.zIndex = "2";
-      }
-      function hideOverlay() {
-        overlay.style.opacity = "0";
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-        }, 200);
-      }
-      function showLoading() {
-        loadingMessage.style.zIndex = "10";
-        loadingMessage.style.opacity = "1";
-        transformContainer.style.cursor = "wait";
-      }
-      function hideLoading() {
-        loadingMessage.style.opacity = "0";
-        loadingMessage.style.zIndex = "-1";
-        transformContainer.style.cursor = "pointer";
-      }
-      function showVolume() {
-        volumeMessage.style.opacity = "1";
-        volumeMessage.style.zIndex = "1";
-      }
-      function hideVolume() {
-        volumeMessage.style.opacity = "0";
-        volumeMessage.style.zIndex = "-1";
-      }
-      const showIframeHelperOverlays = () => {
-        closeButton.style.opacity = "1";
-        closeButton.style.zIndex = "1";
-        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
-          showVolume();
+
+      function inverseScale({ element, keepBounds, transformOrigin }) {
+        const scale =
+          element.getBoundingClientRect().width / element.offsetWidth;
+        const reverseScale = 1 / scale;
+
+        element.style.transformOrigin = transformOrigin
+          ? transformOrigin
+          : "left top";
+        element.style.transform = `scale(${reverseScale})`;
+
+        if (keepBounds) {
+          return;
         }
-      };
-      const hideIframeHelperOverlays = () => {
-        closeButton.style.opacity = "0";
-        closeButton.style.zIndex = "-1";
-        if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
-          hideVolume();
+
+        element.style.width = `${
+          element.getBoundingClientRect().width * scale
+        }px`;
+        element.style.height = `${
+          element.getBoundingClientRect().height * scale
+        }px`;
+      }
+
+      function checkIsTouchDevice() {
+        return (
+          "ontouchstart" in window ||
+          navigator.maxTouchPoints > 0 ||
+          navigator.msMaxTouchPoints > 0
+        );
+      }
+
+      // ELEMENTS
+      const mediaElementsContainer = document.getElementById("media-container");
+      const iframes = Array.from(document.getElementsByClassName("iframe"));
+      const transformContainers = Array.from(
+        document.getElementsByClassName("iframe-container media-transform")
+      );
+      const overlays = Array.from(
+        document.getElementsByClassName("iframe-overlay")
+      );
+      const loadingMessages = Array.from(
+        document.getElementsByClassName("player-loading")
+      );
+      const closeButtons = Array.from(
+        document.getElementsByClassName("close-button")
+      );
+      const volumeMessages = Array.from(
+        document.getElementsByClassName("volume-message")
+      );
+
+      //
+      for (let i = 0; i < iframes.length; i++) {
+        // ELEMENTS
+        const iframe = iframes[i];
+        const transformContainer = transformContainers[i];
+        const overlay = overlays[i];
+        const loadingMessage = loadingMessages[i];
+        const closeButton = closeButtons[i];
+        const volumeMessage = volumeMessages[i];
+
+        // HELPERS
+        function showOverlay() {
+          overlay.style.opacity = "1";
+          overlay.style.zIndex = "2";
         }
-      };
-
-      const player = new YT.Player(iframe.id, {
-        events: {
-          onReady,
-        },
-      });
-
-      // overlay is a child of transform container so transform will occur when overlay clicked on.
-      overlay.addEventListener("click", () => {
-        // prevent click on overlay again until transform transition finished
-        overlay.style.pointerEvents = "none";
-
-        const playerIsReady =
-          transformContainer.classList.contains(playerReadyFlag);
-        const isExpanding = !transformContainer.classList.contains(expandClass);
-
-        if (isExpanding) {
-          const transformTransitionDuration =
-            Number(transformContainer.style.transitionDuration) || 500;
+        function hideOverlay() {
+          overlay.style.opacity = "0";
+          // time for opacity transition
           setTimeout(() => {
-            if (playerIsReady) {
-              inverseScale({ element: iframe });
-              inverseScale({
-                element: closeButton,
-                keepBounds: true,
-                transformOrigin: "right top",
-              });
-              inverseScale({ element: volumeMessage, keepBounds: true });
-
-              hideOverlay(overlay);
-              // wait for overlay transition
-              setTimeout(() => {
-                overlay.style.pointerEvents = "auto";
-                player.playVideo();
-              }, 250);
-            } else {
-              inverseScale({ element: loadingMessage, keepBounds: true });
-              showLoading();
-              overlay.style.pointerEvents = "auto";
-            }
-          }, transformTransitionDuration);
-        } else {
-          hideLoading();
-          setTimeout(() => {
-            loadingMessage.style.transform = "";
-            loadingMessage.style.width = "auto";
-            loadingMessage.style.height = "auto";
+            overlay.style.zIndex = "-1";
           }, 200);
-          // if clicked on when already expanded
-          if (!playerIsReady) {
-            // time for transform transition (handled in another script)
+        }
+        function showLoading() {
+          loadingMessage.style.zIndex = "10";
+          loadingMessage.style.opacity = "1";
+          transformContainer.style.cursor = "wait";
+        }
+        function hideLoading() {
+          loadingMessage.style.opacity = "0";
+          loadingMessage.style.zIndex = "-1";
+          transformContainer.style.cursor = "pointer";
+        }
+        function showVolume() {
+          volumeMessage.style.opacity = "1";
+          volumeMessage.style.zIndex = "1";
+        }
+        function hideVolume() {
+          volumeMessage.style.opacity = "0";
+          volumeMessage.style.zIndex = "-1";
+        }
+        const showIframeHelperOverlays = () => {
+          closeButton.style.opacity = "1";
+          closeButton.style.zIndex = "1";
+          if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+            showVolume();
+          }
+        };
+        const hideIframeHelperOverlays = () => {
+          closeButton.style.opacity = "0";
+          closeButton.style.zIndex = "-1";
+          if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
+            hideVolume();
+          }
+        };
+
+        const player = new YT.Player(iframe.id, {
+          events: {
+            onReady,
+          },
+        });
+
+        // overlay is a child of transform container so transform will occur when overlay clicked on.
+        overlay.addEventListener("click", () => {
+          // prevent click on overlay again until transform transition finished
+          overlay.style.pointerEvents = "none";
+
+          const playerIsReady =
+            transformContainer.classList.contains(playerReadyFlag);
+          const isExpanding =
+            !transformContainer.classList.contains(expandClass);
+
+          if (isExpanding) {
             const transformTransitionDuration =
               Number(transformContainer.style.transitionDuration) || 500;
             setTimeout(() => {
-              overlay.style.pointerEvents = "auto";
+              if (playerIsReady) {
+                inverseScale({ element: iframe });
+                inverseScale({
+                  element: closeButton,
+                  keepBounds: true,
+                  transformOrigin: "right top",
+                });
+                inverseScale({ element: volumeMessage, keepBounds: true });
+
+                hideOverlay(overlay);
+                // wait for overlay transition
+                setTimeout(() => {
+                  overlay.style.pointerEvents = "auto";
+                  player.playVideo();
+                }, 250);
+              } else {
+                inverseScale({ element: loadingMessage, keepBounds: true });
+                showLoading();
+                overlay.style.pointerEvents = "auto";
+              }
             }, transformTransitionDuration);
-          }
-          // if is expanded and player is ready: handled in onReady function below.
-        }
-      });
-
-      closeButton.addEventListener("click", () => {
-        // closeButton is a child of transform-container so transform will occur when closeButton is clicked on
-        // closeButton is not a child of overlay
-
-        hideIframeHelperOverlays();
-        showOverlay();
-
-        player.pauseVideo();
-
-        // wait for contracting transformation transition
-        const transformTransitionDuration =
-          Number(transformContainer.style.transitionDuration) || 500;
-        setTimeout(() => {
-          // revert to uninversed scale;
-          iframe.style.transform = "";
-          iframe.style.width = "100%";
-          iframe.style.height = "100%";
-
-          closeButton.style.transform = "";
-          closeButton.style.width = "auto";
-          closeButton.style.height = "auto";
-
-          volumeMessage.style.transform = "";
-          volumeMessage.style.width = "auto";
-          volumeMessage.style.height = "auto";
-        }, transformTransitionDuration);
-      });
-
-      iframe.addEventListener("mouseover", () => {
-        if (!isTransitionedToExpand) {
-          return;
-        }
-        showIframeHelperOverlays();
-      });
-      iframe.addEventListener("mouseleave", () => {
-        hideIframeHelperOverlays();
-      });
-      closeButton.addEventListener("mouseover", () => {
-        if (!isTransitionedToExpand) {
-          return;
-        }
-        showIframeHelperOverlays();
-      });
-      volumeMessage.addEventListener("mouseover", () => {
-        if (!isTransitionedToExpand) {
-          return;
-        }
-        showIframeHelperOverlays();
-      });
-
-      function onReady(event) {
-        transformContainer.classList.add(playerReadyFlag);
-
-        // have to set vol to 0 otherwise can't play programmatically due to browser security
-        event.target.setVolume(0);
-
-        const isExpanded = transformContainer.classList.contains(expandClass);
-        if (isExpanded) {
-          const transformTransitionDuration =
-            Number(transformContainer.style.transitionDuration) || 500;
-          const timeOut = transformContainer.classList.contains(
-            isTransitionedToExpand
-          )
-            ? 0
-            : transformTransitionDuration;
-          setTimeout(() => {
+          } else {
             hideLoading();
             setTimeout(() => {
               loadingMessage.style.transform = "";
               loadingMessage.style.width = "auto";
               loadingMessage.style.height = "auto";
             }, 200);
-            hideOverlay();
-            // time for hide overlay
-            setTimeout(() => {
-              event.target.playVideo();
-            }, 250);
-          }, timeOut);
-        }
-
-        window.addEventListener("message", function (event) {
-          const iframeWindow = player.getIframe().contentWindow;
-
-          if (event.source === iframeWindow) {
-            var data = JSON.parse(event.data);
-
-            if (
-              data.event === "infoDelivery" &&
-              data.info &&
-              data.info.volume
-            ) {
-              if (checkIsTouchDevice()) {
-                if (Number(data.info.volume) !== 100) {
-                  setTimeout(() => {
-                    player.setVolume(100);
-                  }, 200);
-                }
-              }
-              if (!mediaElementsContainer.classList.contains(volChangedFlag)) {
-                // only want to set to 100 once
-                mediaElementsContainer.classList.add(volChangedFlag);
-                volumeMessage.style.opacity = 0;
-                volumeMessage.style.zIndex = "-1";
-              }
+            // if clicked on when already expanded
+            if (!playerIsReady) {
+              // time for transform transition (handled in another script)
+              const transformTransitionDuration =
+                Number(transformContainer.style.transitionDuration) || 500;
+              setTimeout(() => {
+                overlay.style.pointerEvents = "auto";
+              }, transformTransitionDuration);
             }
+            // if is expanded and player is ready: handled in onReady function below.
           }
         });
+
+        closeButton.addEventListener("click", () => {
+          // closeButton is a child of transform-container so transform will occur when closeButton is clicked on
+          // closeButton is not a child of overlay
+
+          hideIframeHelperOverlays();
+          showOverlay();
+
+          player.pauseVideo();
+
+          // wait for contracting transformation transition
+          const transformTransitionDuration =
+            Number(transformContainer.style.transitionDuration) || 500;
+          setTimeout(() => {
+            // revert to uninversed scale;
+            iframe.style.transform = "";
+            iframe.style.width = "100%";
+            iframe.style.height = "100%";
+
+            closeButton.style.transform = "";
+            closeButton.style.width = "auto";
+            closeButton.style.height = "auto";
+
+            volumeMessage.style.transform = "";
+            volumeMessage.style.width = "auto";
+            volumeMessage.style.height = "auto";
+          }, transformTransitionDuration);
+        });
+
+        iframe.addEventListener("mouseover", () => {
+          if (!isTransitionedToExpand) {
+            return;
+          }
+          showIframeHelperOverlays();
+        });
+        iframe.addEventListener("mouseleave", () => {
+          hideIframeHelperOverlays();
+        });
+        closeButton.addEventListener("mouseover", () => {
+          if (!isTransitionedToExpand) {
+            return;
+          }
+          showIframeHelperOverlays();
+        });
+        volumeMessage.addEventListener("mouseover", () => {
+          if (!isTransitionedToExpand) {
+            return;
+          }
+          showIframeHelperOverlays();
+        });
+
+        function onReady(event) {
+          transformContainer.classList.add(playerReadyFlag);
+
+          // have to set vol to 0 otherwise can't play programmatically due to browser security
+          event.target.setVolume(0);
+
+          const isExpanded = transformContainer.classList.contains(expandClass);
+          if (isExpanded) {
+            const transformTransitionDuration =
+              Number(transformContainer.style.transitionDuration) || 500;
+            const timeOut = transformContainer.classList.contains(
+              isTransitionedToExpand
+            )
+              ? 0
+              : transformTransitionDuration;
+            setTimeout(() => {
+              hideLoading();
+              setTimeout(() => {
+                loadingMessage.style.transform = "";
+                loadingMessage.style.width = "auto";
+                loadingMessage.style.height = "auto";
+              }, 200);
+              hideOverlay();
+              // time for hide overlay
+              setTimeout(() => {
+                event.target.playVideo();
+              }, 250);
+            }, timeOut);
+          }
+
+          window.addEventListener("message", function (event) {
+            const iframeWindow = player.getIframe().contentWindow;
+
+            if (event.source === iframeWindow) {
+              var data = JSON.parse(event.data);
+
+              if (
+                data.event === "infoDelivery" &&
+                data.info &&
+                data.info.volume
+              ) {
+                if (checkIsTouchDevice()) {
+                  if (Number(data.info.volume) !== 100) {
+                    setTimeout(() => {
+                      player.setVolume(100);
+                    }, 200);
+                  }
+                }
+                if (
+                  !mediaElementsContainer.classList.contains(volChangedFlag)
+                ) {
+                  // only want to set to 100 once
+                  mediaElementsContainer.classList.add(volChangedFlag);
+                  volumeMessage.style.opacity = 0;
+                  volumeMessage.style.zIndex = "-1";
+                }
+              }
+            }
+          });
+        }
       }
     }
   }

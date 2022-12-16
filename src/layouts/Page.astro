@@ -12,7 +12,12 @@ type Props = Page;
 const page = Astro.props;
 ---
 
-<Layout pageTitle={page.title}>
+<Layout
+  pageTitle={page.title}
+  preconnectYoutube={page.media
+    .map((item) => item.type)
+    .includes("youtube-video")}
+>
   <div class="page-container">
     <Header />
     <div class="body-outer-container">

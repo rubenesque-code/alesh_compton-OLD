@@ -2,9 +2,10 @@
 import "../styles/global.css";
 export type Props = {
   pageTitle: string;
+  preconnectYoutube: boolean;
 };
 
-const { pageTitle } = Astro.props;
+const { pageTitle, preconnectYoutube } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -13,6 +14,11 @@ const { pageTitle } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    {
+      preconnectYoutube ? (
+        <link rel="preconnect" href="https://www.youtube.com" />
+      ) : null
+    }
     <meta name="generator" content={Astro.generator} />
     <title>Joshua Gordon - {pageTitle}</title>
     <meta
