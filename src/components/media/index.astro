@@ -190,15 +190,9 @@ const { media } = Astro.props;
       translateX = leftDestination - imageLeftAfterScale;
     }
 
-    const totalX =
-      initialLeft > leftDestination
-        ? initialLeft - leftDestination
-        : leftDestination - initialLeft;
+    const totalX = Math.abs(initialLeft - leftDestination);
 
-    const totalY =
-      initialTop > yDestination
-        ? initialTop - yDestination
-        : yDestination - initialTop;
+    const totalY = Math.abs(initialTop - yDestination);
 
     const translateDistance = Math.sqrt(
       Math.pow(totalX, 2) + Math.pow(totalY, 2)
@@ -216,10 +210,14 @@ const { media } = Astro.props;
     zIndex: number
   ) => {
     element.style.zIndex = `${zIndex}`;
-    element.style.left = `${element.getBoundingClientRect().left}px`;
-    element.style.top = `${element.getBoundingClientRect().top}px`;
-    element.style.width = `${element.getBoundingClientRect().width}px`;
-    element.style.height = `${element.getBoundingClientRect().height}px`;
+
+    const rect = element.getBoundingClientRect();
+    console.log("rect:", rect);
+
+    element.style.left = `${rect.left}px`;
+    element.style.top = `${rect.top}px`;
+    element.style.width = `${rect.width}px`;
+    element.style.height = `${rect.height}px`;
 
     element.style.position = "fixed";
   };
@@ -253,7 +251,6 @@ const { media } = Astro.props;
         mediaContainer.style.overflowX = "hidden";
 
         const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
-
         mediaElement.style.transitionDuration = `${transitionDuration}ms`;
         mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
@@ -291,8 +288,6 @@ const { media } = Astro.props;
             )
               ? "iframe"
               : "image";
-
-            console.log("elementType", elementType);
 
             if (elementType === "iframe") {
               mediaElement.style.width = "";
