@@ -45,6 +45,7 @@ const { media } = Astro.props;
               src={mediaElement.url}
               alt=""
               loading={i === 0 ? "eager" : "lazy"}
+              fit="contain"
               format="avif"
             />
           ) : (
@@ -618,8 +619,64 @@ const { media } = Astro.props;
   }
 </script>
 
-<script type="text/javascript">
-  window.addEventListener("orientationchange", () => {
-    location.reload();
+<script>
+  window.addEventListener("orientationchange", (event) => {
+    // location.reload();
+    /*     console.log(window.orientation);
+    console.log("screen W", screen.width, screen.availWidth);
+    console.log("screen H", screen.height, screen.availHeight);
+    console.log(window.innerWidth);
+    console.log(window.innerHeight); */
+
+    const expandClass = "expand";
+
+    const mediaElements = Array.from(
+      document.getElementsByClassName(
+        "media-transform"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const transformed = mediaElements.find((mediaElement) =>
+      mediaElement.classList.contains(expandClass)
+    );
+
+    if (!transformed) {
+      return;
+    }
+
+    // const deviceRotated = window.orientation == 90 || window.orientation == 270;
+    const windowWidth = screen.width;
+    const windowHeight = screen.height;
+
+    const maxWidth = windowWidth * 0.98;
+    const maxHeight = windowHeight * 0.98;
+
+    let width: number;
+    let height: number;
+
+    // const rect = transformed.getBoundingClientRect();
+    // console.log("rect:", rect);
+    // console.log(transformed.offsetWidth);
+    // console.log(transformed.offsetHeight);
+    const initialWidth = transformed.offsetWidth;
+    const initialHeight = transformed.offsetHeight;
+
+    const aspectRatio = initialWidth / initialHeight;
+    const heightFromMaxWidth = maxWidth / aspectRatio;
+    if (heightFromMaxWidth < maxHeight) {
+      width = maxWidth;
+      height = heightFromMaxWidth;
+    } else {
+      height = maxHeight;
+      width = maxHeight * aspectRatio;
+    }
+
+    const left = (windowWidth - width) / 2;
+    const top = (windowHeight - height) / 2;
+
+    transformed.style.transform = ``;
+    transformed.style.left = `${left}px`;
+    transformed.style.top = `${top}px`;
+    transformed.style.width = `${width}px`;
+    transformed.style.height = `${height}px`;
   });
 </script>
