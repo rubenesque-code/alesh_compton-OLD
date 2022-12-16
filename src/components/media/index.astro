@@ -36,7 +36,6 @@ const { media } = Astro.props;
         )
       )
     }
-    <div class="media-spacer">helloo</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, i) =>
@@ -55,7 +54,6 @@ const { media } = Astro.props;
         )
       }
       <Background />
-      <div class="media-spacer">helloo</div>
     </div>
   </div>
 </MediaContainer>
@@ -75,9 +73,6 @@ const { media } = Astro.props;
     align-items: flex-start;
     gap: 1vw;
     height: 100%;
-  }
-  .media-spacer {
-    color: white;
   }
   .visible-media {
     z-index: 3;
@@ -238,11 +233,9 @@ const { media } = Astro.props;
 
   // ELEMENTS
   const mediaContainer = document.getElementById("media-container")!;
-  const mediaElements = Array.from(
-    mediaContainer.getElementsByClassName(
-      "media-transform"
-    ) as HTMLCollectionOf<HTMLElement>
-  ).filter((mediaElement) => mediaElement.classList.contains("image-img"));
+  const mediaElements = mediaContainer.getElementsByClassName(
+    "media-transform"
+  ) as HTMLCollectionOf<HTMLElement>;
   const background = document.getElementById("background") as HTMLElement;
 
   //
@@ -257,7 +250,7 @@ const { media } = Astro.props;
           const mediaElement = mediaElements[j];
           const zIndex = j === i ? 10 : 0;
 
-          // fixed so can be shown outside of its container which needs overflow hidden
+          // image fixed so can be shown outside of its container which needs overflow hidden
           fixElementPositionBeforeTransform(mediaElement, zIndex);
         }
 
@@ -480,19 +473,9 @@ const { media } = Astro.props;
                 inverseScale({ element: volumeMessage, keepBounds: true });
 
                 hideOverlay(overlay);
-
                 // wait for overlay transition
                 setTimeout(() => {
                   overlay.style.pointerEvents = "auto";
-                  if (checkIsTouchDevice()) {
-                    const requestFullScreen =
-                      iframe.requestFullScreen ||
-                      iframe.mozRequestFullScreen ||
-                      iframe.webkitRequestFullScreen;
-                    if (requestFullScreen) {
-                      requestFullScreen.bind(iframe)();
-                    }
-                  }
                   player.playVideo();
                 }, 250);
               } else {
@@ -596,15 +579,6 @@ const { media } = Astro.props;
               hideOverlay();
               // time for hide overlay
               setTimeout(() => {
-                if (checkIsTouchDevice()) {
-                  const requestFullScreen =
-                    iframe.requestFullScreen ||
-                    iframe.mozRequestFullScreen ||
-                    iframe.webkitRequestFullScreen;
-                  if (requestFullScreen) {
-                    requestFullScreen.bind(iframe)();
-                  }
-                }
                 event.target.playVideo();
               }, 250);
             }, timeOut);
@@ -669,49 +643,40 @@ const { media } = Astro.props;
       return;
     }
 
-    const transformedType = transformed.classList.contains("iframe-container")
-      ? "iframe"
-      : "image";
+    // const deviceRotated = window.orientation == 90 || window.orientation == 270;
+    const windowWidth = screen.width;
+    const windowHeight = screen.height;
 
-    if (transformedType === "image") {
-      const windowWidth = screen.availWidth;
-      const windowHeight = screen.availHeight;
+    const maxWidth = windowWidth * 0.98;
+    const maxHeight = windowHeight * 0.98;
 
-      const maxWidth = windowWidth * 0.98;
-      const maxHeight = windowHeight * 0.98;
+    let width: number;
+    let height: number;
 
-      let width: number;
-      let height: number;
+    // const rect = transformed.getBoundingClientRect();
+    // console.log("rect:", rect);
+    // console.log(transformed.offsetWidth);
+    // console.log(transformed.offsetHeight);
+    const initialWidth = transformed.offsetWidth;
+    const initialHeight = transformed.offsetHeight;
 
-      const initialWidth = transformed.offsetWidth;
-      const initialHeight = transformed.offsetHeight;
-
-      const aspectRatio = initialWidth / initialHeight;
-      const heightFromMaxWidth = maxWidth / aspectRatio;
-      if (heightFromMaxWidth < maxHeight) {
-        width = maxWidth;
-        height = heightFromMaxWidth;
-      } else {
-        height = maxHeight;
-        width = maxHeight * aspectRatio;
-      }
-
-      const left = (windowWidth - width) / 2;
-      const top = (windowHeight - height) / 2;
-
-      transformed.style.transform = ``;
-      transformed.style.left = `${left}px`;
-      transformed.style.top = `${top}px`;
-      transformed.style.width = `${width}px`;
-      transformed.style.height = `${height}px`;
+    const aspectRatio = initialWidth / initialHeight;
+    const heightFromMaxWidth = maxWidth / aspectRatio;
+    if (heightFromMaxWidth < maxHeight) {
+      width = maxWidth;
+      height = heightFromMaxWidth;
     } else {
-      // is rotated
-      // const isInLandscape = Math.abs(window.orientation) === 90;
-      console.log("HELLO");
-      // const htmlElement = document.documentElement;
-
-      // htmlElement.style.transform = `rotate(-${window.orientation}deg)`;
-      // htmlElement.style.border = "2px solid red";
+      height = maxHeight;
+      width = maxHeight * aspectRatio;
     }
+
+    const left = (windowWidth - width) / 2;
+    const top = (windowHeight - height) / 2;
+
+    transformed.style.transform = ``;
+    transformed.style.left = `${left}px`;
+    transformed.style.top = `${top}px`;
+    transformed.style.width = `${width}px`;
+    transformed.style.height = `${height}px`;
   });
 </script>
