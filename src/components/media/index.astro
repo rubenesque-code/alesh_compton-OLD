@@ -48,10 +48,7 @@ const { media } = Astro.props;
               format="avif"
             />
           ) : (
-            <YoutubeIframe
-              {...mediaElement}
-              imageLoading={i === 0 ? "eager" : "lazy"}
-            />
+            <YoutubeIframe {...mediaElement} isFirst={i === 0} />
           )
         )
       }

@@ -13,17 +13,16 @@ import VolumeIcon from "./VolumeIcon.astro";
 
 import type { YoutubeVideo } from "../../types";
 
-type Props = { imageLoading: "lazy" | "eager" } & YoutubeVideo;
+type Props = { isFirst: boolean } & YoutubeVideo;
 
 // TODO: try remove controls param below
-const { youtubeUrl, coverImage, imageLoading } = Astro.props;
+const { youtubeUrl, coverImage, isFirst } = Astro.props;
 
 const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl)!;
 const youtubeEmbedSrc = getYoutubeEmbedUrlFromId(youtubeId);
 const youtubeThumbnailSrc = getThumbnailFromYoutubeId(youtubeId);
 
-const youtubeIframeParams =
-  "?enablejsapi=1&modestbranding=1&rel=0&color=white&controls=1";
+const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
 
 const coverImageYPosition = coverImage?.yPosition || 50;
 ---
@@ -32,7 +31,9 @@ const coverImageYPosition = coverImage?.yPosition || 50;
   <iframe
     id={youtubeId}
     class="iframe"
-    src={youtubeEmbedSrc + youtubeIframeParams}></iframe>
+    src={youtubeEmbedSrc + youtubeIframeParams}
+    loading={isFirst ? "eager" : "lazy"}
+    allowfullscreen></iframe>
   <div class="iframe-overlay">
     {
       coverImage ? (
@@ -43,7 +44,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
           style={{
             objectPosition: `50% ${coverImageYPosition}%`,
           }}
-          loading={imageLoading}
+          loading={isFirst ? "eager" : "lazy"}
           format="avif"
         />
       ) : (
@@ -56,7 +57,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
           style={{
             objectPosition: `50% ${coverImageYPosition}%`,
           }}
-          loading={imageLoading}
+          loading={isFirst ? "eager" : "lazy"}
           format="avif"
         />
       )
