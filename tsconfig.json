@@ -8,7 +8,8 @@
       "~images/*": ["src/images/*"],
       "~helpers/*": ["src/helpers/*"],
       "~styles/*": ["src/styles/*"],
-      "~types/*": ["src/types/*"]
+      "~types/*": ["src/types/*"],
+      "~data/*": ["src/data/*"]
     },
     "types": ["@astrojs/image/client"]
   }

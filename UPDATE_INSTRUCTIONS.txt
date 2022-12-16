@@ -15,6 +15,11 @@ ADD DATA
     - you need to add any images to the /src/images folder.
     - make sure you get the import path correct.
       - follow the format already there.
+    - the size of the image as it appears on the site is largely defined by the size of the original image.
+      - this is true on large devices (devices in which the image display is larger in height than the image).
+      (- on small devices images will all have the same height)
+      - make sure your image is not too small.
+        - the current images in images/butterfly/... are a good spread of sizes.
   - add youtube video.
     - simply add the url string copied from the browser url bar. The code will do the rest.
     - you can optionally add a cover image if you want.
