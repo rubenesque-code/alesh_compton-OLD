@@ -83,9 +83,7 @@ const { media } = Astro.props;
     gap: 1vw;
     background: white;
   }
-  .image-img {
-    max-height: 100%;
-  }
+  .image-img,
   .image-img-duplicate {
     max-height: 100%;
   }
@@ -96,6 +94,12 @@ const { media } = Astro.props;
   }
   .hide {
     visibility: hidden;
+  }
+  @media screen and (max-width: 900px) {
+    .image-img,
+    .image-img-duplicate {
+      width: auto;
+    }
   }
 </style>
 
@@ -205,6 +209,13 @@ const { media } = Astro.props;
     };
   };
 
+  function showBackground() {
+    // behind transformed image; in front of rest
+    background.style.position = "fixed";
+    background.style.zIndex = "5";
+    background.style.opacity = "1";
+  }
+
   const fixElementPositionBeforeTransform = (
     element: HTMLElement,
     zIndex: number
@@ -236,9 +247,6 @@ const { media } = Astro.props;
       if (!mediaElement.classList.contains(expandClass)) {
         mediaElement.classList.add(expandClass);
 
-        const { scale, translate, translateDistance } =
-          calculateMediaTransform(mediaElement);
-
         // fix position of clicked element and those following; go from right to left; if left to right, container collapses and elements move; only need to fix elements after the clicked on one.
         for (let j = mediaElements.length - 1; j >= i; j--) {
           const mediaElement = mediaElements[j];
@@ -248,16 +256,18 @@ const { media } = Astro.props;
           fixElementPositionBeforeTransform(mediaElement, zIndex);
         }
 
-        mediaContainer.style.overflowX = "hidden";
+        const { scale, translate, translateDistance } =
+          calculateMediaTransform(mediaElement);
 
         const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
         mediaElement.style.transitionDuration = `${transitionDuration}ms`;
         mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
-        // behind transformed image; in front of rest
-        background.style.position = "fixed";
-        background.style.zIndex = "5";
-        background.style.opacity = "1";
+        showBackground();
+
+        setTimeout(() => {
+          mediaContainer.style.overflowX = "hidden";
+        }, 200);
 
         // time for transform transition
         setTimeout(() => {
@@ -269,6 +279,8 @@ const { media } = Astro.props;
 
         mediaElement.style.transform = "translate(0px) scale(1)";
 
+        mediaContainer.style.overflowX = "auto";
+
         background.style.opacity = "0";
         setTimeout(() => {
           background.style.zIndex = "-1";
@@ -278,8 +290,6 @@ const { media } = Astro.props;
         const transformTransitionDuration =
           Number(mediaElement.style.transitionDuration) || 500;
         setTimeout(() => {
-          mediaContainer.style.overflowX = "auto";
-
           // unfix position of media elements to right
           for (let j = mediaElements.length - 1; j >= i; j--) {
             const mediaElement = mediaElements[j];
