@@ -36,6 +36,7 @@ const { media } = Astro.props;
         )
       )
     }
+    <div class="media-spacer">helloo</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, i) =>
@@ -54,6 +55,7 @@ const { media } = Astro.props;
         )
       }
       <Background />
+      <div class="media-spacer">helloo</div>
     </div>
   </div>
 </MediaContainer>
@@ -73,6 +75,9 @@ const { media } = Astro.props;
     align-items: flex-start;
     gap: 1vw;
     height: 100%;
+  }
+  .media-spacer {
+    color: white;
   }
   .visible-media {
     z-index: 3;
@@ -250,7 +255,7 @@ const { media } = Astro.props;
           const mediaElement = mediaElements[j];
           const zIndex = j === i ? 10 : 0;
 
-          // image fixed so can be shown outside of its container which needs overflow hidden
+          // fixed so can be shown outside of its container which needs overflow hidden
           fixElementPositionBeforeTransform(mediaElement, zIndex);
         }
 
@@ -474,6 +479,7 @@ const { media } = Astro.props;
 
                 hideOverlay(overlay);
                 // wait for overlay transition
+                transformContainer.requestFullscreen();
                 setTimeout(() => {
                   overlay.style.pointerEvents = "auto";
                   player.playVideo();
@@ -643,40 +649,49 @@ const { media } = Astro.props;
       return;
     }
 
-    // const deviceRotated = window.orientation == 90 || window.orientation == 270;
-    const windowWidth = screen.width;
-    const windowHeight = screen.height;
+    const transformedType = transformed.classList.contains("iframe-container")
+      ? "iframe"
+      : "image";
 
-    const maxWidth = windowWidth * 0.98;
-    const maxHeight = windowHeight * 0.98;
+    if (transformedType === "image") {
+      const windowWidth = screen.availWidth;
+      const windowHeight = screen.availHeight;
 
-    let width: number;
-    let height: number;
+      const maxWidth = windowWidth * 0.98;
+      const maxHeight = windowHeight * 0.98;
 
-    // const rect = transformed.getBoundingClientRect();
-    // console.log("rect:", rect);
-    // console.log(transformed.offsetWidth);
-    // console.log(transformed.offsetHeight);
-    const initialWidth = transformed.offsetWidth;
-    const initialHeight = transformed.offsetHeight;
+      let width: number;
+      let height: number;
 
-    const aspectRatio = initialWidth / initialHeight;
-    const heightFromMaxWidth = maxWidth / aspectRatio;
-    if (heightFromMaxWidth < maxHeight) {
-      width = maxWidth;
-      height = heightFromMaxWidth;
+      const initialWidth = transformed.offsetWidth;
+      const initialHeight = transformed.offsetHeight;
+
+      const aspectRatio = initialWidth / initialHeight;
+      const heightFromMaxWidth = maxWidth / aspectRatio;
+      if (heightFromMaxWidth < maxHeight) {
+        width = maxWidth;
+        height = heightFromMaxWidth;
+      } else {
+        height = maxHeight;
+        width = maxHeight * aspectRatio;
+      }
+
+      const left = (windowWidth - width) / 2;
+      const top = (windowHeight - height) / 2;
+
+      transformed.style.transform = ``;
+      transformed.style.left = `${left}px`;
+      transformed.style.top = `${top}px`;
+      transformed.style.width = `${width}px`;
+      transformed.style.height = `${height}px`;
     } else {
-      height = maxHeight;
-      width = maxHeight * aspectRatio;
+      // is rotated
+      // const isInLandscape = Math.abs(window.orientation) === 90;
+      console.log("HELLO");
+      // const htmlElement = document.documentElement;
+
+      // htmlElement.style.transform = `rotate(-${window.orientation}deg)`;
+      // htmlElement.style.border = "2px solid red";
     }
-
-    const left = (windowWidth - width) / 2;
-    const top = (windowHeight - height) / 2;
-
-    transformed.style.transform = ``;
-    transformed.style.left = `${left}px`;
-    transformed.style.top = `${top}px`;
-    transformed.style.width = `${width}px`;
-    transformed.style.height = `${height}px`;
   });
 </script>
