@@ -238,9 +238,11 @@ const { media } = Astro.props;
 
   // ELEMENTS
   const mediaContainer = document.getElementById("media-container")!;
-  const mediaElements = mediaContainer.getElementsByClassName(
-    "media-transform"
-  ) as HTMLCollectionOf<HTMLElement>;
+  const mediaElements = Array.from(
+    mediaContainer.getElementsByClassName(
+      "media-transform"
+    ) as HTMLCollectionOf<HTMLElement>
+  ).filter((mediaElement) => mediaElement.classList.contains("image-img"));
   const background = document.getElementById("background") as HTMLElement;
 
   //
@@ -479,7 +481,13 @@ const { media } = Astro.props;
 
                 hideOverlay(overlay);
                 if (checkIsTouchDevice()) {
-                  transformContainer.requestFullscreen();
+                  const requestFullScreen =
+                    iframe.requestFullScreen ||
+                    iframe.mozRequestFullScreen ||
+                    iframe.webkitRequestFullScreen;
+                  if (requestFullScreen) {
+                    requestFullScreen.bind(iframe)();
+                  }
                 }
                 // wait for overlay transition
                 setTimeout(() => {
