@@ -1,0 +1,32 @@
+---
+import type { PageRoute } from "../types";
+
+const links: PageRoute[] = [
+  "Butterfly",
+  "Transformation",
+  {
+    label: "Diary Part 1",
+    route: "diary-part-1",
+  },
+  {
+    label: "Diary Part 2",
+    route: "diary-part-2",
+  },
+  "Krahang",
+  "Various Videos",
+  "The Wicked Shit",
+  "Various Stills",
+];
+---
+
+{
+  links.map((link, i) =>
+    i === 0 ? (
+      <a href={"/"}>{link}</a>
+    ) : typeof link === "string" ? (
+      <a href={"/" + link}>{link}</a>
+    ) : (
+      <a href={"/" + link.route}>{link.label}</a>
+    )
+  )
+}

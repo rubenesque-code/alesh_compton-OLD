@@ -57,6 +57,14 @@ const { media } = Astro.props;
   </div>
 </MediaContainer>
 
+<style is:global>
+  .media-transform {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity ease-in 0.3s, transform ease-in-out;
+  }
+</style>
+
 <style>
   .media-inner {
     position: relative;
@@ -74,11 +82,6 @@ const { media } = Astro.props;
     align-items: flex-start;
     gap: 1vw;
     background: white;
-  }
-  .media-transform {
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity ease-in 0.3s, transform ease-in-out;
   }
   .image-img {
     max-height: 100%;
@@ -187,12 +190,25 @@ const { media } = Astro.props;
       translateX = leftDestination - imageLeftAfterScale;
     }
 
-    const totalLeft =
+    const totalX =
       initialLeft > leftDestination
         ? initialLeft - leftDestination
         : leftDestination - initialLeft;
 
-    return { scale, translate: { x: translateX, y: translateY }, totalLeft };
+    const totalY =
+      initialTop > yDestination
+        ? initialTop - yDestination
+        : yDestination - initialTop;
+
+    const translateDistance = Math.sqrt(
+      Math.pow(totalX, 2) + Math.pow(totalY, 2)
+    );
+
+    return {
+      scale,
+      translate: { x: translateX, y: translateY },
+      translateDistance,
+    };
   };
 
   const fixElementPositionBeforeTransform = (
@@ -222,9 +238,8 @@ const { media } = Astro.props;
       if (!mediaElement.classList.contains(expandClass)) {
         mediaElement.classList.add(expandClass);
 
-        const { scale, translate, totalLeft } =
+        const { scale, translate, translateDistance } =
           calculateMediaTransform(mediaElement);
-        console.log("totalLeft", totalLeft);
 
         // fix position of clicked element and those following; go from right to left; if left to right, container collapses and elements move; only need to fix elements after the clicked on one.
         for (let j = mediaElements.length - 1; j >= i; j--) {
@@ -237,15 +252,9 @@ const { media } = Astro.props;
 
         mediaContainer.style.overflowX = "hidden";
 
-        const transitionDuration = totalLeft / 1.4;
+        const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
 
-        mediaElement.style.transitionDuration = `${
-          transitionDuration < 400
-            ? 400
-            : transitionDuration > 700
-            ? 700
-            : transitionDuration
-        }ms`;
+        mediaElement.style.transitionDuration = `${transitionDuration}ms`;
         mediaElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 
         // behind transformed image; in front of rest
@@ -256,7 +265,7 @@ const { media } = Astro.props;
         // time for transform transition
         setTimeout(() => {
           mediaElement.classList.add(isTransitionedToExpand);
-        }, 500);
+        }, transitionDuration);
       } else {
         mediaElement.classList.remove(expandClass);
         mediaElement.classList.remove(isTransitionedToExpand);
@@ -269,6 +278,8 @@ const { media } = Astro.props;
           background.style.position = "static";
         }, 200);
         // wait for contract transition
+        const transformTransitionDuration =
+          Number(mediaElement.style.transitionDuration) || 500;
         setTimeout(() => {
           mediaContainer.style.overflowX = "auto";
 
@@ -296,7 +307,7 @@ const { media } = Astro.props;
             mediaElement.style.top = "";
             mediaElement.style.zIndex = "0";
           }
-        }, 500);
+        }, transformTransitionDuration);
       }
     });
   }
@@ -446,6 +457,8 @@ const { media } = Astro.props;
 
         if (isExpanding) {
           // time for transform transition (handled in another script)
+          const transformTransitionDuration =
+            Number(mediaElement.style.transitionDuration) || 500;
           setTimeout(() => {
             if (playerIsReady) {
               inverseScale({ element: iframe });
@@ -467,7 +480,7 @@ const { media } = Astro.props;
               showLoading();
               overlay.style.pointerEvents = "auto";
             }
-          }, 500);
+          }, transformTransitionDuration);
         } else {
           // if clicked on when already expanded
           if (!playerIsReady) {
@@ -478,9 +491,11 @@ const { media } = Astro.props;
               loadingMessage.style.height = "auto";
             }, 200);
             // time for transform transition (handled in another script)
+            const transformTransitionDuration =
+              Number(mediaElement.style.transitionDuration) || 500;
             setTimeout(() => {
               overlay.style.pointerEvents = "auto";
-            }, 500);
+            }, transformTransitionDuration);
           }
           // if is expanded and player is ready: handled in onReady function below.
         }
@@ -496,6 +511,8 @@ const { media } = Astro.props;
         player.pauseVideo();
 
         // wait for contracting transformation transition
+        const transformTransitionDuration =
+          Number(mediaElement.style.transitionDuration) || 500;
         setTimeout(() => {
           // revert to uninversed scale;
           iframe.style.transform = "";
@@ -509,7 +526,7 @@ const { media } = Astro.props;
           volumeMessage.style.transform = "";
           volumeMessage.style.width = "auto";
           volumeMessage.style.height = "auto";
-        }, 500);
+        }, transformTransitionDuration);
       });
 
       iframe.addEventListener("mouseover", () => {
@@ -542,11 +559,13 @@ const { media } = Astro.props;
         event.target.setVolume(0);
 
         if (isExpanded) {
+          const transformTransitionDuration =
+            Number(mediaElement.style.transitionDuration) || 500;
           const timeOut = transformContainer.classList.contains(
             isTransitionedToExpand
           )
             ? 0
-            : 500;
+            : transformTransitionDuration;
           setTimeout(() => {
             hideLoading();
             setTimeout(() => {
