@@ -480,18 +480,19 @@ const { media } = Astro.props;
                 inverseScale({ element: volumeMessage, keepBounds: true });
 
                 hideOverlay(overlay);
-                if (checkIsTouchDevice()) {
-                  const requestFullScreen =
-                    iframe.requestFullScreen ||
-                    iframe.mozRequestFullScreen ||
-                    iframe.webkitRequestFullScreen;
-                  if (requestFullScreen) {
-                    requestFullScreen.bind(iframe)();
-                  }
-                }
+
                 // wait for overlay transition
                 setTimeout(() => {
                   overlay.style.pointerEvents = "auto";
+                  if (checkIsTouchDevice()) {
+                    const requestFullScreen =
+                      iframe.requestFullScreen ||
+                      iframe.mozRequestFullScreen ||
+                      iframe.webkitRequestFullScreen;
+                    if (requestFullScreen) {
+                      requestFullScreen.bind(iframe)();
+                    }
+                  }
                   player.playVideo();
                 }, 250);
               } else {
@@ -595,6 +596,15 @@ const { media } = Astro.props;
               hideOverlay();
               // time for hide overlay
               setTimeout(() => {
+                if (checkIsTouchDevice()) {
+                  const requestFullScreen =
+                    iframe.requestFullScreen ||
+                    iframe.mozRequestFullScreen ||
+                    iframe.webkitRequestFullScreen;
+                  if (requestFullScreen) {
+                    requestFullScreen.bind(iframe)();
+                  }
+                }
                 event.target.playVideo();
               }, 250);
             }, timeOut);
