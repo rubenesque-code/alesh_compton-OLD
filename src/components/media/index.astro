@@ -455,7 +455,6 @@ const { media } = Astro.props;
         const isExpanding = !transformContainer.classList.contains(expandClass);
 
         if (isExpanding) {
-          // time for transform transition (handled in another script)
           const transformTransitionDuration =
             Number(transformContainer.style.transitionDuration) || 500;
           setTimeout(() => {
@@ -481,14 +480,14 @@ const { media } = Astro.props;
             }
           }, transformTransitionDuration);
         } else {
+          hideLoading();
+          setTimeout(() => {
+            loadingMessage.style.transform = "";
+            loadingMessage.style.width = "auto";
+            loadingMessage.style.height = "auto";
+          }, 200);
           // if clicked on when already expanded
           if (!playerIsReady) {
-            hideLoading();
-            setTimeout(() => {
-              loadingMessage.style.transform = "";
-              loadingMessage.style.width = "auto";
-              loadingMessage.style.height = "auto";
-            }, 200);
             // time for transform transition (handled in another script)
             const transformTransitionDuration =
               Number(transformContainer.style.transitionDuration) || 500;
@@ -559,7 +558,7 @@ const { media } = Astro.props;
         const isExpanded = transformContainer.classList.contains(expandClass);
         if (isExpanded) {
           const transformTransitionDuration =
-            Number(mediaElement.style.transitionDuration) || 500;
+            Number(transformContainer.style.transitionDuration) || 500;
           const timeOut = transformContainer.classList.contains(
             isTransitionedToExpand
           )
