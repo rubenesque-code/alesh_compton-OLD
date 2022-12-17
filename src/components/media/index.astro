@@ -36,6 +36,7 @@ const { media } = Astro.props;
         )
       )
     }
+    <div class="spacer">helloo</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, i) =>
@@ -53,6 +54,7 @@ const { media } = Astro.props;
           )
         )
       }
+      <div class="spacer">helloo</div>
       <Background />
     </div>
   </div>
@@ -74,6 +76,9 @@ const { media } = Astro.props;
     gap: 1vw;
     height: 100%;
   }
+  .spacer {
+    color: white;
+  }
   .visible-media {
     z-index: 3;
     position: absolute;
@@ -87,6 +92,7 @@ const { media } = Astro.props;
   .image-img,
   .image-img-duplicate {
     max-height: 100%;
+    object-fit: contain;
   }
   .iframe-duplicate {
     height: 100%;
@@ -129,19 +135,9 @@ const { media } = Astro.props;
   const isTransitionedToExpand = "is-expanded";
 
   // HELPERS
-  const getWindowWidth = () =>
-    window.innerWidth && document.documentElement.clientWidth
-      ? Math.min(window.innerWidth, document.documentElement.clientWidth)
-      : window.innerWidth ||
-        document.documentElement.clientWidth ||
-        document.getElementsByTagName("body")[0].clientWidth;
+  const getWindowWidth = () => window.innerWidth;
 
-  const getWindowHeight = () =>
-    window.innerHeight && document.documentElement.clientHeight
-      ? Math.min(window.innerHeight, document.documentElement.clientHeight)
-      : window.innerHeight ||
-        document.documentElement.clientHeight ||
-        document.getElementsByTagName("body")[0].clientHeight;
+  const getWindowHeight = () => window.innerHeight;
 
   const calculateMediaTransform = (media: HTMLElement) => {
     const windowWidth = getWindowWidth();
@@ -241,6 +237,7 @@ const { media } = Astro.props;
   //
   for (let i = 0; i < mediaElements.length; i++) {
     const mediaElement = mediaElements[i];
+
     mediaElement.addEventListener("click", () => {
       if (!mediaElement.classList.contains(expandClass)) {
         mediaElement.classList.add(expandClass);
@@ -266,6 +263,18 @@ const { media } = Astro.props;
         setTimeout(() => {
           mediaContainer.style.overflowX = "hidden";
         }, 200);
+
+        setTimeout(() => {
+          console.log("AFTER TRANSFORM TRANSITION DURATION");
+          console.log("rect:", mediaElement.getBoundingClientRect());
+          /*           console.log(
+            "offset (h, l, t, w):",
+            mediaElement.offsetHeight,
+            mediaElement.offsetLeft,
+            mediaElement.offsetTop,
+            mediaElement.offsetWidth
+          ); */
+        }, transitionDuration);
 
         // time for transform transition
         setTimeout(() => {
@@ -620,7 +629,16 @@ const { media } = Astro.props;
 </script>
 
 <script>
-  window.addEventListener("orientationchange", (event) => {
+  window.addEventListener("orientationchange", () => {
+    console.log("-----------------------------");
+    console.log("ORIENTATION CHANGE");
+
+    console.log("-----------------------------");
+  });
+
+  window.addEventListener("resize", () => {
+    console.log("-----------------------------");
+    console.log("RESIZE", window.orientation);
     // location.reload();
     /*     console.log(window.orientation);
     console.log("screen W", screen.width, screen.availWidth);
@@ -644,23 +662,124 @@ const { media } = Astro.props;
     }
 
     // const deviceRotated = window.orientation == 90 || window.orientation == 270;
-    const windowWidth = screen.width;
-    const windowHeight = screen.height;
+    /*     const screenAvailWidth = screen.availWidth;
+    console.log("screenAvailWidth:", screenAvailWidth);
+    const screenAvailHeight = screen.availHeight;
+    console.log("screenAvailHeight:", screenAvailHeight);
+    const screenWidth = screen.width;
+    console.log("screenWidth:", screenWidth);
+    const screenHeight = screen.height;
+    console.log("screenHeight:", screenHeight); */
+    const windowInnerWidth = window.innerWidth;
+    console.log("windowInnerWidth:", windowInnerWidth);
+    const windowInnerHeight = window.innerHeight;
+    console.log("windowInnerHeight:", windowInnerHeight);
 
-    const maxWidth = windowWidth * 0.98;
-    const maxHeight = windowHeight * 0.98;
+    const rect = transformed.getBoundingClientRect();
+    console.log("rect:", rect);
 
-    let width: number;
-    let height: number;
+    // transformed.style.transitionDuration = "0ms";
+    // transformed.style.transform = "";
+
+    transformed.style.left = `50%`;
+    transformed.style.top = `50%`;
+    transformed.style.width = `98%`;
+    transformed.style.height = `98%`;
+    transformed.style.transform = "translate(-50%, -50%)";
+
+    /*     transformed.style.left = `${rect.left}px`;
+    transformed.style.top = `${rect.top}px`;
+    transformed.style.width = `${rect.width}px`;
+    transformed.style.height = `${rect.height}px`; */
+
+    // transformed.style.transitionDuration = "300ms";
+    // transformed.style.transform = `translate(${200}px, ${200}px) scale(${1})`;
+
+    // scale and translate
+    const maxWidth = windowInnerWidth * 0.98;
+    const maxHeight = windowInnerHeight * 0.98;
+
+    const calculateMediaTransform = (media: HTMLElement) => {
+      const maxWidth = windowInnerWidth * 0.98;
+      const maxHeight = windowInnerHeight * 0.98;
+
+      let scale: number;
+      let scaledWidth: number;
+      let scaledHeight: number;
+
+      const attemptedWidthScale = maxWidth / rect.width;
+      const attemtedWidthScaleHeight = rect.height * attemptedWidthScale;
+      if (attemtedWidthScaleHeight < maxHeight) {
+        scale = attemptedWidthScale;
+        scaledWidth = maxWidth;
+        scaledHeight = attemtedWidthScaleHeight;
+      } else {
+        scale = maxHeight / rect.height;
+        scaledHeight = maxHeight;
+        scaledWidth = rect.width * scale;
+      }
+
+      const scaledYTopChange = (scaledHeight - rect.height) / 2;
+      const scaledYPos = rect.top - scaledYTopChange;
+      const yDestination = (windowInnerHeight - scaledHeight) / 2;
+      const translateY = yDestination - scaledYPos;
+
+      let translateX: number;
+
+      const imageInitialCenterLeft = rect.left + rect.width / 2;
+      const pageCenterLeft = windowInnerWidth / 2;
+      const transformDirection: "left" | "right" =
+        imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
+      const leftDestination = (windowInnerWidth - scaledWidth) / 2;
+
+      if (transformDirection === "right") {
+        media.style.transformOrigin = "left";
+        translateX = leftDestination - rect.left;
+      } else {
+        media.style.transformOrigin = "right";
+        const scaledWidthChange = scaledWidth - rect.width;
+        const imageLeftAfterScale = rect.left - scaledWidthChange;
+        translateX = leftDestination - imageLeftAfterScale;
+      }
+
+      const totalX = Math.abs(rect.left - leftDestination);
+      const totalY = Math.abs(rect.top - yDestination);
+      const translateDistance = Math.sqrt(
+        Math.pow(totalX, 2) + Math.pow(totalY, 2)
+      );
+
+      return {
+        scale,
+        translate: { x: translateX, y: translateY },
+        translateDistance,
+      };
+    };
+
+    /*     const { scale, translate, translateDistance } =
+      calculateMediaTransform(transformed);
+    console.log("scale:", scale);
+    console.log("translate:", translate);
+
+    setTimeout(() => {
+      const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+      transformed.style.transitionDuration = `${transitionDuration}ms`;
+      transformed.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+    }, 450); */
+
+    // const maxWidth = screenAvailWidth * 0.98;
+    // const maxHeight = screenAvailHeight * 0.98;
+
+    // let width: number;
+    // let height: number;
 
     // const rect = transformed.getBoundingClientRect();
     // console.log("rect:", rect);
     // console.log(transformed.offsetWidth);
     // console.log(transformed.offsetHeight);
-    const initialWidth = transformed.offsetWidth;
-    const initialHeight = transformed.offsetHeight;
+    // const initialWidth = transformed.offsetWidth;
+    // const initialHeight = transformed.offsetHeight;
 
-    const aspectRatio = initialWidth / initialHeight;
+    /*     const aspectRatio = initialWidth / initialHeight;
     const heightFromMaxWidth = maxWidth / aspectRatio;
     if (heightFromMaxWidth < maxHeight) {
       width = maxWidth;
@@ -670,13 +789,14 @@ const { media } = Astro.props;
       width = maxHeight * aspectRatio;
     }
 
-    const left = (windowWidth - width) / 2;
-    const top = (windowHeight - height) / 2;
+    const left = (screenAvailWidth - width) / 2;
+    const top = (screenAvailHeight - height) / 2;
 
     transformed.style.transform = ``;
     transformed.style.left = `${left}px`;
     transformed.style.top = `${top}px`;
     transformed.style.width = `${width}px`;
-    transformed.style.height = `${height}px`;
+    transformed.style.height = `${height}px`; */
+    console.log("-----------------------------");
   });
 </script>

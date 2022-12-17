@@ -1,5 +1,5 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import Layout from "~layouts/Layout.astro";
 
 const youtubeIframeParams = "?enablejsapi=1&modestbranding=1&rel=0&color=white";
 const src = "https://www.youtube.com/embed/QLW1FmWB_5I";
@@ -11,7 +11,7 @@ const iframeId = "iframe-test";
 // - tested volume increased to 100 for mobile.
 ---
 
-<Layout pageTitle="basic yt">
+<Layout pageTitle="basic yt" preconnectYoutube={false}>
   <div class="prototype-yt-iframe-container" id="prototype-yt-iframe-container">
     <iframe
       id={iframeId}
