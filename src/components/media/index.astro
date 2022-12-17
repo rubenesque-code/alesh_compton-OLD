@@ -26,13 +26,13 @@ const { media } = Astro.props;
       media.map((mediaElement) =>
         mediaElement.type === "image" ? (
           <Image
-            class="image-img-duplicate hide"
+            class="image-img-duplicate duplicate hide"
             src={mediaElement.url}
             alt=""
             format="avif"
           />
         ) : (
-          <div class="iframe-duplicate hide" />
+          <div class="iframe-duplicate duplicate hide" />
         )
       )
     }
@@ -232,6 +232,7 @@ const { media } = Astro.props;
   const mediaElements = mediaContainer.getElementsByClassName(
     "media-transform"
   ) as HTMLCollectionOf<HTMLElement>;
+  const duplicates = document.getElementsByClassName("duplicate");
   const background = document.getElementById("background") as HTMLElement;
 
   //
@@ -265,22 +266,120 @@ const { media } = Astro.props;
         }, 200);
 
         setTimeout(() => {
-          console.log("AFTER TRANSFORM TRANSITION DURATION");
-          console.log("rect:", mediaElement.getBoundingClientRect());
-          /*           console.log(
-            "offset (h, l, t, w):",
-            mediaElement.offsetHeight,
-            mediaElement.offsetLeft,
-            mediaElement.offsetTop,
-            mediaElement.offsetWidth
-          ); */
+          // console.log("AFTER TRANSFORM TRANSITION DURATION");
+          // console.log("rect:", mediaElement.getBoundingClientRect());
         }, transitionDuration);
 
         // time for transform transition
         setTimeout(() => {
           mediaElement.classList.add(isTransitionedToExpand);
+
+          // IF DEVICE CAN BE ROTATED
+          // TODO: prevent anthor click whilst being translated?
+          function checkIsTouchDevice() {
+            return (
+              "ontouchstart" in window ||
+              navigator.maxTouchPoints > 0 ||
+              // @ts-ignore: Unreachable code error
+              navigator.msMaxTouchPoints > 0
+            );
+          }
+          if (checkIsTouchDevice()) {
+            mediaElement.style.transitionDuration = "0ms";
+
+            mediaElement.style.left = `50%`;
+            mediaElement.style.top = `50%`;
+            mediaElement.style.width = `98%`;
+            mediaElement.style.height = `98%`;
+            mediaElement.style.transform = "translate(-50%, -50%)";
+          }
         }, transitionDuration);
       } else {
+        const orientationFlag = "orientation-change";
+        // BELOW NEEDS WORK IS JUST PLACEHOLDER
+        if (mediaElement.classList.contains(orientationFlag)) {
+          // work out new transform of transformed element
+          // update position + transform of untransformed elements to the right
+          // - or just revert to initial style as below
+          function getContainedSize(img: HTMLImageElement) {
+            var ratio = img.naturalWidth / img.naturalHeight;
+            var width = img.height * ratio;
+            var height = img.height;
+            if (width > img.width) {
+              width = img.width;
+              height = img.width / ratio;
+            }
+            return [width, height];
+          }
+
+          const containedSize = getContainedSize(
+            mediaElement as HTMLImageElement
+          );
+
+          const rect = {
+            width: containedSize[0],
+            height: containedSize[1],
+            top: (window.innerHeight - containedSize[1]) / 2,
+            left: (window.innerWidth - containedSize[0]) / 2,
+          };
+
+          mediaElement.style.left = `${rect.width}px`;
+          mediaElement.style.top = `${rect.top}px`;
+          mediaElement.style.width = `${rect.width}px`;
+          mediaElement.style.height = `${rect.height}px`;
+          mediaElement.style.transform = "";
+
+          const duplicateRect = duplicates[i].getBoundingClientRect();
+
+          const scale = duplicateRect.width / rect.width;
+
+          const scaledHeightChange = (rect.height * scale - rect.height) / 2;
+          // must minus to go up for 'top'
+          const scaledTopPosition = rect.top - scaledHeightChange;
+          const translateY = duplicateRect.top - scaledTopPosition;
+
+          let translateX: number;
+
+          const transformDirection: "left" | "right" =
+            rect.left < duplicateRect.left ? "right" : "left";
+          const leftDestination = duplicateRect.left;
+
+          if (transformDirection === "right") {
+            // * no scale calc necessary here? ..because of the direction of transform..?
+            mediaElement.style.transformOrigin = "left";
+            translateX = leftDestination - rect.left;
+          } else {
+            mediaElement.style.transformOrigin = "right";
+            const scaledWidthChange = rect.width * scale - rect.width;
+            const leftAfterScale = rect.left - scaledWidthChange;
+            translateX = leftDestination - leftAfterScale;
+          }
+
+          const totalX = Math.abs(rect.left - leftDestination);
+          const totalY = Math.abs(rect.top - duplicateRect.top);
+          const translateDistance = Math.sqrt(
+            Math.pow(totalX, 2) + Math.pow(totalY, 2)
+          );
+
+          mediaElement.style.left = `${rect.left}px`;
+          mediaElement.style.top = `${rect.top}px`;
+          mediaElement.style.width = `${rect.width}px`;
+          mediaElement.style.height = `${rect.height}px`;
+
+          const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+          mediaElement.style.transitionDuration = `${transitionDuration}ms`;
+
+          mediaElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+          background.style.opacity = "0";
+          setTimeout(() => {
+            background.style.zIndex = "-1";
+            background.style.position = "static";
+          }, 200);
+
+          return;
+        }
+
         mediaElement.classList.remove(expandClass);
         mediaElement.classList.remove(isTransitionedToExpand);
 
@@ -631,14 +730,57 @@ const { media } = Astro.props;
 <script>
   window.addEventListener("orientationchange", () => {
     console.log("-----------------------------");
-    console.log("ORIENTATION CHANGE");
+    console.log("ORIENTATION CHANGE", window.orientation);
+
+    const expandClass = "expand";
+    const orientationFlag = "orientation-change";
+
+    const mediaElements = Array.from(
+      document.getElementsByClassName(
+        "media-transform"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const transformed = mediaElements.find((mediaElement) =>
+      mediaElement.classList.contains(expandClass)
+    );
+
+    if (!transformed) {
+      return;
+    }
+
+    console.log("transformed", transformed.getBoundingClientRect());
+
+    setTimeout(() => {
+      console.log(
+        "transformed after transition------",
+        transformed.getBoundingClientRect()
+      );
+      // @ts-ignore: Unreachable code error
+      function getContainedSize(img: HTMLImageElement) {
+        var ratio = img.naturalWidth / img.naturalHeight;
+        var width = img.height * ratio;
+        var height = img.height;
+        if (width > img.width) {
+          width = img.width;
+          height = img.width / ratio;
+        }
+        return [width, height];
+      }
+
+      // console.log(transformed.);
+    }, 700);
+
+    if (!transformed.classList.contains(orientationFlag)) {
+      transformed.classList.add(orientationFlag);
+    } else {
+      // transformed.remove(orientationFlag)
+    }
 
     console.log("-----------------------------");
   });
 
   window.addEventListener("resize", () => {
-    console.log("-----------------------------");
-    console.log("RESIZE", window.orientation);
+    // console.log("-----------------------------");
     // location.reload();
     /*     console.log(window.orientation);
     console.log("screen W", screen.width, screen.availWidth);
@@ -670,22 +812,18 @@ const { media } = Astro.props;
     console.log("screenWidth:", screenWidth);
     const screenHeight = screen.height;
     console.log("screenHeight:", screenHeight); */
-    const windowInnerWidth = window.innerWidth;
-    console.log("windowInnerWidth:", windowInnerWidth);
-    const windowInnerHeight = window.innerHeight;
-    console.log("windowInnerHeight:", windowInnerHeight);
+    // const windowInnerWidth = window.innerWidth;
+    // const windowInnerHeight = window.innerHeight;
 
-    const rect = transformed.getBoundingClientRect();
-    console.log("rect:", rect);
+    // const rect = transformed.getBoundingClientRect();
 
-    // transformed.style.transitionDuration = "0ms";
-    // transformed.style.transform = "";
+    /*     transformed.style.transitionDuration = "100ms";
 
     transformed.style.left = `50%`;
     transformed.style.top = `50%`;
     transformed.style.width = `98%`;
     transformed.style.height = `98%`;
-    transformed.style.transform = "translate(-50%, -50%)";
+    transformed.style.transform = "translate(-50%, -50%)"; */
 
     /*     transformed.style.left = `${rect.left}px`;
     transformed.style.top = `${rect.top}px`;
@@ -696,64 +834,8 @@ const { media } = Astro.props;
     // transformed.style.transform = `translate(${200}px, ${200}px) scale(${1})`;
 
     // scale and translate
-    const maxWidth = windowInnerWidth * 0.98;
-    const maxHeight = windowInnerHeight * 0.98;
-
-    const calculateMediaTransform = (media: HTMLElement) => {
-      const maxWidth = windowInnerWidth * 0.98;
-      const maxHeight = windowInnerHeight * 0.98;
-
-      let scale: number;
-      let scaledWidth: number;
-      let scaledHeight: number;
-
-      const attemptedWidthScale = maxWidth / rect.width;
-      const attemtedWidthScaleHeight = rect.height * attemptedWidthScale;
-      if (attemtedWidthScaleHeight < maxHeight) {
-        scale = attemptedWidthScale;
-        scaledWidth = maxWidth;
-        scaledHeight = attemtedWidthScaleHeight;
-      } else {
-        scale = maxHeight / rect.height;
-        scaledHeight = maxHeight;
-        scaledWidth = rect.width * scale;
-      }
-
-      const scaledYTopChange = (scaledHeight - rect.height) / 2;
-      const scaledYPos = rect.top - scaledYTopChange;
-      const yDestination = (windowInnerHeight - scaledHeight) / 2;
-      const translateY = yDestination - scaledYPos;
-
-      let translateX: number;
-
-      const imageInitialCenterLeft = rect.left + rect.width / 2;
-      const pageCenterLeft = windowInnerWidth / 2;
-      const transformDirection: "left" | "right" =
-        imageInitialCenterLeft < pageCenterLeft ? "right" : "left";
-      const leftDestination = (windowInnerWidth - scaledWidth) / 2;
-
-      if (transformDirection === "right") {
-        media.style.transformOrigin = "left";
-        translateX = leftDestination - rect.left;
-      } else {
-        media.style.transformOrigin = "right";
-        const scaledWidthChange = scaledWidth - rect.width;
-        const imageLeftAfterScale = rect.left - scaledWidthChange;
-        translateX = leftDestination - imageLeftAfterScale;
-      }
-
-      const totalX = Math.abs(rect.left - leftDestination);
-      const totalY = Math.abs(rect.top - yDestination);
-      const translateDistance = Math.sqrt(
-        Math.pow(totalX, 2) + Math.pow(totalY, 2)
-      );
-
-      return {
-        scale,
-        translate: { x: translateX, y: translateY },
-        translateDistance,
-      };
-    };
+    // const maxWidth = windowInnerWidth * 0.98;
+    // const maxHeight = windowInnerHeight * 0.98;
 
     /*     const { scale, translate, translateDistance } =
       calculateMediaTransform(transformed);
@@ -797,6 +879,6 @@ const { media } = Astro.props;
     transformed.style.top = `${top}px`;
     transformed.style.width = `${width}px`;
     transformed.style.height = `${height}px`; */
-    console.log("-----------------------------");
+    // console.log("-----------------------------");
   });
 </script>
