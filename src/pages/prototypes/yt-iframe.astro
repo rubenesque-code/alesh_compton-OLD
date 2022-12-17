@@ -12,26 +12,28 @@ const iframeId = "iframe-test";
 ---
 
 <Layout pageTitle="basic yt" preconnectYoutube={false}>
-  <div class="prototype-yt-iframe-container" id="prototype-yt-iframe-container">
-    <iframe
-      id={iframeId}
-      width="800"
-      height="500"
-      src={src + youtubeIframeParams}></iframe>
-    <div
-      class="prototype-yt-iframe-play-button"
-      id="prototype-yt-iframe-play-button"
-    >
-      PLAY
-    </div>
+  <div class="container" id="container">
+    <iframe id={iframeId} class="iframe" src={src + youtubeIframeParams}
+    ></iframe>
+    <div class="play-button" id="play-button">PLAY</div>
   </div>
+  <button id="expand">Expand</button>
 </Layout>
 
 <style>
-  .prototype-yt-iframe-container {
+  .container {
     position: relative;
+    width: 600px;
+    height: 600px;
+    border: 1px solid red;
+    transition: width 300ms ease-in-out, height 300ms ease-in-out;
   }
-  .prototype-yt-iframe-play-button {
+  .iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  .play-button {
     z-index: 1;
     position: absolute;
     left: 50%;
@@ -48,18 +50,11 @@ const iframeId = "iframe-test";
   // ELEMENTS
   const iframe = document.getElementById("iframe-test");
   // const container = document.getElementById("prototype-yt-iframe-container");
-  const playButton = document.getElementById("prototype-yt-iframe-play-button");
+  const playButton = document.getElementById("play-button");
 
   // CONSTANTS
 
   // HELPERS
-  function checkIsTouchDevice() {
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      navigator.msMaxTouchPoints > 0
-    );
-  }
 
   var tag = document.createElement("script");
   tag.id = "iframe-demo";
@@ -82,36 +77,14 @@ const iframeId = "iframe-test";
         player.playVideo();
       });
     }
-
-    if (checkIsTouchDevice()) {
-      const iframeWindow = player.getIframe().contentWindow;
-
-      window.addEventListener("message", function (event) {
-        if (event.source === iframeWindow) {
-          var data = JSON.parse(event.data);
-
-          if (data.event === "infoDelivery" && data.info && data.info.volume) {
-            const volChangedFlag = "vol-changed-programmatically";
-            if (!iframe.classList.contains(volChangedFlag)) {
-              // only want to set to 100 once
-              iframe.classList.add(volChangedFlag);
-              setTimeout(() => {
-                player.setVolume(100);
-                setTimeout(() => {}, 500);
-              }, 200);
-            }
-          }
-        }
-      });
-    }
-
-    // function onStateChange(event) {}
   }
 </script>
+<script>
+  const container = document.getElementById("container")!;
+  const expandButton = document.getElementById("expand")!;
 
-<script type="text/javascript">
-  window.addEventListener("orientationchange", () => {
-    console.log("CHANGED ORIENTATION");
-    location.reload();
+  expandButton.addEventListener("click", () => {
+    container.style.width = "800px";
+    container.style.height = "400px";
   });
 </script>

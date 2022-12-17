@@ -1,4 +1,5 @@
 ---
+import ArrowRight from "~components/icons/ArrowRight.astro";
 import Layout from "../layouts/Layout.astro";
 ---
 
@@ -6,7 +7,10 @@ import Layout from "../layouts/Layout.astro";
   <div class="page-container">
     <div>
       <h1>Page not found</h1>
-      <p class="back-to-site">Back to site</p>
+      <a class="back-to-site" href="/">
+        <span>Back to site</span>
+        <span class="arrow"><ArrowRight /></span>
+      </a>
       <div class="social-links-container">
         <div class="social-link-container">
           <a href="mailto:joshgordondublin@gmail.com"
@@ -43,6 +47,13 @@ import Layout from "../layouts/Layout.astro";
   .back-to-site {
     cursor: pointer;
     margin-top: 1.5em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .arrow {
+    width: 15px;
+    height: 15px;
   }
   .back-to-site:hover {
     text-decoration: underline;

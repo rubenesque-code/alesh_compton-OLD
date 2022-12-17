@@ -274,6 +274,24 @@ const { media } = Astro.props;
         setTimeout(() => {
           mediaElement.classList.add(isTransitionedToExpand);
 
+          function loadYoutubeApiCode() {
+            console.log("loading yt api code...");
+            const youtubeApiCodeLoadingFlag = "yt-api-code-loading";
+
+            if (mediaContainer.classList.contains(youtubeApiCodeLoadingFlag)) {
+              return;
+            }
+
+            mediaContainer.classList.add(youtubeApiCodeLoadingFlag);
+
+            var tag = document.createElement("script");
+            tag.id = "iframe-demo";
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName("script")[0];
+            firstScriptTag.parentNode!.insertBefore(tag, firstScriptTag);
+          }
+          loadYoutubeApiCode();
+
           // IF DEVICE CAN BE ROTATED
           // TODO: prevent anthor click whilst being translated?
           function checkIsTouchDevice() {
@@ -427,18 +445,206 @@ const { media } = Astro.props;
 <script type="text/javascript">
   // YOUTUBE IFRAME: set up youtube iframe api; create player instances; add element listeners that need access to player.
   // _________________________________
+  function onYouTubeIframeAPIReady() {
+    // will only be ready after an iframe container has been transformed.
+
+    console.log("YT API READY...");
+    const youtubeApiReadyFlag = "yt-api-ready";
+    const mediaContainer = document.getElementById("media-container");
+
+    mediaContainer.classList.add(youtubeApiReadyFlag);
+  }
+</script>
+
+<script type="text/javascript">
+  function main() {
+    class ClassWatcher {
+      constructor(
+        targetNode,
+        classToWatch,
+        classAddedCallback,
+        classRemovedCallback
+      ) {
+        this.targetNode = targetNode;
+        this.classToWatch = classToWatch;
+        this.classAddedCallback = classAddedCallback;
+        this.classRemovedCallback = classRemovedCallback;
+        this.observer = null;
+        this.lastClassState = targetNode.classList.contains(this.classToWatch);
+
+        this.init();
+      }
+
+      init() {
+        this.observer = new MutationObserver(this.mutationCallback);
+        this.observe();
+      }
+
+      observe() {
+        this.observer.observe(this.targetNode, { attributes: true });
+      }
+
+      disconnect() {
+        this.observer.disconnect();
+      }
+
+      mutationCallback = (mutationsList) => {
+        for (let mutation of mutationsList) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            let currentClassState = mutation.target.classList.contains(
+              this.classToWatch
+            );
+            if (this.lastClassState !== currentClassState) {
+              this.lastClassState = currentClassState;
+              if (currentClassState) {
+                this.classAddedCallback();
+              } else {
+                this.classRemovedCallback();
+              }
+            }
+          }
+        }
+      };
+    }
+
+    const youtubeApiReadyFlag = "yt-api-ready";
+    const mediaContainer = document.getElementById("media-container");
+
+    new ClassWatcher(mediaContainer, youtubeApiReadyFlag, () => {
+      console.log("running youtube api ready class watcher...");
+      const isExpanded = "is-expanded";
+
+      const transformContainers = Array.from(
+        document.getElementsByClassName("iframe-container media-transform")
+      );
+      const index = transformContainers.findIndex((mediaElement) =>
+        mediaElement.classList.contains(isExpanded)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const iframe = document.getElementsByClassName("iframe")[index];
+
+      iframe.classList.add("yt-player-loading");
+
+      // only want this to run on first iframe clicked since have to wait for youtube api ready
+      window[`player${iframe.id}`] = new YT.Player(iframe.id, {
+        events: {
+          onReady,
+        },
+      });
+
+      function onReady() {
+        window[`player${iframe.id}`].setVolume(0);
+
+        const overlay = Array.from(
+          document.getElementsByClassName("iframe-overlay")
+        )[index];
+
+        overlay.style.opacity = "0";
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+
+          console.log("playing from youtube api ready watcher...");
+          window[`player${iframe.id}`].playVideo();
+
+          iframe.classList.remove("yt-player-loading");
+        }, 200);
+      }
+    });
+
+    // TODO: cancel playVideo if clicks on exit whilst is loading
+
+    // handle other clicked on iframes
+    const transformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframes = document.getElementsByClassName("iframe");
+
+    const isExpandedClass = "is-expanded";
+
+    for (let i = 0; i < transformContainers.length; i++) {
+      const transformContainer = transformContainers[i];
+      new ClassWatcher(transformContainer, isExpandedClass, () => {
+        console.log("Transform Container Watcher...");
+        const iframe = iframes[i];
+        console.log("iframe:", iframe);
+
+        const player = window[`player${iframe.id}`];
+        console.log("player:", player);
+
+        if (
+          !mediaContainer.classList.contains(youtubeApiReadyFlag) ||
+          iframe.classList.contains("yt-player-loading")
+        ) {
+          console.log("RETURNING");
+          return;
+        }
+
+        if (player) {
+          console.log("is player", player);
+          const overlay = Array.from(
+            document.getElementsByClassName("iframe-overlay")
+          )[i];
+
+          overlay.style.opacity = "0";
+          // time for opacity transition
+          setTimeout(() => {
+            overlay.style.zIndex = "-1";
+
+            window[iframe.id].playVideo();
+          }, 200);
+        } else {
+          console.log("Constructing new...");
+          window[iframe.id] = new YT.Player(iframe.id, {
+            events: {
+              onReady,
+            },
+          });
+
+          function onReady(event) {
+            event.target.setVolume(0);
+
+            const overlay = Array.from(
+              document.getElementsByClassName("iframe-overlay")
+            )[i];
+
+            overlay.style.opacity = "0";
+            // time for opacity transition
+            setTimeout(() => {
+              overlay.style.zIndex = "-1";
+
+              event.target.playVideo();
+            }, 200);
+          }
+        }
+      });
+    }
+  }
+  main();
+</script>
+
+<script type="text/javascript">
   const iframes = document.getElementsByClassName("iframe");
 
   if (iframes.length) {
     // create script for youtube api
-    var tag = document.createElement("script");
+    /*     var tag = document.createElement("script");
     tag.id = "iframe-demo";
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag); */
 
     //
-    function onYouTubeIframeAPIReady() {
+    // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
+    function onYouTubeIframeAPIReadyOLD() {
+      return;
       // CONSTANTS
       const playerReadyFlag = "player-ready";
       const expandClass = "expand";
