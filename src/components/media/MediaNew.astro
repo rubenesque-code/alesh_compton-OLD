@@ -365,12 +365,22 @@ const { media } = Astro.props;
             if (isIframe) {
               mediaElement.style.marginTop = "0";
               mediaElement.style.marginLeft = "0";
+              mediaElement.style.width = `98%`;
+              mediaElement.style.height = `98%`;
+
+              const deviceBiggestSide =
+                window.innerWidth > window.innerHeight
+                  ? window.innerWidth
+                  : window.innerHeight;
+
+              mediaElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
+            } else {
+              mediaElement.style.width = `98%`;
+              mediaElement.style.height = `98%`;
             }
 
             mediaElement.style.left = `50%`;
             mediaElement.style.top = `50%`;
-            mediaElement.style.width = `98%`;
-            mediaElement.style.height = `98%`;
             mediaElement.style.transform = "translate(-50%, -50%)";
           }
         }, transitionDuration);
