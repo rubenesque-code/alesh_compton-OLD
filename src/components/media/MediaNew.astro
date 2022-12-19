@@ -64,7 +64,8 @@ const { media } = Astro.props;
   .media-transform {
     cursor: pointer;
     opacity: 0;
-    transition: opacity ease-in 0.3s, transform ease-in-out;
+    transition: opacity ease-in 0.3s, transform ease-in-out, width ease-in-out,
+      height ease-in-out, margin ease-in-out;
   }
 </style>
 
@@ -111,7 +112,7 @@ const { media } = Astro.props;
 </style>
 
 <script>
-  // FADE IN MEDIA ON LOAD (hacky but should be okay since images are local)
+  // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
   // _________________________________
 
   const mediaContainer = document.getElementById("media-container")!;
@@ -131,6 +132,16 @@ const { media } = Astro.props;
   // _________________________________
   const isTransformingOutClass = "is-transforming-out";
   const isTransformedOutClass = "is-transformed-out";
+
+  //
+  function checkIsTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      // @ts-ignore: Unreachable code error
+      navigator.msMaxTouchPoints > 0
+    );
+  }
 
   //
   function fixElementPosition(element: HTMLElement) {
@@ -244,12 +255,14 @@ const { media } = Astro.props;
   function transformOut({
     transformingElement,
     allMediaElements,
+    transformByWidthAndHeight,
   }: {
     transformingElement: {
       element: HTMLElement;
       index: number;
     };
     allMediaElements: HTMLElement[];
+    transformByWidthAndHeight?: boolean;
   }) {
     transformingElement.element.style.zIndex = "10";
 
@@ -275,8 +288,27 @@ const { media } = Astro.props;
     });
 
     const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+
     transformingElement.element.style.transitionDuration = `${transitionDuration}ms`;
+
+    if (transformByWidthAndHeight) {
+      transformingElement.element.style.width = `${fillScreenRect.width}px`;
+      transformingElement.element.style.height = `${fillScreenRect.height}px`;
+      transformingElement.element.style.marginTop = `${-(
+        transformingElement.element.getBoundingClientRect().top -
+        fillScreenRect.top
+      )}px`;
+      transformingElement.element.style.marginLeft = `${-(
+        transformingElement.element.getBoundingClientRect().left -
+        fillScreenRect.left
+      )}px`;
+      return;
+    }
+
     transformingElement.element.style.transformOrigin = `${transformOrigin}`;
+    transformingElement.element.style.transform = `translate(${
+      translateX / 2
+    }px, ${translateY}px)`;
     transformingElement.element.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
   }
 
@@ -305,9 +337,18 @@ const { media } = Astro.props;
       if (isInInitialPosition) {
         mediaElement.classList.add(isTransformingOutClass);
 
+        /*         if (checkIsTouchDevice()) {
+          const isIframe = mediaElement.classList.contains("iframe-container");
+          if (isIframe) {
+            return;
+          }
+        } */
+        const isIframe = mediaElement.classList.contains("iframe-container");
+
         transformOut({
           allMediaElements: mediaElements,
           transformingElement: { element: mediaElement, index },
+          transformByWidthAndHeight: isIframe,
         });
 
         showBackground();
@@ -319,13 +360,11 @@ const { media } = Astro.props;
         }, 200);
 
         const transitionDuration =
-          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 100;
-        console.log("transitionDuration:", transitionDuration);
+          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 1000;
+
         setTimeout(() => {
           mediaElement.classList.add(isTransformedOutClass);
-        });
-
-        // handle yt api code
+        }, transitionDuration);
 
         // todo: handle orientable device
       }
@@ -413,7 +452,6 @@ const { media } = Astro.props;
       if (!transformContainer.classList.contains(isTransformedOutClass)) {
         return;
       }
-      console.log("is transformed out...");
       const youtubeApiCodeLoadingFlag = "yt-api-code-loading";
       const youtubeApiReadyFlag = "yt-api-ready";
       const mediaContainer = document.getElementById("media-container");
@@ -486,7 +524,6 @@ const { media } = Astro.props;
   // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
   // the API's js is loaded after the first iframe container is transformed
   function onYouTubeIframeAPIReady() {
-    console.log("YT API READY...");
     const youtubeApiReadyFlag = "yt-api-ready";
     const mediaContainer = document.getElementById("media-container");
 
@@ -529,7 +566,6 @@ const { media } = Astro.props;
       setTimeout(() => {
         overlay.style.zIndex = "-1";
 
-        console.log("playing from youtube api ready watcher...");
         window[`player${iframe.id}`].playVideo();
 
         iframe.classList.remove("yt-player-loading");
