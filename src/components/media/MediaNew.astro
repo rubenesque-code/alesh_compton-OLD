@@ -11,6 +11,8 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
+// TODO: close transform, loading text iframe, vol text, bg should have dynamic transition?
+
 // NOTES
 // - only point of the duplication is to keep the width of the container when image content translated
 // - seems like the hidden images won't be loaded
@@ -198,7 +200,7 @@ const { media } = Astro.props;
     } as CustomRect;
   }
 
-  function calcElementTransformOut({
+  function calcElementTransform({
     destinationRect,
     element,
   }: {
@@ -248,6 +250,12 @@ const { media } = Astro.props;
       translateY,
       transformOrigin: transformDirection === "left" ? "right" : "left",
       translateDistance,
+      width: destinationRect.width,
+      height: destinationRect.height,
+      marginTop: -(element.getBoundingClientRect().top - destinationRect.top),
+      marginLeft: -(
+        element.getBoundingClientRect().left - destinationRect.left
+      ),
     };
   }
 
@@ -282,7 +290,11 @@ const { media } = Astro.props;
       translateDistance,
       translateX,
       translateY,
-    } = calcElementTransformOut({
+      width,
+      height,
+      marginLeft,
+      marginTop,
+    } = calcElementTransform({
       destinationRect: fillScreenRect,
       element: transformingElement.element,
     });
@@ -292,16 +304,10 @@ const { media } = Astro.props;
     transformingElement.element.style.transitionDuration = `${transitionDuration}ms`;
 
     if (transformByWidthAndHeight) {
-      transformingElement.element.style.width = `${fillScreenRect.width}px`;
-      transformingElement.element.style.height = `${fillScreenRect.height}px`;
-      transformingElement.element.style.marginTop = `${-(
-        transformingElement.element.getBoundingClientRect().top -
-        fillScreenRect.top
-      )}px`;
-      transformingElement.element.style.marginLeft = `${-(
-        transformingElement.element.getBoundingClientRect().left -
-        fillScreenRect.left
-      )}px`;
+      transformingElement.element.style.width = `${width}px`;
+      transformingElement.element.style.height = `${height}px`;
+      transformingElement.element.style.marginTop = `${marginTop}px`;
+      transformingElement.element.style.marginLeft = `${marginLeft}px`;
       return;
     }
 
@@ -315,7 +321,6 @@ const { media } = Astro.props;
   //
   function showBackground() {
     const background = document.getElementById("background")!;
-    background.style.position = "fixed";
     background.style.zIndex = "5";
     background.style.opacity = "1";
   }
@@ -361,6 +366,7 @@ const { media } = Astro.props;
 
         setTimeout(() => {
           if (checkIsTouchDevice()) {
+            // contain image and iframe to allow for orientation change
             mediaElement.style.transitionDuration = "0ms";
 
             if (isIframe) {
@@ -388,10 +394,41 @@ const { media } = Astro.props;
           mediaElement.style.pointerEvents = "auto";
           mediaElement.classList.add(isTransformedOutClass);
         }, transitionDuration);
-
-        // todo: handle orientable device
       } else {
-        // RETURN TO INITIAL POSITION
+        // RETURN TO INITIAL POSITION: START
+
+        if (checkIsTouchDevice()) {
+          const isIframe = mediaElement.classList.contains("iframe-container");
+
+          if (isIframe) {
+            const duplicate = document.getElementsByClassName(
+              "iframe-duplicate"
+            )[index] as HTMLElement;
+            const duplicateRect = duplicate.getBoundingClientRect();
+
+            const { height, width, marginLeft, marginTop, translateDistance } =
+              calcElementTransform({
+                destinationRect: duplicateRect,
+                element: mediaElement,
+              });
+
+            const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+            mediaElement.style.transitionDuration = `${transitionDuration}ms`;
+
+            mediaElement.style.width = `${width}px`;
+            mediaElement.style.height = `${height}px`;
+            mediaElement.style.marginTop = `${marginTop}px`;
+            mediaElement.style.marginLeft = `${marginLeft}px`;
+          }
+        }
+        const background = document.getElementById("background")!;
+        background.style.opacity = "0";
+        setTimeout(() => {
+          background.style.zIndex = "-1";
+          background.style.position = "static";
+        }, 500);
+
+        // RETURN TO INITIAL POSITON: END
       }
     });
   });
@@ -452,6 +489,9 @@ const { media } = Astro.props;
         }
       };
     }
+
+    //
+    function onYoutubePlayerReady(playerId) {}
 
     //
     function handleLoadYoutubeApiCode() {
