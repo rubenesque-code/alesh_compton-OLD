@@ -337,12 +337,6 @@ const { media } = Astro.props;
       if (isInInitialPosition) {
         mediaElement.classList.add(isTransformingOutClass);
 
-        /*         if (checkIsTouchDevice()) {
-          const isIframe = mediaElement.classList.contains("iframe-container");
-          if (isIframe) {
-            return;
-          }
-        } */
         const isIframe = mediaElement.classList.contains("iframe-container");
 
         transformOut({
@@ -364,9 +358,26 @@ const { media } = Astro.props;
 
         setTimeout(() => {
           mediaElement.classList.add(isTransformedOutClass);
+
+          if (checkIsTouchDevice()) {
+            mediaElement.style.transitionDuration = "0ms";
+
+            if (isIframe) {
+              mediaElement.style.marginTop = "0";
+              mediaElement.style.marginLeft = "0";
+            }
+
+            mediaElement.style.left = `50%`;
+            mediaElement.style.top = `50%`;
+            mediaElement.style.width = `98%`;
+            mediaElement.style.height = `98%`;
+            mediaElement.style.transform = "translate(-50%, -50%)";
+          }
         }, transitionDuration);
 
         // todo: handle orientable device
+      } else {
+        // RETURN TO INITIAL POSITION
       }
     });
   });
