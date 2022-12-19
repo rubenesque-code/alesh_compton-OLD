@@ -14,8 +14,10 @@ const iframeId = "iframe-test";
 <Layout pageTitle="basic yt" preconnectYoutube={false}>
   <div class="container">
     <div class="iframe-container">
-      <iframe id={iframeId} class="iframe" src={src + youtubeIframeParams}
-      ></iframe>
+      <div class="xx">
+        <iframe id={iframeId} class="iframe" src={src + youtubeIframeParams}
+        ></iframe>
+      </div>
     </div>
   </div>
   <!--   <div class="container" id="container">
@@ -43,8 +45,13 @@ const iframeId = "iframe-test";
     width: 100%;
     aspect-ratio: 16/9;
   }
-  .iframe {
+  .xx {
     position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .iframe {
     width: 100%;
     height: 100%;
   }
@@ -93,5 +100,9 @@ const iframeId = "iframe-test";
   expandButton.addEventListener("click", () => {
     container.style.width = "800px";
     container.style.height = "400px";
+  });
+  const iframe = document.getElementById("iframe")!;
+  iframe.addEventListener("click", () => {
+    console.log("IFRAME CLICKED");
   });
 </script>

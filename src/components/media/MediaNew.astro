@@ -337,6 +337,8 @@ const { media } = Astro.props;
       if (isInInitialPosition) {
         mediaElement.classList.add(isTransformingOutClass);
 
+        mediaElement.style.pointerEvents = "none";
+
         const isIframe = mediaElement.classList.contains("iframe-container");
 
         transformOut({
@@ -354,11 +356,10 @@ const { media } = Astro.props;
         }, 200);
 
         const transitionDuration =
-          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 1000;
+          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 1000 +
+          300;
 
         setTimeout(() => {
-          mediaElement.classList.add(isTransformedOutClass);
-
           if (checkIsTouchDevice()) {
             mediaElement.style.transitionDuration = "0ms";
 
@@ -383,6 +384,9 @@ const { media } = Astro.props;
             mediaElement.style.top = `50%`;
             mediaElement.style.transform = "translate(-50%, -50%)";
           }
+
+          mediaElement.style.pointerEvents = "auto";
+          mediaElement.classList.add(isTransformedOutClass);
         }, transitionDuration);
 
         // todo: handle orientable device
@@ -394,6 +398,7 @@ const { media } = Astro.props;
 </script>
 
 <script type="text/javascript">
+  // YOUTUBE STUFF
   function main() {
     //
     class ClassWatcher {
@@ -539,9 +544,7 @@ const { media } = Astro.props;
     });
   }
   main();
-</script>
 
-<script type="text/javascript">
   // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
   // the API's js is loaded after the first iframe container is transformed
   function onYouTubeIframeAPIReady() {

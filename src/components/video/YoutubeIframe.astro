@@ -39,38 +39,6 @@ const coverImageYPosition = coverImage?.yPosition || 50;
       src={youtubeEmbedSrc + youtubeIframeParams}
       loading={"lazy"}
       allowfullscreen></iframe>
-    <div class="iframe-overlay">
-      {
-        coverImage ? (
-          <Image
-            class="iframe-img"
-            src={coverImage.url}
-            alt=""
-            style={{
-              objectPosition: `50% ${coverImageYPosition}%`,
-            }}
-            loading={isFirst ? "eager" : "lazy"}
-            format="avif"
-          />
-        ) : (
-          <Image
-            class="iframe-img"
-            src={youtubeThumbnailSrc}
-            width={1600}
-            aspectRatio="16:9"
-            alt=""
-            style={{
-              objectPosition: `50% ${coverImageYPosition}%`,
-            }}
-            loading={isFirst ? "eager" : "lazy"}
-            format="avif"
-          />
-        )
-      }
-      <div class="play-icon">
-        <PlayIcon lineWidth={2} />
-      </div>
-    </div>
     <div id="player-loading" class="player-loading">Loading...</div>
     <div id="close-button" class="iframe-helper-overlay close-button">
       <span>close</span>
@@ -81,9 +49,41 @@ const coverImageYPosition = coverImage?.yPosition || 50;
       <span>use controls for volume</span>
     </div>
   </div>
+  <div class="iframe-overlay">
+    {
+      coverImage ? (
+        <Image
+          class="iframe-img"
+          src={coverImage.url}
+          alt=""
+          style={{
+            objectPosition: `50% ${coverImageYPosition}%`,
+          }}
+          loading={isFirst ? "eager" : "lazy"}
+          format="avif"
+        />
+      ) : (
+        <Image
+          class="iframe-img"
+          src={youtubeThumbnailSrc}
+          width={1600}
+          aspectRatio="16:9"
+          alt=""
+          style={{
+            objectPosition: `50% ${coverImageYPosition}%`,
+          }}
+          loading={isFirst ? "eager" : "lazy"}
+          format="avif"
+        />
+      )
+    }
+    <div class="play-icon">
+      <PlayIcon lineWidth={2} />
+    </div>
+  </div>
 </div>
 
-<style>
+<style is:global>
   .iframe-container {
     position: relative;
     height: 100%;
@@ -115,10 +115,11 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     /* display: none; */
     z-index: 2;
     position: absolute;
-    left: 0;
-    top: 0;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     width: 100%;
-    height: 100%;
+    aspect-ratio: 16/9;
     transition: opacity ease-in-out 0.2s;
   }
   .iframe-img {
@@ -126,9 +127,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     height: 100%;
     object-fit: cover;
   }
-</style>
 
-<style>
   .player-loading {
     z-index: -1;
     opacity: 0;
@@ -156,9 +155,9 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     opacity: 0;
   }
   .close-button {
-    z-index: 10;
+    z-index: -1;
     opacity: 1;
-    right: 1%;
+    left: 1%;
     top: 40%;
     font-size: large;
     cursor: pointer;
@@ -180,6 +179,18 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     aspect-ratio: 1;
     min-width: 20px;
   }
+
+  .inner-container:hover .close-button,
+  .inner-container:active .close-button {
+    z-index: 10;
+  }
+
+  /*   @media (hover: hover) and (pointer: fine) {
+    .inner-container:hover .close-button {
+      z-index: 10;
+    }
+  } */
+
   @media screen and (max-width: 600px) {
     .close-button {
       top: 35%;
