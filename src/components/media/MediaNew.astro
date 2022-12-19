@@ -340,6 +340,8 @@ const { media } = Astro.props;
         isTransformingOutClass
       );
       if (isInInitialPosition) {
+        // TRANSFORM OUT: START
+
         mediaElement.classList.add(isTransformingOutClass);
 
         mediaElement.style.pointerEvents = "none";
@@ -394,6 +396,8 @@ const { media } = Astro.props;
           mediaElement.style.pointerEvents = "auto";
           mediaElement.classList.add(isTransformedOutClass);
         }, transitionDuration);
+
+        // TRANSFORM OUT: END
       } else {
         // RETURN TO INITIAL POSITION: START
 
