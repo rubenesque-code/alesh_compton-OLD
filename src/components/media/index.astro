@@ -313,6 +313,7 @@ const { media } = Astro.props;
           }
         }, transitionDuration);
       } else {
+        // * can just work out from window.orientation
         const orientationFlag = "orientation-change";
         // BELOW NEEDS WORK IS JUST PLACEHOLDER
         if (mediaElement.classList.contains(orientationFlag)) {

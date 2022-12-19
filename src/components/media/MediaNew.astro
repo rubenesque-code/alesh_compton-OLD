@@ -1,0 +1,539 @@
+---
+import { Image } from "@astrojs/image/components";
+
+import MediaContainer from "~components/media/Container.astro";
+import Background from "~components/media/Background.astro";
+import YoutubeIframe from "~components/video/YoutubeIframe.astro";
+
+import type { LocalImage, YoutubeVideo } from "~types/index";
+
+type Props = { media: (LocalImage | YoutubeVideo)[] };
+
+const { media } = Astro.props;
+
+// NOTES
+// - only point of the duplication is to keep the width of the container when image content translated
+// - seems like the hidden images won't be loaded
+
+// CHECK
+// iframe is scaled correctly. Check transform origin to counteract translate works across all devices, etc; position iframe moves from.
+// can click on close iframe if iframe takes up whole screen (on touch screen)?
+---
+
+<MediaContainer>
+  <div class="media-inner">
+    {
+      media.map((mediaElement) =>
+        mediaElement.type === "image" ? (
+          <Image
+            class="image-img-duplicate duplicate"
+            src={mediaElement.url}
+            alt=""
+            format="avif"
+          />
+        ) : (
+          <div class="iframe-duplicate duplicate" />
+        )
+      )
+    }
+    <div class="spacer">helloo</div>
+    <div class="visible-media" id="visible-media">
+      {
+        media.map((mediaElement, i) =>
+          mediaElement.type === "image" ? (
+            <Image
+              class="image-img media-transform"
+              src={mediaElement.url}
+              alt=""
+              loading={i === 0 ? "eager" : "lazy"}
+              fit="contain"
+              format="avif"
+            />
+          ) : (
+            <YoutubeIframe {...mediaElement} isFirst={i === 0} />
+          )
+        )
+      }
+      <div class="spacer">helloo</div>
+      <Background />
+    </div>
+  </div>
+</MediaContainer>
+
+<style is:global>
+  .media-transform {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity ease-in 0.3s, transform ease-in-out;
+  }
+</style>
+
+<style>
+  .media-inner {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    height: 100%;
+  }
+  .spacer {
+    color: white;
+  }
+  .visible-media {
+    z-index: 3;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 1vw;
+    background: white;
+  }
+  .image-img,
+  .image-img-duplicate {
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .iframe-duplicate {
+    height: 100%;
+    max-height: 1000px;
+    aspect-ratio: 16 / 9;
+  }
+  .duplicate {
+    visibility: hidden;
+  }
+  @media screen and (max-width: 900px) {
+    .image-img,
+    .image-img-duplicate {
+      width: auto;
+    }
+  }
+</style>
+
+<script>
+  // FADE IN MEDIA ON LOAD (hacky but should be okay since images are local)
+  // _________________________________
+
+  const mediaContainer = document.getElementById("media-container")!;
+  const media = mediaContainer.getElementsByClassName(
+    "media-transform"
+  ) as HTMLCollectionOf<HTMLElement>;
+
+  // avoid image flashing in
+  for (let i = 0; i < media.length; i++) {
+    const mediaElement = media[i];
+    mediaElement.style.opacity = "1";
+  }
+</script>
+
+<script>
+  // MEDIA TRANSFORM
+  // _________________________________
+  const isTransformingOutClass = "is-transforming-out";
+  const isTransformedOutClass = "is-transformed-out";
+
+  //
+  function fixElementPosition(element: HTMLElement) {
+    const rect = element.getBoundingClientRect();
+
+    element.style.left = `${rect.left}px`;
+    element.style.top = `${rect.top}px`;
+    element.style.width = `${rect.width}px`;
+    element.style.height = `${rect.height}px`;
+
+    element.style.position = "fixed";
+  }
+
+  type Mutable<T> = {
+    -readonly [k in keyof T]: T[k];
+  };
+  type CustomRect = Mutable<{
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+  }>;
+
+  function calcFillScreenRect(element: HTMLElement) {
+    const elementRect = element.getBoundingClientRect();
+
+    const maxWidth = window.innerWidth * 0.98;
+    const maxHeight = window.innerHeight * 0.98;
+
+    const fillWidthHeight = elementRect.height * (maxWidth / elementRect.width);
+
+    if (fillWidthHeight <= maxHeight) {
+      return {
+        width: maxWidth,
+        height: fillWidthHeight,
+        get left() {
+          return (window.innerWidth - this.width) / 2;
+        },
+        get top() {
+          return (window.innerHeight - this.height) / 2;
+        },
+      } as CustomRect;
+    }
+
+    return {
+      width: elementRect.width * (maxHeight / elementRect.height),
+      height: maxHeight,
+      get left() {
+        return (window.innerWidth - this.width) / 2;
+      },
+      get top() {
+        return (window.innerHeight - this.height) / 2;
+      },
+    } as CustomRect;
+  }
+
+  function calcElementTransformOut({
+    destinationRect,
+    element,
+  }: {
+    element: HTMLElement;
+    destinationRect: {
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+    };
+  }) {
+    // destination rect has same aspect-ratio as elementRect
+
+    const initialRect = element.getBoundingClientRect();
+
+    const scale = destinationRect.width / initialRect.width;
+
+    const heightChangeFromScale =
+      initialRect.height * scale - initialRect.height;
+    const topChangeFromScale = heightChangeFromScale / 2;
+    // must minus to go up for 'top'
+    const topAfterScale = initialRect.top - topChangeFromScale;
+    const translateY = destinationRect.top - topAfterScale;
+
+    let translateX: number;
+    const transformDirection =
+      destinationRect.left < initialRect.left ? "left" : "right";
+
+    if (transformDirection === "left") {
+      const widthChangeFromScale =
+        initialRect.width * scale - initialRect.width;
+      const leftAfterScale = initialRect.left - widthChangeFromScale;
+      translateX = destinationRect.left - leftAfterScale;
+    } else {
+      translateX = destinationRect.left - initialRect.left;
+    }
+
+    const totalX = Math.abs(initialRect.left - destinationRect.left);
+    const totalY = Math.abs(initialRect.top - destinationRect.top);
+    const translateDistance = Math.sqrt(
+      Math.pow(totalX, 2) + Math.pow(totalY, 2)
+    );
+
+    return {
+      scale,
+      translateX,
+      translateY,
+      transformOrigin: transformDirection === "left" ? "right" : "left",
+      translateDistance,
+    };
+  }
+
+  //
+  function transformOut({
+    transformingElement,
+    allMediaElements,
+  }: {
+    transformingElement: {
+      element: HTMLElement;
+      index: number;
+    };
+    allMediaElements: HTMLElement[];
+  }) {
+    transformingElement.element.style.zIndex = "10";
+
+    for (
+      let j = allMediaElements.length - 1;
+      j >= transformingElement.index;
+      j--
+    ) {
+      fixElementPosition(allMediaElements[j]);
+    }
+
+    const fillScreenRect = calcFillScreenRect(transformingElement.element);
+
+    const {
+      scale,
+      transformOrigin,
+      translateDistance,
+      translateX,
+      translateY,
+    } = calcElementTransformOut({
+      destinationRect: fillScreenRect,
+      element: transformingElement.element,
+    });
+
+    const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+    transformingElement.element.style.transitionDuration = `${transitionDuration}ms`;
+    transformingElement.element.style.transformOrigin = `${transformOrigin}`;
+    transformingElement.element.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
+
+  //
+  function showBackground() {
+    const background = document.getElementById("background")!;
+    background.style.position = "fixed";
+    background.style.zIndex = "5";
+    background.style.opacity = "1";
+  }
+
+  //
+  const mediaContainer = document.getElementById("media-container")!;
+  const mediaElements = Array.from(
+    mediaContainer.getElementsByClassName(
+      "media-transform"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+
+  //
+  mediaElements.forEach((mediaElement, index) => {
+    mediaElement.addEventListener("click", () => {
+      const isInInitialPosition = !mediaElement.classList.contains(
+        isTransformingOutClass
+      );
+      if (isInInitialPosition) {
+        mediaElement.classList.add(isTransformingOutClass);
+
+        transformOut({
+          allMediaElements: mediaElements,
+          transformingElement: { element: mediaElement, index },
+        });
+
+        showBackground();
+
+        // time for bg to show
+        setTimeout(() => {
+          // prevent scrolling
+          mediaContainer.style.overflowX = "hidden";
+        }, 200);
+
+        const transitionDuration =
+          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 100;
+        console.log("transitionDuration:", transitionDuration);
+        setTimeout(() => {
+          mediaElement.classList.add(isTransformedOutClass);
+        });
+
+        // handle yt api code
+
+        // todo: handle orientable device
+      }
+    });
+  });
+</script>
+
+<script type="text/javascript">
+  function main() {
+    //
+    class ClassWatcher {
+      constructor(
+        targetNode,
+        classToWatch,
+        classAddedCallback,
+        classRemovedCallback
+      ) {
+        this.targetNode = targetNode;
+        this.classToWatch = classToWatch;
+        this.classAddedCallback = classAddedCallback;
+        this.classRemovedCallback = classRemovedCallback;
+        this.observer = null;
+        this.lastClassState = targetNode.classList.contains(this.classToWatch);
+
+        this.init();
+      }
+
+      init() {
+        this.observer = new MutationObserver(this.mutationCallback);
+        this.observe();
+      }
+
+      observe() {
+        this.observer.observe(this.targetNode, { attributes: true });
+      }
+
+      disconnect() {
+        this.observer.disconnect();
+      }
+
+      mutationCallback = (mutationsList) => {
+        for (let mutation of mutationsList) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            let currentClassState = mutation.target.classList.contains(
+              this.classToWatch
+            );
+            if (this.lastClassState !== currentClassState) {
+              this.lastClassState = currentClassState;
+              if (currentClassState) {
+                this.classAddedCallback();
+              } else {
+                this.classRemovedCallback();
+              }
+            }
+          }
+        }
+      };
+    }
+
+    //
+    function handleLoadYoutubeApiCode() {
+      console.log("loading yt api code...");
+
+      var tag = document.createElement("script");
+      tag.id = "iframe-demo";
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
+
+    //
+    const isTransformedOutClass = "is-transformed-out";
+
+    const iframeTransformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframes = document.getElementsByClassName("iframe");
+    const overlays = document.getElementsByClassName("iframe-overlay");
+
+    //
+    function onIsTransformedOut({ iframe, overlay, transformContainer }) {
+      if (!transformContainer.classList.contains(isTransformedOutClass)) {
+        return;
+      }
+      console.log("is transformed out...");
+      const youtubeApiCodeLoadingFlag = "yt-api-code-loading";
+      const youtubeApiReadyFlag = "yt-api-ready";
+      const mediaContainer = document.getElementById("media-container");
+
+      if (!mediaContainer.classList.contains(youtubeApiCodeLoadingFlag)) {
+        mediaContainer.classList.add(youtubeApiCodeLoadingFlag);
+        handleLoadYoutubeApiCode();
+        return;
+      }
+
+      if (!mediaContainer.classList.contains(youtubeApiReadyFlag)) {
+        return;
+      }
+      if (iframe.classList.contains("yt-player-loading")) {
+        return;
+      }
+
+      const player = window[`player${iframe.id}`];
+
+      if (player) {
+        overlay.style.opacity = "0";
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+
+          window[iframe.id].playVideo();
+        }, 200);
+
+        return;
+      }
+
+      console.log("Constructing new...");
+      window[iframe.id] = new YT.Player(iframe.id, {
+        events: {
+          onReady,
+        },
+      });
+
+      function onReady(event) {
+        event.target.setVolume(0);
+
+        const overlay = Array.from(
+          document.getElementsByClassName("iframe-overlay")
+        )[i];
+
+        overlay.style.opacity = "0";
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+
+          event.target.playVideo();
+        }, 200);
+      }
+    }
+
+    iframeTransformContainers.forEach((transformContainer, i) => {
+      new ClassWatcher(transformContainer, isTransformedOutClass, () =>
+        onIsTransformedOut({
+          iframe: iframes[i],
+          overlay: overlays[i],
+          transformContainer,
+        })
+      );
+    });
+  }
+  main();
+</script>
+
+<script type="text/javascript">
+  // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
+  // the API's js is loaded after the first iframe container is transformed
+  function onYouTubeIframeAPIReady() {
+    console.log("YT API READY...");
+    const youtubeApiReadyFlag = "yt-api-ready";
+    const mediaContainer = document.getElementById("media-container");
+
+    mediaContainer.classList.add(youtubeApiReadyFlag);
+
+    const iframeTransformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+
+    const isTransformedOutClass = "is-transformed-out";
+
+    const index = iframeTransformContainers.findIndex((node) =>
+      node.classList.contains(isTransformedOutClass)
+    );
+
+    if (index < 0) {
+      return;
+    }
+
+    const iframes = Array.from(document.getElementsByClassName("iframe"));
+    const iframe = iframes[index];
+
+    iframe.classList.add("yt-player-loading");
+
+    window[`player${iframe.id}`] = new YT.Player(iframe.id, {
+      events: {
+        onReady,
+      },
+    });
+
+    function onReady() {
+      window[`player${iframe.id}`].setVolume(0);
+
+      const overlay = Array.from(
+        document.getElementsByClassName("iframe-overlay")
+      )[index];
+
+      overlay.style.opacity = "0";
+      // time for opacity transition
+      setTimeout(() => {
+        overlay.style.zIndex = "-1";
+
+        console.log("playing from youtube api ready watcher...");
+        window[`player${iframe.id}`].playVideo();
+
+        iframe.classList.remove("yt-player-loading");
+      }, 200);
+    }
+  }
+</script>
