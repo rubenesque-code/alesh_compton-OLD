@@ -23,7 +23,7 @@ const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl)!;
 const youtubeEmbedSrc = getYoutubeEmbedUrlFromId(youtubeId);
 const youtubeThumbnailSrc = getThumbnailFromYoutubeId(youtubeId);
 
-const youtubeIframeParams = `?enablejsapi=1&modestbranding=1&rel=0&color=white${
+const youtubeIframeParams = `?enablejsapi=1&modestbranding=1&rel=0&color=white&frameborder=0&${
   import.meta.env.PROD ? domain : ""
 }`;
 
@@ -32,15 +32,15 @@ const coverImageYPosition = coverImage?.yPosition || 50;
 
 <div class="iframe-container media-transform">
   <div class="inner-container">
-    <span class="bg-loading-text">Loading...</span>
+    <span class="bg-loading-text">Loading video...</span>
     <iframe
       id={youtubeId}
       class="iframe"
       src={youtubeEmbedSrc + youtubeIframeParams}
       loading={"lazy"}
+      frameborder={0}
       allowfullscreen></iframe>
-    <div id="player-loading" class="player-loading">Loading...</div>
-    <div id="close-button" class="iframe-helper-overlay close-button">
+    <div id="close-button" class="close-button">
       <span>close</span>
       <CloseIcon />
     </div>
@@ -50,6 +50,9 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     </div>
   </div>
   <div class="iframe-overlay">
+    <div id="player-loading" class="player-loading">
+      Connecting to youtube...
+    </div>
     {
       coverImage ? (
         <Image
@@ -92,9 +95,6 @@ const coverImageYPosition = coverImage?.yPosition || 50;
   }
   .inner-container {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: 100%;
     aspect-ratio: 16/9;
   }
@@ -103,6 +103,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     position: absolute;
     width: 100%;
     height: 100%;
+    border: none;
   }
   /* will show when iframe image and video haven't loaded in */
   .bg-loading-text {
@@ -112,12 +113,8 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     font-size: small;
   }
   .iframe-overlay {
-    /* display: none; */
     z-index: 2;
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: 100%;
     aspect-ratio: 16/9;
     transition: opacity ease-in-out 0.2s;
@@ -134,8 +131,6 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     position: absolute;
     left: 2%;
     top: 2%;
-    background-color: black;
-    color: white;
     padding: 0.2em 0.5em;
     border-radius: 3px;
     transition: opacity 0.2s ease-in-out;
@@ -155,12 +150,22 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     opacity: 0;
   }
   .close-button {
+    text-transform: uppercase;
+    position: absolute;
     z-index: 10;
     opacity: 1;
-    left: 1%;
-    top: 40%;
-    font-size: large;
+    right: 0;
+    bottom: 0;
+    transform: translateY(100%);
+    font-size: small;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    backdrop-filter: blur(60px);
+    background-color: hsla(360, 100%, 100%, 0.31);
+    padding-left: 1em;
+    border-radius: 3px;
   }
   .volume-message {
     bottom: 30%;
@@ -169,6 +174,8 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     white-space: wrap;
     cursor: default;
     pointer-events: none;
+    background-color: black;
+    color: white;
   }
   .play-icon {
     position: absolute;
@@ -180,21 +187,17 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     min-width: 20px;
   }
 
-  .inner-container:hover .close-button,
-  .inner-container:active .close-button {
+  .inner-container:hover .close-button {
     z-index: 10;
   }
 
-  @media (hover: hover) and (pointer: fine) {
+  /*   @media (hover: hover) and (pointer: fine) {
     .inner-container:hover .close-button {
       z-index: 10;
     }
-  }
+  } */
 
   @media screen and (max-width: 600px) {
-    .close-button {
-      top: 35%;
-    }
     .volume-message {
       bottom: 45%;
     }

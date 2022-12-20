@@ -11,7 +11,8 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// TODO: close transform, loading text iframe, vol text, bg should have dynamic transition?
+// TODO close: clicking on bg closes.
+// TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
 
 // NOTES
 // - only point of the duplication is to keep the width of the container when image content translated
@@ -222,31 +223,31 @@ const { media } = Astro.props;
     const fillWidthHeight = elementRect.height * (maxWidth / elementRect.width);
 
     if (fillWidthHeight <= maxHeight) {
+      const width = maxWidth;
+      const height = fillWidthHeight;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
       return {
-        width: maxWidth,
-        height: fillWidthHeight,
-        get left() {
-          return (window.innerWidth - this.width) / 2;
-        },
-        get top() {
-          return (window.innerHeight - this.height) / 2;
-        },
+        width,
+        height,
+        left,
+        top,
       } as CustomRect;
     }
 
+    const width = elementRect.width * (maxHeight / elementRect.height);
+    const height = maxHeight;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
     return {
-      width: elementRect.width * (maxHeight / elementRect.height),
-      height: maxHeight,
-      get left() {
-        return (window.innerWidth - this.width) / 2;
-      },
-      get top() {
-        return (window.innerHeight - this.height) / 2;
-      },
+      width,
+      height,
+      left,
+      top,
     } as CustomRect;
   }
 
-  // TODO: need to update this. Different calculations for an element already transformed by margin,
   function calcElementTransform({
     destinationRect,
     element,
@@ -294,8 +295,8 @@ const { media } = Astro.props;
       translateDistance,
       width: destinationRect.width,
       height: destinationRect.height,
-      marginTop: -(initialRect.top - destinationRect.top),
-      marginLeft: -(initialRect.left - destinationRect.left),
+      marginTop: destinationRect.top - initialRect.top,
+      marginLeft: destinationRect.left - initialRect.left,
     };
   }
 
@@ -495,21 +496,14 @@ const { media } = Astro.props;
             }
 
             for (let j = transformElements.length - 1; j > index; j--) {
-              const mediaElement = transformElements[j];
-              const elementType = mediaElement.classList.contains(
-                "iframe-container"
-              )
-                ? "iframe"
-                : "image";
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
 
-              if (elementType === "image") {
-                mediaElement.style.width = "";
-                mediaElement.style.height = "";
-                mediaElement.style.position = "static";
+              if (isIframe) {
+                revertIframeToInitialPlacement(transformElement);
+              } else {
+                revertImageToInitialPlacement(transformElement);
               }
-              mediaElement.style.transform = "";
-              mediaElement.style.left = "";
-              mediaElement.style.top = "";
             }
 
             transformElement.style.pointerEvents = "auto";
@@ -625,7 +619,9 @@ const { media } = Astro.props;
               if (currentClassState) {
                 this.classAddedCallback();
               } else {
-                this.classRemovedCallback();
+                if (this.classRemovedCallback) {
+                  this.classRemovedCallback();
+                }
               }
             }
           }
@@ -655,21 +651,47 @@ const { media } = Astro.props;
     const overlays = document.getElementsByClassName("iframe-overlay");
 
     //
-    function onIsTransformedOut({ iframe, overlay, transformContainer }) {
+    function onIsTransformedOut({
+      iframe,
+      overlay,
+      transformContainer,
+      iframeIndex,
+    }) {
       if (!transformContainer.classList.contains(isTransformedOutClass)) {
         return;
       }
-      const youtubeApiCodeLoadingFlag = "yt-api-code-loading";
+      const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
       const youtubeApiReadyFlag = "yt-api-ready";
-      const mediaContainer = document.getElementById("media-container");
 
-      if (!mediaContainer.classList.contains(youtubeApiCodeLoadingFlag)) {
-        mediaContainer.classList.add(youtubeApiCodeLoadingFlag);
+      const mediaContainer = document.getElementById("media-container");
+      const loadingText = Array.from(
+        document.getElementsByClassName("player-loading")
+      )[iframeIndex];
+
+      //
+      const youtubeApiIsInitiated = mediaContainer.classList.contains(
+        youtubeApiCodeInitiatedClass
+      );
+      const youtubeApiIsReady =
+        mediaContainer.classList.contains(youtubeApiReadyFlag);
+
+      //
+      function showLoading() {
+        loadingText.style.zIndex = "10";
+        loadingText.style.opacity = "1";
+      }
+
+      if (!youtubeApiIsInitiated || !youtubeApiIsReady) {
+        showLoading();
+      }
+
+      if (!youtubeApiIsInitiated) {
+        mediaContainer.classList.add(youtubeApiCodeInitiatedClass);
         handleLoadYoutubeApiCode();
         return;
       }
 
-      if (!mediaContainer.classList.contains(youtubeApiReadyFlag)) {
+      if (!youtubeApiIsReady) {
         return;
       }
       if (iframe.classList.contains("yt-player-loading")) {
@@ -690,6 +712,8 @@ const { media } = Astro.props;
         return;
       }
 
+      showLoading();
+
       window[iframe.id] = new YT.Player(iframe.id, {
         events: {
           onReady,
@@ -697,11 +721,12 @@ const { media } = Astro.props;
       });
 
       function onReady(event) {
-        event.target.setVolume(0);
+        loadingText.style.opacity = "0";
+        setTimeout(() => {
+          loadingText.style.zIndex = "-1";
+        }, 200);
 
-        const overlay = Array.from(
-          document.getElementsByClassName("iframe-overlay")
-        )[i];
+        event.target.setVolume(0);
 
         overlay.style.opacity = "0";
         // time for opacity transition
@@ -719,6 +744,7 @@ const { media } = Astro.props;
           iframe: iframes[i],
           overlay: overlays[i],
           transformContainer,
+          iframeIndex: i,
         })
       );
     });
@@ -758,8 +784,8 @@ const { media } = Astro.props;
       },
     });
 
-    function onReady() {
-      window[`player${iframe.id}`].setVolume(0);
+    function onReady(event) {
+      event.target.setVolume(0);
 
       const overlay = Array.from(
         document.getElementsByClassName("iframe-overlay")
@@ -770,7 +796,7 @@ const { media } = Astro.props;
       setTimeout(() => {
         overlay.style.zIndex = "-1";
 
-        window[`player${iframe.id}`].playVideo();
+        event.target.playVideo();
 
         iframe.classList.remove("yt-player-loading");
       }, 200);

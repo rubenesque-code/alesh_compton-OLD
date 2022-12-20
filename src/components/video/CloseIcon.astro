@@ -1,33 +1,41 @@
+---
+type Props = {
+  lineWidth?: number;
+};
+
+const { lineWidth = 16 } = Astro.props;
+---
+
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="20"
   height="20"
-  fill="#FFFFFF"
+  fill="black"
   viewBox="0 0 256 256"
   ><rect width="256" height="256" fill="none"></rect><circle
     cx="128"
     cy="128"
     r="96"
     fill="none"
-    stroke="#FFFFFF"
+    stroke="black"
     stroke-miterlimit="10"
-    stroke-width="16"></circle><line
+    stroke-width={lineWidth}></circle><line
     x1="160"
     y1="96"
     x2="96"
     y2="160"
     fill="none"
-    stroke="#FFFFFF"
+    stroke="black"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="16"></line><line
+    stroke-width={lineWidth}></line><line
     x1="160"
     y1="160"
     x2="96"
     y2="96"
     fill="none"
-    stroke="#FFFFFF"
+    stroke="black"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="16"></line>
+    stroke-width={lineWidth}></line>
 </svg>
