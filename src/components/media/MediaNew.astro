@@ -11,7 +11,7 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// vol, close butt positioning; iframe max width as width - timeout width;
+// iframe max width as width - timeout width;
 
 // TODO: undo iframe-inner container transform on contract animation; can't click on iframe overlay again after contract.
 // TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
@@ -233,11 +233,19 @@ const { media } = Astro.props;
     top: number;
   }>;
 
-  function calcFillScreenRect(element: HTMLElement) {
+  function calcFillScreenRect({
+    element,
+    maxHeightDecimal = 0.98,
+    maxWidthDecimal = 0.98,
+  }: {
+    element: HTMLElement;
+    maxWidthDecimal?: number;
+    maxHeightDecimal?: number;
+  }) {
     const elementRect = element.getBoundingClientRect();
 
-    const maxWidth = window.innerWidth * 0.98;
-    const maxHeight = window.innerHeight * 0.98;
+    const maxWidth = window.innerWidth * maxWidthDecimal;
+    const maxHeight = window.innerHeight * maxHeightDecimal;
 
     const fillWidthHeight = elementRect.height * (maxWidth / elementRect.width);
 
@@ -389,8 +397,8 @@ const { media } = Astro.props;
       const isTransformingIn = checkIsTransformingIn(transformElement);
 
       if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
-        // TRANSFORM OUT: START
-        console.log("TRANSFORMING OUT");
+        // TRANSFORM OUT: start
+
         transformElement.classList.add(isTransformingOutClass);
         transformElement.style.pointerEvents = "none";
 
@@ -400,8 +408,20 @@ const { media } = Astro.props;
 
         transformElement.style.zIndex = "10";
 
-        const fillScreenRect = calcFillScreenRect(transformElement);
         const isIframe = isIframeTransformContainer(transformElement);
+
+        const isMobileAndLandscape =
+          window.innerWidth < 800 &&
+          (window.orientation === 90 || window.orientation === -90);
+
+        const maxDimensionDecimal =
+          isIframe && isMobileAndLandscape ? 0.8 : 0.98;
+
+        const fillScreenRect = calcFillScreenRect({
+          element: transformElement,
+          maxHeightDecimal: maxDimensionDecimal,
+          maxWidthDecimal: maxDimensionDecimal,
+        });
 
         transform({
           destinationRect: fillScreenRect,
@@ -429,12 +449,14 @@ const { media } = Astro.props;
             transformElement.style.marginTop = "0";
             transformElement.style.marginLeft = "0";
 
+            // maybe don't need this---
             const deviceBiggestSide =
               window.innerWidth > window.innerHeight
                 ? window.innerWidth
                 : window.innerHeight;
 
             transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
+            // ---
             transformElement.style.maxHeight = "100vh";
 
             //
