@@ -146,6 +146,11 @@ const { media } = Astro.props;
   }
 
   //
+  function getTransitionDurationMs(element: HTMLElement) {
+    return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
+  }
+
+  //
   function fixElementPosition(element: HTMLElement) {
     const rect = element.getBoundingClientRect();
 
@@ -200,17 +205,13 @@ const { media } = Astro.props;
     } as CustomRect;
   }
 
+  // TODO: need to update this. Different calculations for an element already transformed by margin,
   function calcElementTransform({
     destinationRect,
     element,
   }: {
     element: HTMLElement;
-    destinationRect: {
-      left: number;
-      top: number;
-      width: number;
-      height: number;
-    };
+    destinationRect: CustomRect;
   }) {
     // destination rect has same aspect-ratio as elementRect
 
@@ -252,38 +253,21 @@ const { media } = Astro.props;
       translateDistance,
       width: destinationRect.width,
       height: destinationRect.height,
-      marginTop: -(element.getBoundingClientRect().top - destinationRect.top),
-      marginLeft: -(
-        element.getBoundingClientRect().left - destinationRect.left
-      ),
+      marginTop: -(initialRect.top - destinationRect.top),
+      marginLeft: -(initialRect.left - destinationRect.left),
     };
   }
 
   //
-  function transformOut({
+  function transform({
     transformingElement,
-    allMediaElements,
-    transformByWidthAndHeight,
+    destinationRect,
+    transformBy,
   }: {
-    transformingElement: {
-      element: HTMLElement;
-      index: number;
-    };
-    allMediaElements: HTMLElement[];
-    transformByWidthAndHeight?: boolean;
+    transformingElement: HTMLElement;
+    destinationRect: CustomRect;
+    transformBy: "width-height-margin" | "scale-translate";
   }) {
-    transformingElement.element.style.zIndex = "10";
-
-    for (
-      let j = allMediaElements.length - 1;
-      j >= transformingElement.index;
-      j--
-    ) {
-      fixElementPosition(allMediaElements[j]);
-    }
-
-    const fillScreenRect = calcFillScreenRect(transformingElement.element);
-
     const {
       scale,
       transformOrigin,
@@ -295,32 +279,30 @@ const { media } = Astro.props;
       marginLeft,
       marginTop,
     } = calcElementTransform({
-      destinationRect: fillScreenRect,
-      element: transformingElement.element,
+      destinationRect,
+      element: transformingElement,
     });
 
     const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
 
-    transformingElement.element.style.transitionDuration = `${transitionDuration}ms`;
+    transformingElement.style.transitionDuration = `${transitionDuration}ms`;
 
-    if (transformByWidthAndHeight) {
-      transformingElement.element.style.width = `${width}px`;
-      transformingElement.element.style.height = `${height}px`;
-      transformingElement.element.style.marginTop = `${marginTop}px`;
-      transformingElement.element.style.marginLeft = `${marginLeft}px`;
+    if (transformBy === "width-height-margin") {
+      transformingElement.style.width = `${width}px`;
+      transformingElement.style.height = `${height}px`;
+      transformingElement.style.marginTop = `${marginTop}px`;
+      transformingElement.style.marginLeft = `${marginLeft}px`;
       return;
     }
 
-    transformingElement.element.style.transformOrigin = `${transformOrigin}`;
-    transformingElement.element.style.transform = `translate(${
-      translateX / 2
-    }px, ${translateY}px)`;
-    transformingElement.element.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    transformingElement.style.transformOrigin = `${transformOrigin}`;
+    transformingElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
   }
 
   //
   function showBackground() {
     const background = document.getElementById("background")!;
+    background.style.position = "fixed";
     background.style.zIndex = "5";
     background.style.opacity = "1";
   }
@@ -332,6 +314,11 @@ const { media } = Astro.props;
       "media-transform"
     ) as HTMLCollectionOf<HTMLElement>
   );
+  const duplicates = Array.from(
+    mediaContainer.getElementsByClassName(
+      "duplicate"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
 
   //
   mediaElements.forEach((mediaElement, index) => {
@@ -341,17 +328,22 @@ const { media } = Astro.props;
       );
       if (isInInitialPosition) {
         // TRANSFORM OUT: START
-
         mediaElement.classList.add(isTransformingOutClass);
-
         mediaElement.style.pointerEvents = "none";
 
+        for (let j = mediaElements.length - 1; j >= index; j--) {
+          fixElementPosition(mediaElements[j]);
+        }
+
+        mediaElement.style.zIndex = "10";
+
+        const fillScreenRect = calcFillScreenRect(mediaElement);
         const isIframe = mediaElement.classList.contains("iframe-container");
 
-        transformOut({
-          allMediaElements: mediaElements,
-          transformingElement: { element: mediaElement, index },
-          transformByWidthAndHeight: isIframe,
+        transform({
+          destinationRect: fillScreenRect,
+          transformBy: isIframe ? "width-height-margin" : "scale-translate",
+          transformingElement: mediaElement,
         });
 
         showBackground();
@@ -362,20 +354,18 @@ const { media } = Astro.props;
           mediaContainer.style.overflowX = "hidden";
         }, 200);
 
-        const transitionDuration =
-          parseFloat(getComputedStyle(mediaElement).transitionDuration) * 1000 +
-          300;
+        const transitionDuration = getTransitionDurationMs(mediaElement);
 
+        // timeout until transform transition end
         setTimeout(() => {
           if (checkIsTouchDevice()) {
-            // contain image and iframe to allow for orientation change
+            // orientation considerations: start
+
             mediaElement.style.transitionDuration = "0ms";
 
             if (isIframe) {
               mediaElement.style.marginTop = "0";
               mediaElement.style.marginLeft = "0";
-              mediaElement.style.width = `98%`;
-              mediaElement.style.height = `98%`;
 
               const deviceBiggestSide =
                 window.innerWidth > window.innerHeight
@@ -383,14 +373,16 @@ const { media } = Astro.props;
                   : window.innerHeight;
 
               mediaElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
-            } else {
-              mediaElement.style.width = `98%`;
-              mediaElement.style.height = `98%`;
+              mediaElement.style.maxHeight = "100vh";
             }
 
+            mediaElement.style.width = `98%`;
+            mediaElement.style.height = `98%`;
             mediaElement.style.left = `50%`;
             mediaElement.style.top = `50%`;
             mediaElement.style.transform = "translate(-50%, -50%)";
+
+            // orientation considerations: end
           }
 
           mediaElement.style.pointerEvents = "auto";
@@ -400,31 +392,86 @@ const { media } = Astro.props;
         // TRANSFORM OUT: END
       } else {
         // RETURN TO INITIAL POSITION: START
+        mediaElement.classList.remove(isTransformingOutClass);
+        mediaElement.classList.remove(isTransformedOutClass);
 
+        // iframes always animated by width/height
         if (checkIsTouchDevice()) {
           const isIframe = mediaElement.classList.contains("iframe-container");
 
           if (isIframe) {
-            const duplicate = document.getElementsByClassName(
-              "iframe-duplicate"
-            )[index] as HTMLElement;
+            fixElementPosition(mediaElement);
+            mediaElement.style.transform = "";
+
+            mediaElement.style.maxWidth = "";
+
+            const duplicate = duplicates[index];
             const duplicateRect = duplicate.getBoundingClientRect();
 
-            const { height, width, marginLeft, marginTop, translateDistance } =
-              calcElementTransform({
-                destinationRect: duplicateRect,
-                element: mediaElement,
-              });
+            transform({
+              destinationRect: duplicateRect,
+              transformBy: "width-height-margin",
+              transformingElement: mediaElement,
+            });
 
-            const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
-            mediaElement.style.transitionDuration = `${transitionDuration}ms`;
+            const transitionDuration = getTransitionDurationMs(mediaElement);
 
-            mediaElement.style.width = `${width}px`;
-            mediaElement.style.height = `${height}px`;
-            mediaElement.style.marginTop = `${marginTop}px`;
-            mediaElement.style.marginLeft = `${marginLeft}px`;
+            // revert to initial, untransformed css
+            setTimeout(() => {
+              mediaElement.style.transitionDuration = "0ms";
+              mediaElement.style.left = "0";
+              mediaElement.style.top = "0";
+              mediaElement.style.height = "100%";
+              mediaElement.style.maxHeight = "1000px";
+              mediaElement.style.width = "";
+              mediaElement.style.marginTop = "0";
+              mediaElement.style.marginLeft = "0";
+              mediaElement.style.position = "relative";
+            }, transitionDuration + 50);
           }
+        } else {
+          // NON TOUCH DEVICE: start
+
+          mediaElement.style.transitionDuration = "0ms";
+          fixElementPosition(mediaElement);
+          mediaElement.style.transform = "";
+
+          const duplicate = duplicates[index];
+          const duplicateRect = duplicate.getBoundingClientRect();
+
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: "scale-translate",
+            transformingElement: mediaElement,
+          });
+
+          //
+          const transitionDuration = getTransitionDurationMs(mediaElement);
+          setTimeout(() => {
+            mediaElement.style.transitionDuration = "0ms";
+            mediaContainer.style.overflowX = "auto";
+            mediaElement.style.zIndex = "0";
+
+            for (let j = mediaElements.length - 1; j >= index; j--) {
+              const mediaElement = mediaElements[j];
+              const elementType = mediaElement.classList.contains(
+                "iframe-container"
+              )
+                ? "iframe"
+                : "image";
+
+              if (elementType === "image") {
+                mediaElement.style.width = "";
+                mediaElement.style.height = "";
+                mediaElement.style.position = "static";
+              }
+              mediaElement.style.transform = "";
+              mediaElement.style.left = "";
+              mediaElement.style.top = "";
+            }
+          }, transitionDuration);
         }
+
         const background = document.getElementById("background")!;
         background.style.opacity = "0";
         setTimeout(() => {

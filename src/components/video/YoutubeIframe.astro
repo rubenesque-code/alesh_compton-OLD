@@ -83,7 +83,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
   </div>
 </div>
 
-<style is:global>
+<style>
   .iframe-container {
     position: relative;
     height: 100%;
@@ -155,7 +155,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     opacity: 0;
   }
   .close-button {
-    z-index: -1;
+    z-index: 10;
     opacity: 1;
     left: 1%;
     top: 40%;
@@ -185,11 +185,11 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     z-index: 10;
   }
 
-  /*   @media (hover: hover) and (pointer: fine) {
+  @media (hover: hover) and (pointer: fine) {
     .inner-container:hover .close-button {
       z-index: 10;
     }
-  } */
+  }
 
   @media screen and (max-width: 600px) {
     .close-button {
