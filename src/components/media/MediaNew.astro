@@ -400,32 +400,35 @@ const { media } = Astro.props;
 
         // timeout until transform transition end
         setTimeout(() => {
-          if (checkIsTouchDevice()) {
-            // orientation considerations: start
+          // orientation + resize considerations: start
 
-            transformElement.style.transitionDuration = "0ms";
+          transformElement.style.transitionDuration = "0ms";
 
-            if (isIframe) {
-              transformElement.style.marginTop = "0";
-              transformElement.style.marginLeft = "0";
+          if (isIframe) {
+            transformElement.style.marginTop = "0";
+            transformElement.style.marginLeft = "0";
 
-              const deviceBiggestSide =
-                window.innerWidth > window.innerHeight
-                  ? window.innerWidth
-                  : window.innerHeight;
+            const deviceBiggestSide =
+              window.innerWidth > window.innerHeight
+                ? window.innerWidth
+                : window.innerHeight;
 
-              transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
-              transformElement.style.maxHeight = "100vh";
-            }
-
-            transformElement.style.width = `98%`;
-            transformElement.style.height = `98%`;
-            transformElement.style.left = `50%`;
-            transformElement.style.top = `50%`;
-            transformElement.style.transform = "translate(-50%, -50%)";
-
-            // orientation considerations: end
+            transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
+            transformElement.style.maxHeight = "100vh";
+            transformElement.style.paddingTop = `${
+              (window.innerHeight -
+                transformElement.getBoundingClientRect().height) /
+              2
+            }px`;
           }
+
+          transformElement.style.width = `98%`;
+          transformElement.style.height = `98%`;
+          transformElement.style.left = `50%`;
+          transformElement.style.top = `50%`;
+          transformElement.style.transform = "translate(-50%, -50%)";
+
+          // orientation + resize considerations: end
 
           transformElement.style.pointerEvents = "auto";
           transformElement.classList.add(isTransformedOutClass);
@@ -439,125 +442,83 @@ const { media } = Astro.props;
 
         transformElement.style.pointerEvents = "none";
 
-        if (checkIsTouchDevice()) {
-          // TOUCH DEVICE: start
+        transformElement.style.transitionDuration = "0ms";
+
+        const isIframe = isIframeTransformContainer(transformElement);
+
+        if (isIframe) {
+          // TODO: added padding top on transform out for iframe. Might not be the best solution. Trying to counter for now.
+          // fixElementPosition(transformElement);
+          const rect = transformElement.getBoundingClientRect();
+          const paddingTop = parseFloat(
+            getComputedStyle(transformElement).paddingTop
+          );
+
+          transformElement.style.paddingTop = "0";
+          transformElement.style.left = `${rect.left}px`;
+          transformElement.style.top = `${paddingTop + rect.top}px`;
+          transformElement.style.width = `${rect.width}px`;
+          transformElement.style.height = `${rect.height}px`;
+
+          transformElement.style.position = "fixed";
+        } else {
+          const [width, height] = getContainedSize(
+            transformElement as HTMLImageElement
+          );
+
+          transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
+          transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
+          transformElement.style.width = `${width}px`;
+          transformElement.style.height = `${height}px`;
+
+          transformElement.style.position = "fixed";
+        }
+
+        transformElement.style.transform = "";
+
+        if (isIframe) {
+          transformElement.style.maxWidth = "";
+        }
+
+        const duplicate = duplicates[index];
+        const duplicateRect = duplicate.getBoundingClientRect();
+
+        transform({
+          destinationRect: duplicateRect,
+          transformBy: isIframe ? "width-height-margin" : "scale-translate",
+          transformingElement: transformElement,
+        });
+
+        const transitionDuration = getTransitionDurationMs(transformElement);
+
+        setTimeout(() => {
+          mediaContainer.style.overflowX = "auto";
+        }, transitionDuration - 300);
+
+        // revert to initial, untransformed css
+        setTimeout(() => {
           transformElement.style.transitionDuration = "0ms";
 
-          const isIframe = isIframeTransformContainer(transformElement);
-
           if (isIframe) {
-            fixElementPosition(transformElement);
+            revertIframeToInitialPlacement(transformElement);
           } else {
-            const [width, height] = getContainedSize(
-              transformElement as HTMLImageElement
-            );
-
-            transformElement.style.left = `${
-              (window.innerWidth - width) / 2
-            }px`;
-            transformElement.style.top = `${
-              (window.innerHeight - height) / 2
-            }px`;
-            transformElement.style.width = `${width}px`;
-            transformElement.style.height = `${height}px`;
-
-            transformElement.style.position = "fixed";
+            revertImageToInitialPlacement(transformElement);
           }
 
-          transformElement.style.transform = "";
-
-          if (isIframe) {
-            transformElement.style.maxWidth = "";
-          }
-
-          const duplicate = duplicates[index];
-          const duplicateRect = duplicate.getBoundingClientRect();
-
-          transform({
-            destinationRect: duplicateRect,
-            transformBy: isIframe ? "width-height-margin" : "scale-translate",
-            transformingElement: transformElement,
-          });
-
-          const transitionDuration = getTransitionDurationMs(transformElement);
-
-          setTimeout(() => {
-            mediaContainer.style.overflowX = "auto";
-          }, transitionDuration - 300);
-
-          // revert to initial, untransformed css
-          setTimeout(() => {
-            transformElement.style.transitionDuration = "0ms";
+          for (let j = transformElements.length - 1; j > index; j--) {
+            const transformElement = transformElements[j];
+            const isIframe = isIframeTransformContainer(transformElement);
 
             if (isIframe) {
               revertIframeToInitialPlacement(transformElement);
             } else {
               revertImageToInitialPlacement(transformElement);
             }
-
-            for (let j = transformElements.length - 1; j > index; j--) {
-              const transformElement = transformElements[j];
-              const isIframe = isIframeTransformContainer(transformElement);
-
-              if (isIframe) {
-                revertIframeToInitialPlacement(transformElement);
-              } else {
-                revertImageToInitialPlacement(transformElement);
-              }
-            }
-
-            transformElement.style.pointerEvents = "auto";
-          }, transitionDuration);
-
-          // TOUCH DEVICE: end
-        } else {
-          // NON TOUCH DEVICE: start
-
-          const isIframe = isIframeTransformContainer(transformElement);
-
-          transformElement.style.transitionDuration = "0ms";
-          fixElementPosition(transformElement);
-          transformElement.style.transform = "";
-
-          if (isIframe) {
-            transformElement.style.marginTop = "0";
-            transformElement.style.marginLeft = "0";
           }
 
-          const duplicate = duplicates[index];
-          const duplicateRect = duplicate.getBoundingClientRect();
+          transformElement.style.pointerEvents = "auto";
+        }, transitionDuration);
 
-          transform({
-            destinationRect: duplicateRect,
-            transformBy: isIframe ? "width-height-margin" : "scale-translate",
-            transformingElement: transformElement,
-          });
-
-          const transitionDuration = getTransitionDurationMs(transformElement);
-          setTimeout(() => {
-            mediaContainer.style.overflowX = "auto";
-            transformElement.style.transitionDuration = "0ms";
-            transformElement.style.zIndex = "0";
-
-            for (let j = transformElements.length - 1; j >= index; j--) {
-              const transformElement = transformElements[j];
-              const isIframe = isIframeTransformContainer(transformElement);
-
-              if (isIframe) {
-                revertIframeToInitialPlacement(transformElement);
-              } else {
-                revertImageToInitialPlacement(transformElement);
-              }
-            }
-
-            transformElement.style.pointerEvents = "auto";
-          }, transitionDuration);
-
-          // NON TOUCH: end
-        }
-        // apply on all transforms in...
-
-        const transitionDuration = getTransitionDurationMs(transformElement);
         const background = document.getElementById("background")!;
         background.style.opacity = "0";
         setTimeout(() => {
