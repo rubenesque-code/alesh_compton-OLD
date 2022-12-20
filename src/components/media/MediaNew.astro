@@ -11,7 +11,7 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// TODO: undo iframe-inner container transform on contract animation
+// TODO: undo iframe-inner container transform on contract animation; can't click on iframe overlay again after contract.
 // TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
 // TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
 
@@ -583,6 +583,7 @@ const { media } = Astro.props;
       transformElement.classList.remove(isTransformingOutClass);
       transformElement.classList.remove(isTransformedOutClass);
 
+      transformElement.style.pointerEvents = "none";
       //
       const overlay = overlays[iframeIndex];
       const volumeMessage = volumeMessages[iframeIndex];
@@ -610,7 +611,6 @@ const { media } = Astro.props;
       setTimeout(() => {
         const allElementsIndex = Number(transformElement.id);
 
-        transformElement.style.pointerEvents = "none";
         transformElement.style.transitionDuration = "0ms";
         fixElementPosition(transformElement);
         transformElement.style.transform = "";
