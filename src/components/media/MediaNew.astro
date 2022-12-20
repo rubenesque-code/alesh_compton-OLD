@@ -415,11 +415,22 @@ const { media } = Astro.props;
 
             transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
             transformElement.style.maxHeight = "100vh";
-            transformElement.style.paddingTop = `${
-              (window.innerHeight -
-                transformElement.getBoundingClientRect().height) /
-              2
-            }px`;
+
+            //
+            const innerContainer = transformElement.getElementsByClassName(
+              "inner-container"
+            )[0] as HTMLElement;
+
+            innerContainer.style.left = "50%";
+            innerContainer.style.top = "50%";
+            innerContainer.style.transform = "translate(-50%, -50%)";
+
+            const iframeOverlay = transformElement.getElementsByClassName(
+              "iframe-overlay"
+            )[0] as HTMLElement;
+            iframeOverlay.style.left = "50%";
+            iframeOverlay.style.top = "50%";
+            iframeOverlay.style.transform = "translate(-50%, -50%)";
           }
 
           transformElement.style.width = `98%`;
@@ -447,20 +458,7 @@ const { media } = Astro.props;
         const isIframe = isIframeTransformContainer(transformElement);
 
         if (isIframe) {
-          // TODO: added padding top on transform out for iframe. Might not be the best solution. Trying to counter for now.
-          // fixElementPosition(transformElement);
-          const rect = transformElement.getBoundingClientRect();
-          const paddingTop = parseFloat(
-            getComputedStyle(transformElement).paddingTop
-          );
-
-          transformElement.style.paddingTop = "0";
-          transformElement.style.left = `${rect.left}px`;
-          transformElement.style.top = `${paddingTop + rect.top}px`;
-          transformElement.style.width = `${rect.width}px`;
-          transformElement.style.height = `${rect.height}px`;
-
-          transformElement.style.position = "fixed";
+          fixElementPosition(transformElement);
         } else {
           const [width, height] = getContainedSize(
             transformElement as HTMLImageElement
