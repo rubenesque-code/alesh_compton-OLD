@@ -11,6 +11,8 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
+// vol, close butt positioning; iframe max width as width - timeout width;
+
 // TODO: undo iframe-inner container transform on contract animation; can't click on iframe overlay again after contract.
 // TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
 // TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
@@ -746,8 +748,7 @@ const { media } = Astro.props;
     );
     const iframes = document.getElementsByClassName("iframe");
     const overlays = document.getElementsByClassName("iframe-overlay");
-    const volumeMessages = document.getElementsByClassName("volume-message");
-    const closeButtons = document.getElementsByClassName("close-button");
+    const helperPanels = document.getElementsByClassName("iframe-helper");
 
     //
     function onIsTransformedOut({
@@ -802,13 +803,10 @@ const { media } = Astro.props;
       if (player) {
         overlay.style.opacity = "0";
 
-        const volMessage = volumeMessages[iframeIndex];
-        const closeButton = closeButtons[iframeIndex];
+        const helperPanel = helperPanels[iframeIndex];
 
-        volMessage.style.zIndex = "10";
-        volMessage.style.opacity = "1";
-        closeButton.style.zIndex = "10";
-        closeButton.style.opacity = "1";
+        helperPanel.style.zIndex = "10";
+        helperPanel.style.opacity = "1";
         // time for opacity transition
         setTimeout(() => {
           overlay.style.zIndex = "-1";
@@ -837,13 +835,10 @@ const { media } = Astro.props;
 
         overlay.style.opacity = "0";
 
-        const volMessage = volumeMessages[iframeIndex];
-        const closeButton = closeButtons[iframeIndex];
+        const helperPanel = helperPanels[iframeIndex];
 
-        volMessage.style.zIndex = "10";
-        volMessage.style.opacity = "1";
-        closeButton.style.zIndex = "10";
-        closeButton.style.opacity = "1";
+        helperPanel.style.zIndex = "10";
+        helperPanel.style.opacity = "1";
         // time for opacity transition
         setTimeout(() => {
           overlay.style.zIndex = "-1";
@@ -877,8 +872,8 @@ const { media } = Astro.props;
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
-    const volumeMessages = document.getElementsByClassName("volume-message");
-    const closeButtons = document.getElementsByClassName("close-button");
+
+    const helperPanels = document.getElementsByClassName("iframe-helper");
 
     const isTransformedOutClass = "is-transformed-out";
 
@@ -910,13 +905,11 @@ const { media } = Astro.props;
 
       overlay.style.opacity = "0";
 
-      const volMessage = volumeMessages[index];
-      const closeButton = closeButtons[index];
+      const helperPanel = helperPanels[index];
 
-      volMessage.style.zIndex = "10";
-      volMessage.style.opacity = "1";
-      closeButton.style.zIndex = "10";
-      closeButton.style.opacity = "1";
+      helperPanel.style.zIndex = "10";
+      helperPanel.style.opacity = "1";
+
       // time for opacity transition
       setTimeout(() => {
         overlay.style.zIndex = "-1";
