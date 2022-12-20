@@ -145,6 +145,17 @@ const { media } = Astro.props;
     );
   }
 
+  function getContainedSize(img: HTMLImageElement) {
+    var ratio = img.naturalWidth / img.naturalHeight;
+    var width = img.height * ratio;
+    var height = img.height;
+    if (width > img.width) {
+      width = img.width;
+      height = img.width / ratio;
+    }
+    return [width, height];
+  }
+
   //
   function getTransitionDurationMs(element: HTMLElement) {
     return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
@@ -391,44 +402,96 @@ const { media } = Astro.props;
 
         // TRANSFORM OUT: END
       } else {
-        // RETURN TO INITIAL POSITION: START
+        // RETURN TO INITIAL POSITION: start
         mediaElement.classList.remove(isTransformingOutClass);
         mediaElement.classList.remove(isTransformedOutClass);
 
-        // iframes always animated by width/height
+        mediaElement.style.pointerEvents = "none";
+
         if (checkIsTouchDevice()) {
+          // TOUCH DEVICE: start
+          mediaElement.style.transitionDuration = "0ms";
+
           const isIframe = mediaElement.classList.contains("iframe-container");
 
           if (isIframe) {
             fixElementPosition(mediaElement);
-            mediaElement.style.transform = "";
+          } else {
+            const [width, height] = getContainedSize(
+              mediaElement as HTMLImageElement
+            );
 
+            mediaElement.style.left = `${(window.innerWidth - width) / 2}px`;
+            mediaElement.style.top = `${(window.innerHeight - height) / 2}px`;
+            mediaElement.style.width = `${width}px`;
+            mediaElement.style.height = `${height}px`;
+
+            mediaElement.style.position = "fixed";
+          }
+          mediaElement.style.transform = "";
+
+          if (isIframe) {
             mediaElement.style.maxWidth = "";
+          }
 
-            const duplicate = duplicates[index];
-            const duplicateRect = duplicate.getBoundingClientRect();
+          const duplicate = duplicates[index];
+          const duplicateRect = duplicate.getBoundingClientRect();
 
-            transform({
-              destinationRect: duplicateRect,
-              transformBy: "width-height-margin",
-              transformingElement: mediaElement,
-            });
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: isIframe ? "width-height-margin" : "scale-translate",
+            transformingElement: mediaElement,
+          });
 
-            const transitionDuration = getTransitionDurationMs(mediaElement);
+          const transitionDuration = getTransitionDurationMs(mediaElement);
 
-            // revert to initial, untransformed css
-            setTimeout(() => {
-              mediaElement.style.transitionDuration = "0ms";
-              mediaElement.style.left = "0";
-              mediaElement.style.top = "0";
-              mediaElement.style.height = "100%";
+          setTimeout(() => {
+            mediaContainer.style.overflowX = "auto";
+          }, transitionDuration - 300);
+
+          // revert to initial, untransformed css
+          setTimeout(() => {
+            mediaElement.style.transitionDuration = "0ms";
+            mediaElement.style.zIndex = "0";
+
+            mediaElement.style.transform = "";
+            mediaElement.style.left = "0";
+            mediaElement.style.top = "0";
+
+            if (isIframe) {
               mediaElement.style.maxHeight = "1000px";
+              mediaElement.style.height = "100%";
               mediaElement.style.width = "";
               mediaElement.style.marginTop = "0";
               mediaElement.style.marginLeft = "0";
               mediaElement.style.position = "relative";
-            }, transitionDuration + 50);
-          }
+            } else {
+              mediaElement.style.width = "";
+              mediaElement.style.height = "";
+              mediaElement.style.position = "static";
+            }
+
+            for (let j = mediaElements.length - 1; j > index; j--) {
+              const mediaElement = mediaElements[j];
+              const elementType = mediaElement.classList.contains(
+                "iframe-container"
+              )
+                ? "iframe"
+                : "image";
+
+              if (elementType === "image") {
+                mediaElement.style.width = "";
+                mediaElement.style.height = "";
+                mediaElement.style.position = "static";
+              }
+              mediaElement.style.transform = "";
+              mediaElement.style.left = "";
+              mediaElement.style.top = "";
+            }
+
+            mediaElement.style.pointerEvents = "auto";
+          }, transitionDuration);
+          // TOUCH DEVICE: start
         } else {
           // NON TOUCH DEVICE: start
 
@@ -448,8 +511,8 @@ const { media } = Astro.props;
           //
           const transitionDuration = getTransitionDurationMs(mediaElement);
           setTimeout(() => {
-            mediaElement.style.transitionDuration = "0ms";
             mediaContainer.style.overflowX = "auto";
+            mediaElement.style.transitionDuration = "0ms";
             mediaElement.style.zIndex = "0";
 
             for (let j = mediaElements.length - 1; j >= index; j--) {
@@ -470,6 +533,8 @@ const { media } = Astro.props;
               mediaElement.style.top = "";
             }
           }, transitionDuration);
+
+          // NON TOUCH: end
         }
 
         const background = document.getElementById("background")!;
@@ -546,8 +611,6 @@ const { media } = Astro.props;
 
     //
     function handleLoadYoutubeApiCode() {
-      console.log("loading yt api code...");
-
       var tag = document.createElement("script");
       tag.id = "iframe-demo";
       tag.src = "https://www.youtube.com/iframe_api";
@@ -600,7 +663,6 @@ const { media } = Astro.props;
         return;
       }
 
-      console.log("Constructing new...");
       window[iframe.id] = new YT.Player(iframe.id, {
         events: {
           onReady,
