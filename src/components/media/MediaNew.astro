@@ -161,6 +161,10 @@ const { media } = Astro.props;
     return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
   }
 
+  function isIframeTransformContainer(element: HTMLElement) {
+    return element.classList.contains("iframe-container");
+  }
+
   //
   function fixElementPosition(element: HTMLElement) {
     const rect = element.getBoundingClientRect();
@@ -320,7 +324,7 @@ const { media } = Astro.props;
 
   //
   const mediaContainer = document.getElementById("media-container")!;
-  const mediaElements = Array.from(
+  const transformElements = Array.from(
     mediaContainer.getElementsByClassName(
       "media-transform"
     ) as HTMLCollectionOf<HTMLElement>
@@ -332,29 +336,29 @@ const { media } = Astro.props;
   );
 
   //
-  mediaElements.forEach((mediaElement, index) => {
-    mediaElement.addEventListener("click", () => {
-      const isInInitialPosition = !mediaElement.classList.contains(
+  transformElements.forEach((transformElement, index) => {
+    transformElement.addEventListener("click", () => {
+      const isInInitialPosition = !transformElement.classList.contains(
         isTransformingOutClass
       );
       if (isInInitialPosition) {
         // TRANSFORM OUT: START
-        mediaElement.classList.add(isTransformingOutClass);
-        mediaElement.style.pointerEvents = "none";
+        transformElement.classList.add(isTransformingOutClass);
+        transformElement.style.pointerEvents = "none";
 
-        for (let j = mediaElements.length - 1; j >= index; j--) {
-          fixElementPosition(mediaElements[j]);
+        for (let j = transformElements.length - 1; j >= index; j--) {
+          fixElementPosition(transformElements[j]);
         }
 
-        mediaElement.style.zIndex = "10";
+        transformElement.style.zIndex = "10";
 
-        const fillScreenRect = calcFillScreenRect(mediaElement);
-        const isIframe = mediaElement.classList.contains("iframe-container");
+        const fillScreenRect = calcFillScreenRect(transformElement);
+        const isIframe = isIframeTransformContainer(transformElement);
 
         transform({
           destinationRect: fillScreenRect,
           transformBy: isIframe ? "width-height-margin" : "scale-translate",
-          transformingElement: mediaElement,
+          transformingElement: transformElement,
         });
 
         showBackground();
@@ -365,73 +369,77 @@ const { media } = Astro.props;
           mediaContainer.style.overflowX = "hidden";
         }, 200);
 
-        const transitionDuration = getTransitionDurationMs(mediaElement);
+        const transitionDuration = getTransitionDurationMs(transformElement);
 
         // timeout until transform transition end
         setTimeout(() => {
           if (checkIsTouchDevice()) {
             // orientation considerations: start
 
-            mediaElement.style.transitionDuration = "0ms";
+            transformElement.style.transitionDuration = "0ms";
 
             if (isIframe) {
-              mediaElement.style.marginTop = "0";
-              mediaElement.style.marginLeft = "0";
+              transformElement.style.marginTop = "0";
+              transformElement.style.marginLeft = "0";
 
               const deviceBiggestSide =
                 window.innerWidth > window.innerHeight
                   ? window.innerWidth
                   : window.innerHeight;
 
-              mediaElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
-              mediaElement.style.maxHeight = "100vh";
+              transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
+              transformElement.style.maxHeight = "100vh";
             }
 
-            mediaElement.style.width = `98%`;
-            mediaElement.style.height = `98%`;
-            mediaElement.style.left = `50%`;
-            mediaElement.style.top = `50%`;
-            mediaElement.style.transform = "translate(-50%, -50%)";
+            transformElement.style.width = `98%`;
+            transformElement.style.height = `98%`;
+            transformElement.style.left = `50%`;
+            transformElement.style.top = `50%`;
+            transformElement.style.transform = "translate(-50%, -50%)";
 
             // orientation considerations: end
           }
 
-          mediaElement.style.pointerEvents = "auto";
-          mediaElement.classList.add(isTransformedOutClass);
+          transformElement.style.pointerEvents = "auto";
+          transformElement.classList.add(isTransformedOutClass);
         }, transitionDuration);
 
         // TRANSFORM OUT: END
       } else {
         // RETURN TO INITIAL POSITION: start
-        mediaElement.classList.remove(isTransformingOutClass);
-        mediaElement.classList.remove(isTransformedOutClass);
+        transformElement.classList.remove(isTransformingOutClass);
+        transformElement.classList.remove(isTransformedOutClass);
 
-        mediaElement.style.pointerEvents = "none";
+        transformElement.style.pointerEvents = "none";
 
         if (checkIsTouchDevice()) {
           // TOUCH DEVICE: start
-          mediaElement.style.transitionDuration = "0ms";
+          transformElement.style.transitionDuration = "0ms";
 
-          const isIframe = mediaElement.classList.contains("iframe-container");
+          const isIframe = isIframeTransformContainer(transformElement);
 
           if (isIframe) {
-            fixElementPosition(mediaElement);
+            fixElementPosition(transformElement);
           } else {
             const [width, height] = getContainedSize(
-              mediaElement as HTMLImageElement
+              transformElement as HTMLImageElement
             );
 
-            mediaElement.style.left = `${(window.innerWidth - width) / 2}px`;
-            mediaElement.style.top = `${(window.innerHeight - height) / 2}px`;
-            mediaElement.style.width = `${width}px`;
-            mediaElement.style.height = `${height}px`;
+            transformElement.style.left = `${
+              (window.innerWidth - width) / 2
+            }px`;
+            transformElement.style.top = `${
+              (window.innerHeight - height) / 2
+            }px`;
+            transformElement.style.width = `${width}px`;
+            transformElement.style.height = `${height}px`;
 
-            mediaElement.style.position = "fixed";
+            transformElement.style.position = "fixed";
           }
-          mediaElement.style.transform = "";
+          transformElement.style.transform = "";
 
           if (isIframe) {
-            mediaElement.style.maxWidth = "";
+            transformElement.style.maxWidth = "";
           }
 
           const duplicate = duplicates[index];
@@ -440,10 +448,10 @@ const { media } = Astro.props;
           transform({
             destinationRect: duplicateRect,
             transformBy: isIframe ? "width-height-margin" : "scale-translate",
-            transformingElement: mediaElement,
+            transformingElement: transformElement,
           });
 
-          const transitionDuration = getTransitionDurationMs(mediaElement);
+          const transitionDuration = getTransitionDurationMs(transformElement);
 
           setTimeout(() => {
             mediaContainer.style.overflowX = "auto";
@@ -451,28 +459,28 @@ const { media } = Astro.props;
 
           // revert to initial, untransformed css
           setTimeout(() => {
-            mediaElement.style.transitionDuration = "0ms";
-            mediaElement.style.zIndex = "0";
+            transformElement.style.transitionDuration = "0ms";
+            transformElement.style.zIndex = "0";
 
-            mediaElement.style.transform = "";
-            mediaElement.style.left = "0";
-            mediaElement.style.top = "0";
+            transformElement.style.transform = "";
+            transformElement.style.left = "0";
+            transformElement.style.top = "0";
 
             if (isIframe) {
-              mediaElement.style.maxHeight = "1000px";
-              mediaElement.style.height = "100%";
-              mediaElement.style.width = "";
-              mediaElement.style.marginTop = "0";
-              mediaElement.style.marginLeft = "0";
-              mediaElement.style.position = "relative";
+              transformElement.style.maxHeight = "1000px";
+              transformElement.style.height = "100%";
+              transformElement.style.width = "";
+              transformElement.style.marginTop = "0";
+              transformElement.style.marginLeft = "0";
+              transformElement.style.position = "relative";
             } else {
-              mediaElement.style.width = "";
-              mediaElement.style.height = "";
-              mediaElement.style.position = "static";
+              transformElement.style.width = "";
+              transformElement.style.height = "";
+              transformElement.style.position = "static";
             }
 
-            for (let j = mediaElements.length - 1; j > index; j--) {
-              const mediaElement = mediaElements[j];
+            for (let j = transformElements.length - 1; j > index; j--) {
+              const mediaElement = transformElements[j];
               const elementType = mediaElement.classList.contains(
                 "iframe-container"
               )
@@ -489,53 +497,67 @@ const { media } = Astro.props;
               mediaElement.style.top = "";
             }
 
-            mediaElement.style.pointerEvents = "auto";
+            transformElement.style.pointerEvents = "auto";
           }, transitionDuration);
           // TOUCH DEVICE: start
         } else {
           // NON TOUCH DEVICE: start
 
-          mediaElement.style.transitionDuration = "0ms";
-          fixElementPosition(mediaElement);
-          mediaElement.style.transform = "";
+          // TODO: non-touch iframe in...
+          const isIframe = isIframeTransformContainer(transformElement);
+
+          transformElement.style.transitionDuration = "0ms";
+          fixElementPosition(transformElement);
+          transformElement.style.transform = "";
+
+          if (isIframe) {
+            transformElement.style.marginTop = "0";
+            transformElement.style.marginLeft = "0";
+          }
 
           const duplicate = duplicates[index];
           const duplicateRect = duplicate.getBoundingClientRect();
 
           transform({
             destinationRect: duplicateRect,
-            transformBy: "scale-translate",
-            transformingElement: mediaElement,
+            transformBy: isIframe ? "width-height-margin" : "scale-translate",
+            transformingElement: transformElement,
           });
 
-          //
-          const transitionDuration = getTransitionDurationMs(mediaElement);
+          const transitionDuration = getTransitionDurationMs(transformElement);
           setTimeout(() => {
             mediaContainer.style.overflowX = "auto";
-            mediaElement.style.transitionDuration = "0ms";
-            mediaElement.style.zIndex = "0";
+            transformElement.style.transitionDuration = "0ms";
+            transformElement.style.zIndex = "0";
 
-            for (let j = mediaElements.length - 1; j >= index; j--) {
-              const mediaElement = mediaElements[j];
-              const elementType = mediaElement.classList.contains(
-                "iframe-container"
-              )
-                ? "iframe"
-                : "image";
+            for (let j = transformElements.length - 1; j >= index; j--) {
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
 
-              if (elementType === "image") {
-                mediaElement.style.width = "";
-                mediaElement.style.height = "";
-                mediaElement.style.position = "static";
+              transformElement.style.transform = "";
+              transformElement.style.left = "";
+              transformElement.style.top = "";
+
+              if (isIframe) {
+                transformElement.style.maxHeight = "1000px";
+                transformElement.style.height = "100%";
+                transformElement.style.width = "";
+                transformElement.style.marginTop = "0";
+                transformElement.style.marginLeft = "0";
+                transformElement.style.position = "relative";
+              } else {
+                transformElement.style.width = "";
+                transformElement.style.height = "";
+                transformElement.style.position = "static";
               }
-              mediaElement.style.transform = "";
-              mediaElement.style.left = "";
-              mediaElement.style.top = "";
             }
+
+            transformElement.style.pointerEvents = "auto";
           }, transitionDuration);
 
           // NON TOUCH: end
         }
+        // apply on all transforms in...
 
         const background = document.getElementById("background")!;
         background.style.opacity = "0";
