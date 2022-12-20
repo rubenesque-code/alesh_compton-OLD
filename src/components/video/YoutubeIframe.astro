@@ -14,10 +14,10 @@ import VolumeIcon from "./VolumeIcon.astro";
 
 import type { YoutubeVideo } from "~types/index";
 
-type Props = { isFirst: boolean } & YoutubeVideo;
+type Props = { isFirst: boolean; index: number } & YoutubeVideo;
 
 // TODO: try remove controls param below
-const { youtubeUrl, coverImage, isFirst } = Astro.props;
+const { youtubeUrl, coverImage, isFirst, index } = Astro.props;
 
 const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl)!;
 const youtubeEmbedSrc = getYoutubeEmbedUrlFromId(youtubeId);
@@ -30,23 +30,22 @@ const youtubeIframeParams = `?enablejsapi=1&modestbranding=1&rel=0&color=white&f
 const coverImageYPosition = coverImage?.yPosition || 50;
 ---
 
-<div class="iframe-container media-transform">
+<div class="iframe-container media-transform" id={`${index}`}>
   <div class="inner-container">
     <span class="bg-loading-text">Loading video...</span>
     <iframe
       id={youtubeId}
       class="iframe"
       src={youtubeEmbedSrc + youtubeIframeParams}
-      loading={"lazy"}
-      frameborder={0}
+      loading="lazy"
       allowfullscreen></iframe>
-    <div id="close-button" class="close-button">
+    <div id="close-button" class="iframe-helper-overlay close-button">
       <span>close</span>
       <CloseIcon />
     </div>
     <div id="volume-message" class="iframe-helper-overlay volume-message">
       <VolumeIcon />
-      <span>use controls for volume</span>
+      <span>use youtube controls for volume</span>
     </div>
   </div>
   <div class="iframe-overlay">
@@ -136,46 +135,30 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     transition: opacity 0.2s ease-in-out;
   }
   .iframe-helper-overlay {
-    z-index: 2;
     position: absolute;
-    background-color: black;
-    color: white;
-    text-transform: uppercase;
-    padding: 0.2em 0.5em;
-    border-radius: 3px;
-    transition: opacity 0.2s ease-in-out;
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
+    z-index: -1;
     opacity: 0;
-  }
-  .close-button {
-    text-transform: uppercase;
-    position: absolute;
-    z-index: 10;
-    opacity: 1;
-    right: 0;
-    bottom: 0;
+    bottom: -0.5em;
     transform: translateY(100%);
     font-size: small;
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5em;
     backdrop-filter: blur(60px);
     background-color: hsla(360, 100%, 100%, 0.31);
-    padding-left: 1em;
     border-radius: 3px;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .close-button {
+    right: 0;
+    cursor: pointer;
+    padding-left: 1em;
   }
   .volume-message {
-    bottom: 30%;
-    left: 1%;
+    left: 0;
     max-width: 60%;
     white-space: wrap;
-    cursor: default;
     pointer-events: none;
-    background-color: black;
-    color: white;
   }
   .play-icon {
     position: absolute;
@@ -185,21 +168,5 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     width: 10%;
     aspect-ratio: 1;
     min-width: 20px;
-  }
-
-  .inner-container:hover .close-button {
-    z-index: 10;
-  }
-
-  /*   @media (hover: hover) and (pointer: fine) {
-    .inner-container:hover .close-button {
-      z-index: 10;
-    }
-  } */
-
-  @media screen and (max-width: 600px) {
-    .volume-message {
-      bottom: 45%;
-    }
   }
 </style>

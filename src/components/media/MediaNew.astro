@@ -11,7 +11,8 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// TODO close: clicking on bg closes.
+// TODO: undo iframe-inner container transform on contract animation
+// TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
 // TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
 
 // NOTES
@@ -42,18 +43,23 @@ const { media } = Astro.props;
     <div class="spacer">helloo</div>
     <div class="visible-media" id="visible-media">
       {
-        media.map((mediaElement, i) =>
+        media.map((mediaElement, index) =>
           mediaElement.type === "image" ? (
             <Image
               class="image-img media-transform"
               src={mediaElement.url}
               alt=""
-              loading={i === 0 ? "eager" : "lazy"}
+              loading={index === 0 ? "eager" : "lazy"}
               fit="contain"
               format="avif"
+              id={`${index}`}
             />
           ) : (
-            <YoutubeIframe {...mediaElement} isFirst={i === 0} />
+            <YoutubeIframe
+              {...mediaElement}
+              isFirst={index === 0}
+              index={index}
+            />
           )
         )
       }
@@ -135,6 +141,17 @@ const { media } = Astro.props;
   // _________________________________
   const isTransformingOutClass = "is-transforming-out";
   const isTransformedOutClass = "is-transformed-out";
+  const isTransformingInClass = "is-transforming-in";
+
+  function checkIsTransformingOut(element: HTMLElement) {
+    return element.classList.contains(isTransformingOutClass);
+  }
+  function checkIsTransformedOut(element: HTMLElement) {
+    return element.classList.contains(isTransformedOutClass);
+  }
+  function checkIsTransformingIn(element: HTMLElement) {
+    return element.classList.contains(isTransformingInClass);
+  }
 
   //
   function checkIsTouchDevice() {
@@ -365,11 +382,13 @@ const { media } = Astro.props;
   //
   transformElements.forEach((transformElement, index) => {
     transformElement.addEventListener("click", () => {
-      const isInInitialPosition = !transformElement.classList.contains(
-        isTransformingOutClass
-      );
-      if (isInInitialPosition) {
+      const isInInitialPosition = !checkIsTransformingOut(transformElement);
+      const isTransformedOut = checkIsTransformedOut(transformElement);
+      const isTransformingIn = checkIsTransformingIn(transformElement);
+
+      if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
         // TRANSFORM OUT: START
+        console.log("TRANSFORMING OUT");
         transformElement.classList.add(isTransformingOutClass);
         transformElement.style.pointerEvents = "none";
 
@@ -447,7 +466,13 @@ const { media } = Astro.props;
 
         // TRANSFORM OUT: END
       } else {
+        const isIframe = isIframeTransformContainer(transformElement);
+        if (isIframe) {
+          // iframe handled by close button click listener
+          return;
+        }
         // RETURN TO INITIAL POSITION: start
+
         transformElement.classList.remove(isTransformingOutClass);
         transformElement.classList.remove(isTransformedOutClass);
 
@@ -455,35 +480,25 @@ const { media } = Astro.props;
 
         transformElement.style.transitionDuration = "0ms";
 
-        const isIframe = isIframeTransformContainer(transformElement);
+        const [width, height] = getContainedSize(
+          transformElement as HTMLImageElement
+        );
 
-        if (isIframe) {
-          fixElementPosition(transformElement);
-        } else {
-          const [width, height] = getContainedSize(
-            transformElement as HTMLImageElement
-          );
+        transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
+        transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
+        transformElement.style.width = `${width}px`;
+        transformElement.style.height = `${height}px`;
 
-          transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
-          transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
-          transformElement.style.width = `${width}px`;
-          transformElement.style.height = `${height}px`;
-
-          transformElement.style.position = "fixed";
-        }
+        transformElement.style.position = "fixed";
 
         transformElement.style.transform = "";
-
-        if (isIframe) {
-          transformElement.style.maxWidth = "";
-        }
 
         const duplicate = duplicates[index];
         const duplicateRect = duplicate.getBoundingClientRect();
 
         transform({
           destinationRect: duplicateRect,
-          transformBy: isIframe ? "width-height-margin" : "scale-translate",
+          transformBy: "scale-translate",
           transformingElement: transformElement,
         });
 
@@ -497,11 +512,7 @@ const { media } = Astro.props;
         setTimeout(() => {
           transformElement.style.transitionDuration = "0ms";
 
-          if (isIframe) {
-            revertIframeToInitialPlacement(transformElement);
-          } else {
-            revertImageToInitialPlacement(transformElement);
-          }
+          revertImageToInitialPlacement(transformElement);
 
           for (let j = transformElements.length - 1; j > index; j--) {
             const transformElement = transformElements[j];
@@ -526,6 +537,133 @@ const { media } = Astro.props;
 
         // RETURN TO INITIAL POSITON: END
       }
+    });
+  });
+
+  const closeButtons = Array.from(
+    mediaContainer.getElementsByClassName(
+      "close-button"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+  const iframeTransformContainers = Array.from(
+    mediaContainer.getElementsByClassName("iframe-container media-transform")
+  );
+  const iframes = Array.from(
+    mediaContainer.getElementsByClassName(
+      "iframe"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+  const overlays = Array.from(
+    mediaContainer.getElementsByClassName(
+      "iframe-overlay"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+  const volumeMessages = Array.from(
+    mediaContainer.getElementsByClassName(
+      "volume-message"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
+
+  closeButtons.forEach((closeButton, iframeIndex) => {
+    const transformElement = iframeTransformContainers[
+      iframeIndex
+    ] as HTMLElement;
+
+    closeButton.addEventListener("click", () => {
+      const isExpanded = transformElement.classList.contains(
+        isTransformedOutClass
+      );
+
+      if (!isExpanded) {
+        return;
+      }
+      // RETURN TO INITIAL POSITION: start
+      transformElement.classList.add(isTransformingInClass);
+
+      transformElement.classList.remove(isTransformingOutClass);
+      transformElement.classList.remove(isTransformedOutClass);
+
+      //
+      const overlay = overlays[iframeIndex];
+      const volumeMessage = volumeMessages[iframeIndex];
+
+      overlay.style.zIndex = "2";
+      overlay.style.opacity = "1";
+
+      closeButton.style.opacity = "0";
+      volumeMessage.style.opacity = "0";
+
+      setTimeout(() => {
+        closeButton.style.zIndex = "-1";
+        volumeMessage.style.zIndex = "-1";
+      }, 200);
+
+      const iframe = iframes[iframeIndex];
+      // @ts-ignore: Unreachable code error
+      const player = window[`player${iframe.id}`];
+
+      if (player) {
+        player.pauseVideo();
+      }
+
+      // time for overlay
+      setTimeout(() => {
+        const allElementsIndex = Number(transformElement.id);
+
+        transformElement.style.pointerEvents = "none";
+        transformElement.style.transitionDuration = "0ms";
+        fixElementPosition(transformElement);
+        transformElement.style.transform = "";
+        transformElement.style.maxWidth = "";
+
+        const duplicate = duplicates[allElementsIndex];
+        const duplicateRect = duplicate.getBoundingClientRect();
+
+        transform({
+          destinationRect: duplicateRect,
+          transformBy: "width-height-margin",
+          transformingElement: transformElement,
+        });
+
+        const transitionDuration = getTransitionDurationMs(transformElement);
+
+        setTimeout(() => {
+          mediaContainer.style.overflowX = "auto";
+        }, transitionDuration / 2);
+
+        // revert to initial, untransformed css
+        setTimeout(() => {
+          transformElement.style.transitionDuration = "0ms";
+
+          revertIframeToInitialPlacement(transformElement);
+
+          for (
+            let j = transformElements.length - 1;
+            j > allElementsIndex;
+            j--
+          ) {
+            const transformElement = transformElements[j];
+            const isIframe = isIframeTransformContainer(transformElement);
+
+            if (isIframe) {
+              revertIframeToInitialPlacement(transformElement);
+            } else {
+              revertImageToInitialPlacement(transformElement);
+            }
+          }
+
+          transformElement.style.pointerEvents = "auto";
+        }, transitionDuration);
+
+        const background = document.getElementById("background")!;
+        background.style.opacity = "0";
+        setTimeout(() => {
+          background.style.zIndex = "-1";
+          background.style.position = "static";
+        }, transitionDuration);
+      }, 100);
+
+      // RETURN TO INITIAL POSITON: END
     });
   });
 </script>
@@ -608,6 +746,8 @@ const { media } = Astro.props;
     );
     const iframes = document.getElementsByClassName("iframe");
     const overlays = document.getElementsByClassName("iframe-overlay");
+    const volumeMessages = document.getElementsByClassName("volume-message");
+    const closeButtons = document.getElementsByClassName("close-button");
 
     //
     function onIsTransformedOut({
@@ -661,6 +801,14 @@ const { media } = Astro.props;
 
       if (player) {
         overlay.style.opacity = "0";
+
+        const volMessage = volumeMessages[iframeIndex];
+        const closeButton = closeButtons[iframeIndex];
+
+        volMessage.style.zIndex = "10";
+        volMessage.style.opacity = "1";
+        closeButton.style.zIndex = "10";
+        closeButton.style.opacity = "1";
         // time for opacity transition
         setTimeout(() => {
           overlay.style.zIndex = "-1";
@@ -688,6 +836,14 @@ const { media } = Astro.props;
         event.target.setVolume(0);
 
         overlay.style.opacity = "0";
+
+        const volMessage = volumeMessages[iframeIndex];
+        const closeButton = closeButtons[iframeIndex];
+
+        volMessage.style.zIndex = "10";
+        volMessage.style.opacity = "1";
+        closeButton.style.zIndex = "10";
+        closeButton.style.opacity = "1";
         // time for opacity transition
         setTimeout(() => {
           overlay.style.zIndex = "-1";
@@ -721,6 +877,8 @@ const { media } = Astro.props;
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
+    const volumeMessages = document.getElementsByClassName("volume-message");
+    const closeButtons = document.getElementsByClassName("close-button");
 
     const isTransformedOutClass = "is-transformed-out";
 
@@ -751,6 +909,14 @@ const { media } = Astro.props;
       )[index];
 
       overlay.style.opacity = "0";
+
+      const volMessage = volumeMessages[index];
+      const closeButton = closeButtons[index];
+
+      volMessage.style.zIndex = "10";
+      volMessage.style.opacity = "1";
+      closeButton.style.zIndex = "10";
+      closeButton.style.opacity = "1";
       // time for opacity transition
       setTimeout(() => {
         overlay.style.zIndex = "-1";
