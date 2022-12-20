@@ -177,6 +177,32 @@ const { media } = Astro.props;
     element.style.position = "fixed";
   }
 
+  function revertIframeToInitialPlacement(element: HTMLElement) {
+    element.style.zIndex = "0";
+
+    element.style.transform = "";
+    element.style.left = "0";
+    element.style.top = "0";
+
+    element.style.maxHeight = "1000px";
+    element.style.height = "100%";
+    element.style.width = "";
+    element.style.marginTop = "0";
+    element.style.marginLeft = "0";
+    element.style.position = "relative";
+  }
+  function revertImageToInitialPlacement(element: HTMLElement) {
+    element.style.zIndex = "0";
+
+    element.style.transform = "";
+    element.style.left = "0";
+    element.style.top = "0";
+
+    element.style.width = "";
+    element.style.height = "";
+    element.style.position = "static";
+  }
+
   type Mutable<T> = {
     -readonly [k in keyof T]: T[k];
   };
@@ -436,6 +462,7 @@ const { media } = Astro.props;
 
             transformElement.style.position = "fixed";
           }
+
           transformElement.style.transform = "";
 
           if (isIframe) {
@@ -460,23 +487,11 @@ const { media } = Astro.props;
           // revert to initial, untransformed css
           setTimeout(() => {
             transformElement.style.transitionDuration = "0ms";
-            transformElement.style.zIndex = "0";
-
-            transformElement.style.transform = "";
-            transformElement.style.left = "0";
-            transformElement.style.top = "0";
 
             if (isIframe) {
-              transformElement.style.maxHeight = "1000px";
-              transformElement.style.height = "100%";
-              transformElement.style.width = "";
-              transformElement.style.marginTop = "0";
-              transformElement.style.marginLeft = "0";
-              transformElement.style.position = "relative";
+              revertIframeToInitialPlacement(transformElement);
             } else {
-              transformElement.style.width = "";
-              transformElement.style.height = "";
-              transformElement.style.position = "static";
+              revertImageToInitialPlacement(transformElement);
             }
 
             for (let j = transformElements.length - 1; j > index; j--) {
@@ -499,11 +514,11 @@ const { media } = Astro.props;
 
             transformElement.style.pointerEvents = "auto";
           }, transitionDuration);
-          // TOUCH DEVICE: start
+
+          // TOUCH DEVICE: end
         } else {
           // NON TOUCH DEVICE: start
 
-          // TODO: non-touch iframe in...
           const isIframe = isIframeTransformContainer(transformElement);
 
           transformElement.style.transitionDuration = "0ms";
@@ -534,21 +549,10 @@ const { media } = Astro.props;
               const transformElement = transformElements[j];
               const isIframe = isIframeTransformContainer(transformElement);
 
-              transformElement.style.transform = "";
-              transformElement.style.left = "";
-              transformElement.style.top = "";
-
               if (isIframe) {
-                transformElement.style.maxHeight = "1000px";
-                transformElement.style.height = "100%";
-                transformElement.style.width = "";
-                transformElement.style.marginTop = "0";
-                transformElement.style.marginLeft = "0";
-                transformElement.style.position = "relative";
+                revertIframeToInitialPlacement(transformElement);
               } else {
-                transformElement.style.width = "";
-                transformElement.style.height = "";
-                transformElement.style.position = "static";
+                revertImageToInitialPlacement(transformElement);
               }
             }
 
@@ -559,12 +563,13 @@ const { media } = Astro.props;
         }
         // apply on all transforms in...
 
+        const transitionDuration = getTransitionDurationMs(transformElement);
         const background = document.getElementById("background")!;
         background.style.opacity = "0";
         setTimeout(() => {
           background.style.zIndex = "-1";
           background.style.position = "static";
-        }, 500);
+        }, transitionDuration);
 
         // RETURN TO INITIAL POSITON: END
       }
