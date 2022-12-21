@@ -413,12 +413,11 @@ const { media } = Astro.props;
 
         const isIframe = isIframeTransformContainer(transformElement);
 
-        const isTouchDeviceAndLandscape =
-          checkIsTouchDevice() &&
-          (window.orientation === 90 || window.orientation === -90);
+        const isLandscape =
+          window.orientation === 90 || window.orientation === -90;
+        // checkIsTouchDevice() &&
 
-        const maxDimensionDecimal =
-          isIframe && isTouchDeviceAndLandscape ? 0.8 : 0.98;
+        const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
 
         const fillScreenRect = calcFillScreenRect({
           element: transformElement,
@@ -595,6 +594,11 @@ const { media } = Astro.props;
       "volume-message"
     ) as HTMLCollectionOf<HTMLElement>
   );
+  const iframeHelperPanels = Array.from(
+    mediaContainer.getElementsByClassName(
+      "iframe-helper"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
 
   closeButtons.forEach((closeButton, iframeIndex) => {
     const transformElement = iframeTransformContainers[
@@ -615,22 +619,20 @@ const { media } = Astro.props;
       transformElement.style.pointerEvents = "none";
       //
       const overlay = overlays[iframeIndex];
-      const volumeMessage = volumeMessages[iframeIndex];
+      const iframeHelperPanel = iframeHelperPanels[iframeIndex];
+      // const volumeMessage = volumeMessages[iframeIndex];
 
       overlay.style.zIndex = "2";
       overlay.style.opacity = "1";
 
-      closeButton.style.opacity = "0";
-      volumeMessage.style.opacity = "0";
-
+      iframeHelperPanel.style.opacity = "0";
       setTimeout(() => {
-        closeButton.style.zIndex = "-1";
-        volumeMessage.style.zIndex = "-1";
+        iframeHelperPanel.style.zIndex = "-1";
       }, 200);
 
       const iframe = iframes[iframeIndex];
       // @ts-ignore: Unreachable code error
-      const player = window[`player${iframe.id}`];
+      const player = window[`player-${iframe.id}`];
 
       if (player) {
         player.pauseVideo();
@@ -777,6 +779,8 @@ const { media } = Astro.props;
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
+    const iframeInnerContainers =
+      document.getElementsByClassName("inner-container");
     const iframes = document.getElementsByClassName("iframe");
     const overlays = document.getElementsByClassName("iframe-overlay");
     const helperPanels = document.getElementsByClassName("iframe-helper");
@@ -798,6 +802,7 @@ const { media } = Astro.props;
       }
 
       const iframe = iframes[iframeIndex];
+      const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
       const loadingText = loadingTexts[iframeIndex];
       const helperPanel = helperPanels[iframeIndex];
@@ -808,8 +813,16 @@ const { media } = Astro.props;
 
       //
       function showLoading() {
+        innerContainer.style.cursor = "wait";
         loadingText.style.zIndex = "10";
         loadingText.style.opacity = "1";
+      }
+      function hideLoading() {
+        innerContainer.style.cursor = "auto";
+        loadingText.style.opacity = "0";
+        setTimeout(() => {
+          loadingText.style.zIndex = "-1";
+        }, 200);
       }
 
       if (!youtubeApiIsInitiated || !youtubeApiIsReady) {
@@ -829,18 +842,20 @@ const { media } = Astro.props;
         return;
       }
 
-      const player = window[`player${iframe.id}`];
+      const player = window[`player-${iframe.id}`];
 
+      // TODO: could have a player that isn't ready - but then would have an onReady handler
       if (player) {
         overlay.style.opacity = "0";
 
         helperPanel.style.zIndex = "10";
         helperPanel.style.opacity = "1";
+
         // time for opacity transition
         setTimeout(() => {
           overlay.style.zIndex = "-1";
 
-          window[iframe.id].playVideo();
+          player.playVideo();
         }, 200);
 
         return;
@@ -850,7 +865,7 @@ const { media } = Astro.props;
 
       showLoading();
 
-      window[iframe.id] = new YT.Player(iframe.id, {
+      window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
           onReady,
         },
@@ -859,16 +874,11 @@ const { media } = Astro.props;
       function onReady(event) {
         iframe.classList.remove(youtubePlayerLoadingFlag);
 
-        loadingText.style.opacity = "0";
-        setTimeout(() => {
-          loadingText.style.zIndex = "-1";
-        }, 200);
+        hideLoading();
 
         event.target.setVolume(0);
 
         overlay.style.opacity = "0";
-
-        const helperPanel = helperPanels[iframeIndex];
 
         helperPanel.style.zIndex = "10";
         helperPanel.style.opacity = "1";
@@ -891,22 +901,21 @@ const { media } = Astro.props;
   }
   main();
 
+  const scopeMessage = "HELLO SCOPE TEST";
   // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
   // the API's js is loaded after the first iframe container is transformed
   function onYouTubeIframeAPIReady() {
+    console.log("Scope message:", scopeMessage);
     const youtubeApiReadyFlag = "yt-api-ready";
     const youtubePlayerLoadingFlag = "yt-player-loading";
+    const isTransformedOutClass = "is-transformed-out";
+
     const mediaContainer = document.getElementById("media-container");
-
-    mediaContainer.classList.add(youtubeApiReadyFlag);
-
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
 
-    const helperPanels = document.getElementsByClassName("iframe-helper");
-
-    const isTransformedOutClass = "is-transformed-out";
+    mediaContainer.classList.add(youtubeApiReadyFlag);
 
     const index = iframeTransformContainers.findIndex((node) =>
       node.classList.contains(isTransformedOutClass)
@@ -916,17 +925,17 @@ const { media } = Astro.props;
       return;
     }
 
-    const iframe = Array.from(document.getElementsByClassName("iframe"))[index];
-    const overlay = Array.from(
-      document.getElementsByClassName("iframe-overlay")
-    )[index];
-    const loadingText = Array.from(
-      document.getElementsByClassName("player-loading")
-    )[index];
+    const iframe = document.getElementsByClassName("iframe")[index];
+    const overlay = document.getElementsByClassName("iframe-overlay")[index];
+    const loadingText =
+      document.getElementsByClassName("player-loading")[index];
+    const helperPanel = document.getElementsByClassName("iframe-helper")[index];
+    const innerContainer =
+      document.getElementsByClassName("inner-container")[index];
 
     iframe.classList.add(youtubePlayerLoadingFlag);
 
-    window[`player${iframe.id}`] = new YT.Player(iframe.id, {
+    window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
       events: {
         onReady,
       },
@@ -935,14 +944,13 @@ const { media } = Astro.props;
     function onReady(event) {
       iframe.classList.remove(youtubePlayerLoadingFlag);
 
+      innerContainer.style.cursor = "auto";
       loadingText.style.opacity = "0";
       setTimeout(() => {
         loadingText.style.zIndex = "-1";
       }, 200);
 
       overlay.style.opacity = "0";
-
-      const helperPanel = helperPanels[index];
 
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
