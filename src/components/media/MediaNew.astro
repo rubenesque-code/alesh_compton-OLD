@@ -142,6 +142,7 @@ const { media } = Astro.props;
   const isTransformingOutClass = "is-transforming-out";
   const isTransformedOutClass = "is-transformed-out";
   const isTransformingInClass = "is-transforming-in";
+  const isTransformedInClass = "is-transformed-in";
 
   function checkIsTransformingOut(element: HTMLElement) {
     return element.classList.contains(isTransformingOutClass);
@@ -151,6 +152,9 @@ const { media } = Astro.props;
   }
   function checkIsTransformingIn(element: HTMLElement) {
     return element.classList.contains(isTransformingInClass);
+  }
+  function checkIsTransformedIn(element: HTMLElement) {
+    return element.classList.contains(isTransformedInClass);
   }
 
   //
@@ -376,6 +380,7 @@ const { media } = Astro.props;
 
   //
   const mediaContainer = document.getElementById("media-container")!;
+  const background = document.getElementById("background")!;
   const transformElements = Array.from(
     mediaContainer.getElementsByClassName(
       "media-transform"
@@ -484,6 +489,7 @@ const { media } = Astro.props;
 
           transformElement.style.pointerEvents = "auto";
           transformElement.classList.add(isTransformedOutClass);
+          transformElement.classList.remove(isTransformingOutClass);
         }, transitionDuration);
 
         // TRANSFORM OUT: END
@@ -495,8 +501,8 @@ const { media } = Astro.props;
         }
         // RETURN TO INITIAL POSITION: start
 
-        transformElement.classList.remove(isTransformingOutClass);
         transformElement.classList.remove(isTransformedOutClass);
+        transformElement.classList.add(isTransformingInClass);
 
         transformElement.style.pointerEvents = "none";
 
@@ -530,6 +536,9 @@ const { media } = Astro.props;
           mediaContainer.style.overflowX = "auto";
         }, transitionDuration - 300);
 
+        background.style.transitionDuration = `${transitionDuration}ms`;
+        background.style.opacity = "0";
+
         // revert to initial, untransformed css
         setTimeout(() => {
           transformElement.style.transitionDuration = "0ms";
@@ -547,15 +556,16 @@ const { media } = Astro.props;
             }
           }
 
-          transformElement.style.pointerEvents = "auto";
-        }, transitionDuration);
-
-        const background = document.getElementById("background")!;
-        background.style.opacity = "0";
-        setTimeout(() => {
           background.style.zIndex = "-1";
           background.style.position = "static";
+
+          transformElement.style.pointerEvents = "auto";
+
+          transformElement.classList.add(isTransformedInClass);
+          transformElement.classList.remove(isTransformingInClass);
         }, transitionDuration);
+
+        setTimeout(() => {}, transitionDuration);
 
         // RETURN TO INITIAL POSITON: END
       }
@@ -599,11 +609,8 @@ const { media } = Astro.props;
       if (!isExpanded) {
         return;
       }
-      // RETURN TO INITIAL POSITION: start
-      transformElement.classList.add(isTransformingInClass);
-
-      transformElement.classList.remove(isTransformingOutClass);
       transformElement.classList.remove(isTransformedOutClass);
+      transformElement.classList.add(isTransformingInClass);
 
       transformElement.style.pointerEvents = "none";
       //
@@ -629,7 +636,7 @@ const { media } = Astro.props;
         player.pauseVideo();
       }
 
-      // time for overlay
+      // time for iframe overlay
       setTimeout(() => {
         const allElementsIndex = Number(transformElement.id);
 
@@ -653,6 +660,8 @@ const { media } = Astro.props;
           mediaContainer.style.overflowX = "auto";
         }, transitionDuration / 2);
 
+        background.style.opacity = "0";
+
         // revert to initial, untransformed css
         setTimeout(() => {
           transformElement.style.transitionDuration = "0ms";
@@ -674,18 +683,15 @@ const { media } = Astro.props;
             }
           }
 
-          transformElement.style.pointerEvents = "auto";
-        }, transitionDuration);
-
-        const background = document.getElementById("background")!;
-        background.style.opacity = "0";
-        setTimeout(() => {
           background.style.zIndex = "-1";
           background.style.position = "static";
+
+          transformElement.style.pointerEvents = "auto";
+
+          transformElement.classList.remove(isTransformingInClass);
+          transformElement.classList.add(isTransformedInClass);
         }, transitionDuration);
       }, 100);
-
-      // RETURN TO INITIAL POSITON: END
     });
   });
 </script>
@@ -761,39 +767,44 @@ const { media } = Astro.props;
     }
 
     //
+    const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
+    const youtubeApiReadyFlag = "yt-api-ready";
     const isTransformedOutClass = "is-transformed-out";
+    const youtubePlayerLoadingFlag = "yt-player-loading";
 
+    //
+    const mediaContainer = document.getElementById("media-container");
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
     const iframes = document.getElementsByClassName("iframe");
     const overlays = document.getElementsByClassName("iframe-overlay");
     const helperPanels = document.getElementsByClassName("iframe-helper");
+    const loadingTexts = document.getElementsByClassName("player-loading");
 
     //
-    function onIsTransformedOut({
-      iframe,
-      overlay,
-      transformContainer,
-      iframeIndex,
-    }) {
+    function checkYoutubeApiIsInitiated() {
+      return mediaContainer.classList.contains(youtubeApiCodeInitiatedClass);
+    }
+    function checkYoutubeApiIsReady() {
+      return mediaContainer.classList.contains(youtubeApiReadyFlag);
+    }
+
+    //
+    function onIsTransformedOut({ iframeIndex }) {
+      const transformContainer = iframeTransformContainers[iframeIndex];
       if (!transformContainer.classList.contains(isTransformedOutClass)) {
         return;
       }
-      const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
-      const youtubeApiReadyFlag = "yt-api-ready";
 
-      const mediaContainer = document.getElementById("media-container");
-      const loadingText = Array.from(
-        document.getElementsByClassName("player-loading")
-      )[iframeIndex];
+      const iframe = iframes[iframeIndex];
+      const overlay = overlays[iframeIndex];
+      const loadingText = loadingTexts[iframeIndex];
+      const helperPanel = helperPanels[iframeIndex];
 
       //
-      const youtubeApiIsInitiated = mediaContainer.classList.contains(
-        youtubeApiCodeInitiatedClass
-      );
-      const youtubeApiIsReady =
-        mediaContainer.classList.contains(youtubeApiReadyFlag);
+      const youtubeApiIsInitiated = checkYoutubeApiIsInitiated();
+      const youtubeApiIsReady = checkYoutubeApiIsReady();
 
       //
       function showLoading() {
@@ -814,7 +825,7 @@ const { media } = Astro.props;
       if (!youtubeApiIsReady) {
         return;
       }
-      if (iframe.classList.contains("yt-player-loading")) {
+      if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
 
@@ -822,8 +833,6 @@ const { media } = Astro.props;
 
       if (player) {
         overlay.style.opacity = "0";
-
-        const helperPanel = helperPanels[iframeIndex];
 
         helperPanel.style.zIndex = "10";
         helperPanel.style.opacity = "1";
@@ -837,6 +846,8 @@ const { media } = Astro.props;
         return;
       }
 
+      iframe.classList.add(youtubePlayerLoadingFlag);
+
       showLoading();
 
       window[iframe.id] = new YT.Player(iframe.id, {
@@ -846,6 +857,8 @@ const { media } = Astro.props;
       });
 
       function onReady(event) {
+        iframe.classList.remove(youtubePlayerLoadingFlag);
+
         loadingText.style.opacity = "0";
         setTimeout(() => {
           loadingText.style.zIndex = "-1";
@@ -871,9 +884,6 @@ const { media } = Astro.props;
     iframeTransformContainers.forEach((transformContainer, i) => {
       new ClassWatcher(transformContainer, isTransformedOutClass, () =>
         onIsTransformedOut({
-          iframe: iframes[i],
-          overlay: overlays[i],
-          transformContainer,
           iframeIndex: i,
         })
       );
@@ -885,6 +895,7 @@ const { media } = Astro.props;
   // the API's js is loaded after the first iframe container is transformed
   function onYouTubeIframeAPIReady() {
     const youtubeApiReadyFlag = "yt-api-ready";
+    const youtubePlayerLoadingFlag = "yt-player-loading";
     const mediaContainer = document.getElementById("media-container");
 
     mediaContainer.classList.add(youtubeApiReadyFlag);
@@ -913,7 +924,7 @@ const { media } = Astro.props;
       document.getElementsByClassName("player-loading")
     )[index];
 
-    iframe.classList.add("yt-player-loading");
+    iframe.classList.add(youtubePlayerLoadingFlag);
 
     window[`player${iframe.id}`] = new YT.Player(iframe.id, {
       events: {
@@ -922,6 +933,8 @@ const { media } = Astro.props;
     });
 
     function onReady(event) {
+      iframe.classList.remove(youtubePlayerLoadingFlag);
+
       loadingText.style.opacity = "0";
       setTimeout(() => {
         loadingText.style.zIndex = "-1";
@@ -941,8 +954,6 @@ const { media } = Astro.props;
         overlay.style.zIndex = "-1";
 
         event.target.playVideo();
-
-        iframe.classList.remove("yt-player-loading");
       }, 200);
     }
   }
