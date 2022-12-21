@@ -11,9 +11,9 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// TODO: undo iframe-inner container transform on contract animation; can't click on iframe overlay again after contract.
-// TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
-// TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
+// TODO: on landscape, iframe transform out and in still not right (seems perfect in portrait).
+// TODO: undo iframe-inner container transform on contract animation;
+// TODO   what happens if youtube player loading and exit transformation; vol message hide on vol change.
 
 // NOTES
 // - only point of the duplication is to keep the width of the container when image content translated
@@ -403,6 +403,8 @@ const { media } = Astro.props;
         // TRANSFORM OUT: start
 
         transformElement.classList.add(isTransformingOutClass);
+        transformElement.classList.remove(isTransformedInClass);
+
         transformElement.style.pointerEvents = "none";
 
         for (let j = transformElements.length - 1; j >= index; j--) {
@@ -413,9 +415,13 @@ const { media } = Astro.props;
 
         const isIframe = isIframeTransformContainer(transformElement);
 
-        const isLandscape =
-          window.orientation === 90 || window.orientation === -90;
+        const innerWidth = window.innerWidth;
+        const innerHeight = window.innerHeight;
+
+        const isLandscape = innerWidth >= innerHeight;
+
         // checkIsTouchDevice() &&
+        console.log("isLandscape:", isLandscape);
 
         const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
 
@@ -579,6 +585,11 @@ const { media } = Astro.props;
   const iframeTransformContainers = Array.from(
     mediaContainer.getElementsByClassName("iframe-container media-transform")
   );
+  const iframeInnerContainers = Array.from(
+    mediaContainer.getElementsByClassName(
+      "inner-container"
+    ) as HTMLCollectionOf<HTMLElement>
+  );
   const iframes = Array.from(
     mediaContainer.getElementsByClassName(
       "iframe"
@@ -606,11 +617,11 @@ const { media } = Astro.props;
     ] as HTMLElement;
 
     closeButton.addEventListener("click", () => {
-      const isExpanded = transformElement.classList.contains(
-        isTransformedOutClass
-      );
+      const isTransformedOut = checkIsTransformedOut(transformElement);
+      const isTransformingIn = checkIsTransformingIn(transformElement);
+      const isTransformedIn = checkIsTransformedIn(transformElement);
 
-      if (!isExpanded) {
+      if (!isTransformedOut || isTransformingIn || isTransformedIn) {
         return;
       }
       transformElement.classList.remove(isTransformedOutClass);
@@ -618,6 +629,7 @@ const { media } = Astro.props;
 
       transformElement.style.pointerEvents = "none";
       //
+      const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
       const iframeHelperPanel = iframeHelperPanels[iframeIndex];
       // const volumeMessage = volumeMessages[iframeIndex];
@@ -669,6 +681,13 @@ const { media } = Astro.props;
           transformElement.style.transitionDuration = "0ms";
 
           revertIframeToInitialPlacement(transformElement);
+          innerContainer.style.left = "";
+          innerContainer.style.top = "";
+          innerContainer.style.transform = "";
+
+          overlay.style.left = "";
+          overlay.style.top = "";
+          overlay.style.transform = "";
 
           for (
             let j = transformElements.length - 1;
