@@ -93,6 +93,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     aspect-ratio: 16/9;
   }
   .inner-container {
+    /* visibility: hidden; */
     position: absolute;
     width: 100%;
     aspect-ratio: 16/9;
@@ -177,7 +178,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     min-width: 20px;
   }
 
-  @media (orientation: landscape), (max-width: 800px) {
+  @media (orientation: landscape) and (max-width: 800px) {
     .iframe-helper {
       bottom: 0;
     }

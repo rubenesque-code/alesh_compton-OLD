@@ -454,23 +454,15 @@ const { media } = Astro.props;
             transformElement.style.marginTop = "0";
             transformElement.style.marginLeft = "0";
 
-            console.log("sc avail h:", screen.availHeight);
-            console.log("win inner h:", window.innerHeight);
-
             // maybe don't need this---
             const deviceBiggestSide =
               window.innerWidth > window.innerHeight
                 ? window.innerWidth
                 : window.innerHeight;
 
-            const maxWidth =
-              checkIsTouchDevice() && deviceBiggestSide < 800
-                ? deviceBiggestSide * 0.8 - 80
-                : deviceBiggestSide * 0.8;
+            const maxWidth = deviceBiggestSide * 0.8;
 
-            transformElement.style.maxWidth = `${
-              deviceBiggestSide * 0.8 - 80
-            }px`;
+            transformElement.style.maxWidth = `${maxWidth}px`;
             transformElement.style.maxHeight = "100vh";
 
             const innerContainer = transformElement.getElementsByClassName(
@@ -989,4 +981,14 @@ const { media } = Astro.props;
       }, 200);
     }
   }
+</script>
+
+<script>
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      // This hides the address bar:
+      console.log("Scrolling to...");
+      window.scrollTo(0, 1);
+    }, 0);
+  });
 </script>
