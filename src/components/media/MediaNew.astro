@@ -420,9 +420,6 @@ const { media } = Astro.props;
 
         const isLandscape = innerWidth >= innerHeight;
 
-        // checkIsTouchDevice() &&
-        console.log("isLandscape:", isLandscape);
-
         const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
 
         const fillScreenRect = calcFillScreenRect({
@@ -457,17 +454,25 @@ const { media } = Astro.props;
             transformElement.style.marginTop = "0";
             transformElement.style.marginLeft = "0";
 
+            console.log("sc avail h:", screen.availHeight);
+            console.log("win inner h:", window.innerHeight);
+
             // maybe don't need this---
             const deviceBiggestSide =
               window.innerWidth > window.innerHeight
                 ? window.innerWidth
                 : window.innerHeight;
 
-            transformElement.style.maxWidth = `${deviceBiggestSide * 0.8}px`;
-            // ---
+            const maxWidth =
+              checkIsTouchDevice() && deviceBiggestSide < 800
+                ? deviceBiggestSide * 0.8 - 80
+                : deviceBiggestSide * 0.8;
+
+            transformElement.style.maxWidth = `${
+              deviceBiggestSide * 0.8 - 80
+            }px`;
             transformElement.style.maxHeight = "100vh";
 
-            //
             const innerContainer = transformElement.getElementsByClassName(
               "inner-container"
             )[0] as HTMLElement;
@@ -485,7 +490,7 @@ const { media } = Astro.props;
           }
 
           transformElement.style.width = `98%`;
-          transformElement.style.height = `98%`;
+          transformElement.style.height = `98vh`;
           transformElement.style.left = `50%`;
           transformElement.style.top = `50%`;
           transformElement.style.transform = "translate(-50%, -50%)";
@@ -647,7 +652,7 @@ const { media } = Astro.props;
       const player = window[`player-${iframe.id}`];
 
       if (player) {
-        player.pauseVideo();
+        player.stopVideo();
       }
 
       // time for iframe overlay

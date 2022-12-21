@@ -160,8 +160,10 @@ const coverImageYPosition = coverImage?.yPosition || 50;
   }
   .close-button {
     cursor: pointer;
+    padding-left: 4px;
   }
   .volume-message {
+    padding-right: 4px;
     white-space: wrap;
     pointer-events: none;
   }
@@ -175,11 +177,9 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     min-width: 20px;
   }
 
-  /*   @media (orientation: landscape), (max-width: 800px) {
-    .close-button {
-      position: fixed;
-      right: 0.5em;
-      bottom: 0.5em;
+  @media (orientation: landscape), (max-width: 800px) {
+    .iframe-helper {
+      bottom: 0;
     }
-  } */
+  }
 </style>
