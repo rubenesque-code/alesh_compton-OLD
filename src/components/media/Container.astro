@@ -66,7 +66,7 @@
       // HANDLE PRELOAD NEXT MEDIA
       const visibleContainer = document.getElementById("visible-media");
       const images = Array.from(
-        visibleContainer.getElementsByTagName("img")
+        visibleContainer.querySelectorAll(".image-img, .iframe-img")
       ).filter((image) => image.loading === "lazy");
 
       for (let i = 0; i < images.length; i++) {

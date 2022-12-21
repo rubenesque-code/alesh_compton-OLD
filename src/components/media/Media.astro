@@ -158,14 +158,6 @@ const { media } = Astro.props;
   }
 
   //
-  function checkIsTouchDevice() {
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      // @ts-ignore: Unreachable code error
-      navigator.msMaxTouchPoints > 0
-    );
-  }
 
   function getContainedSize(img: HTMLImageElement) {
     var ratio = img.naturalWidth / img.naturalHeight;
@@ -597,11 +589,6 @@ const { media } = Astro.props;
       "iframe-overlay"
     ) as HTMLCollectionOf<HTMLElement>
   );
-  const volumeMessages = Array.from(
-    mediaContainer.getElementsByClassName(
-      "volume-message"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
   const iframeHelperPanels = Array.from(
     mediaContainer.getElementsByClassName(
       "iframe-helper"
@@ -629,7 +616,6 @@ const { media } = Astro.props;
       const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
       const iframeHelperPanel = iframeHelperPanels[iframeIndex];
-      // const volumeMessage = volumeMessages[iframeIndex];
 
       overlay.style.zIndex = "2";
       overlay.style.opacity = "1";
@@ -716,66 +702,123 @@ const { media } = Astro.props;
 
 <script type="text/javascript">
   // YOUTUBE STUFF
-  function main() {
-    //
-    class ClassWatcher {
-      constructor(
-        targetNode,
-        classToWatch,
-        classAddedCallback,
-        classRemovedCallback
-      ) {
-        this.targetNode = targetNode;
-        this.classToWatch = classToWatch;
-        this.classAddedCallback = classAddedCallback;
-        this.classRemovedCallback = classRemovedCallback;
-        this.observer = null;
-        this.lastClassState = targetNode.classList.contains(this.classToWatch);
 
-        this.init();
-      }
+  //
+  class ClassWatcher {
+    constructor(
+      targetNode,
+      classToWatch,
+      classAddedCallback,
+      classRemovedCallback
+    ) {
+      this.targetNode = targetNode;
+      this.classToWatch = classToWatch;
+      this.classAddedCallback = classAddedCallback;
+      this.classRemovedCallback = classRemovedCallback;
+      this.observer = null;
+      this.lastClassState = targetNode.classList.contains(this.classToWatch);
 
-      init() {
-        this.observer = new MutationObserver(this.mutationCallback);
-        this.observe();
-      }
+      this.init();
+    }
 
-      observe() {
-        this.observer.observe(this.targetNode, { attributes: true });
-      }
+    init() {
+      this.observer = new MutationObserver(this.mutationCallback);
+      this.observe();
+    }
 
-      disconnect() {
-        this.observer.disconnect();
-      }
+    observe() {
+      this.observer.observe(this.targetNode, { attributes: true });
+    }
 
-      mutationCallback = (mutationsList) => {
-        for (let mutation of mutationsList) {
-          if (
-            mutation.type === "attributes" &&
-            mutation.attributeName === "class"
-          ) {
-            let currentClassState = mutation.target.classList.contains(
-              this.classToWatch
-            );
-            if (this.lastClassState !== currentClassState) {
-              this.lastClassState = currentClassState;
-              if (currentClassState) {
-                this.classAddedCallback();
-              } else {
-                if (this.classRemovedCallback) {
-                  this.classRemovedCallback();
-                }
+    disconnect() {
+      this.observer.disconnect();
+    }
+
+    mutationCallback = (mutationsList) => {
+      for (let mutation of mutationsList) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          let currentClassState = mutation.target.classList.contains(
+            this.classToWatch
+          );
+          if (this.lastClassState !== currentClassState) {
+            this.lastClassState = currentClassState;
+            if (currentClassState) {
+              this.classAddedCallback();
+            } else {
+              if (this.classRemovedCallback) {
+                this.classRemovedCallback();
               }
             }
           }
         }
-      };
+      }
+    };
+  }
+
+  function checkIsTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      // @ts-ignore: Unreachable code error
+      navigator.msMaxTouchPoints > 0
+    );
+  }
+
+  //
+  function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
+    const volumeSet = mediaContainer.classList.contains(volumeSetClass);
+
+    if (volumeSet) {
+      return;
     }
 
-    //
-    function onYoutubePlayerReady(playerId) {}
+    const iframeWindow = player.getIframe().contentWindow;
+    if (event.source === iframeWindow) {
+      var data = JSON.parse(event.data);
+      if (data.event === "infoDelivery" && data.info && data.info.volume) {
+        if (checkIsTouchDevice()) {
+          if (Number(data.info.volume) !== 100) {
+            setTimeout(() => {
+              player.setVolume(100);
+              mediaContainer.classList.add(volumeSetClass);
 
-    //
+              volumeMessage.style.opacity = 0;
+              setTimeout(() => {
+                volumeMessage.style.zIndex = "-1";
+              }, 200);
+            }, 200);
+          }
+        }
+        // only want to set to 100 once
+      }
+    }
+  }
+
+  //
+  const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
+  const youtubeApiReadyFlag = "yt-api-ready";
+  const isTransformedOutClass = "is-transformed-out";
+  const youtubePlayerLoadingFlag = "yt-player-loading";
+  const volumeSetClass = "volume-set";
+
+  //
+  // const mediaContainer = document.getElementById("media-container");
+  const iframeTransformContainers = Array.from(
+    document.getElementsByClassName("iframe-container media-transform")
+  );
+  const iframeInnerContainers =
+    document.getElementsByClassName("inner-container");
+  const iframes = document.getElementsByClassName("iframe");
+  const overlays = document.getElementsByClassName("iframe-overlay");
+  const helperPanels = document.getElementsByClassName("iframe-helper");
+  const loadingTexts = document.getElementsByClassName("player-loading");
+  const volumeMessages =
+    mediaContainer.getElementsByClassName("volume-message");
+
+  function main() {
     function handleLoadYoutubeApiCode() {
       var tag = document.createElement("script");
       tag.id = "iframe-demo";
@@ -783,24 +826,6 @@ const { media } = Astro.props;
       var firstScriptTag = document.getElementsByTagName("script")[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
-
-    //
-    const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
-    const youtubeApiReadyFlag = "yt-api-ready";
-    const isTransformedOutClass = "is-transformed-out";
-    const youtubePlayerLoadingFlag = "yt-player-loading";
-
-    //
-    const mediaContainer = document.getElementById("media-container");
-    const iframeTransformContainers = Array.from(
-      document.getElementsByClassName("iframe-container media-transform")
-    );
-    const iframeInnerContainers =
-      document.getElementsByClassName("inner-container");
-    const iframes = document.getElementsByClassName("iframe");
-    const overlays = document.getElementsByClassName("iframe-overlay");
-    const helperPanels = document.getElementsByClassName("iframe-helper");
-    const loadingTexts = document.getElementsByClassName("player-loading");
 
     //
     function checkYoutubeApiIsInitiated() {
@@ -813,7 +838,10 @@ const { media } = Astro.props;
     //
     function onIsTransformedOut({ iframeIndex }) {
       const transformContainer = iframeTransformContainers[iframeIndex];
-      if (!transformContainer.classList.contains(isTransformedOutClass)) {
+      const isTransformedOut = transformContainer.classList.contains(
+        isTransformedOutClass
+      );
+      if (!isTransformedOut) {
         return;
       }
 
@@ -854,6 +882,7 @@ const { media } = Astro.props;
       if (!youtubeApiIsReady) {
         return;
       }
+
       if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
@@ -917,19 +946,10 @@ const { media } = Astro.props;
   }
   main();
 
-  const scopeMessage = "HELLO SCOPE TEST";
   // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
   // the API's js is loaded after the first iframe container is transformed
   function onYouTubeIframeAPIReady() {
-    console.log("Scope message:", scopeMessage);
-    const youtubeApiReadyFlag = "yt-api-ready";
-    const youtubePlayerLoadingFlag = "yt-player-loading";
-    const isTransformedOutClass = "is-transformed-out";
-
-    const mediaContainer = document.getElementById("media-container");
-    const iframeTransformContainers = Array.from(
-      document.getElementsByClassName("iframe-container media-transform")
-    );
+    // const mediaContainer = document.getElementById("media-container");
 
     mediaContainer.classList.add(youtubeApiReadyFlag);
 
@@ -941,13 +961,12 @@ const { media } = Astro.props;
       return;
     }
 
-    const iframe = document.getElementsByClassName("iframe")[index];
-    const overlay = document.getElementsByClassName("iframe-overlay")[index];
-    const loadingText =
-      document.getElementsByClassName("player-loading")[index];
-    const helperPanel = document.getElementsByClassName("iframe-helper")[index];
-    const innerContainer =
-      document.getElementsByClassName("inner-container")[index];
+    const iframe = iframes[index];
+    const overlay = overlays[index];
+    const loadingText = loadingTexts[index];
+    const helperPanel = helperPanels[index];
+    const innerContainer = iframeInnerContainers[index];
+    // const volumeMessage = volumeMessages[index];
 
     iframe.classList.add(youtubePlayerLoadingFlag);
 
@@ -956,8 +975,15 @@ const { media } = Astro.props;
         onReady,
       },
     });
+    // const player = window[`player-${iframe.id}`];
 
     function onReady(event) {
+      /*       if (checkIsTouchDevice()) {
+        window.addEventListener("message", (event) =>
+          handleSetVolumeForTouchDevice(event, player, volumeMessage)
+        );
+      } */
+
       iframe.classList.remove(youtubePlayerLoadingFlag);
 
       innerContainer.style.cursor = "auto";
@@ -981,14 +1007,4 @@ const { media } = Astro.props;
       }, 200);
     }
   }
-</script>
-
-<script>
-  window.addEventListener("load", function () {
-    setTimeout(function () {
-      // This hides the address bar:
-      console.log("Scrolling to...");
-      window.scrollTo(0, 1);
-    }, 0);
-  });
 </script>
