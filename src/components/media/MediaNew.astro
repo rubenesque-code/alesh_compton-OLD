@@ -11,8 +11,6 @@ type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
 
-// iframe max width as width - timeout width;
-
 // TODO: undo iframe-inner container transform on contract animation; can't click on iframe overlay again after contract.
 // TODO close: clicking on bg closes. what happens if youtube player loading and exit transformation.
 // TODO: vol text, should probably just contain by default (not just on touch devices - to account for resize browser)
@@ -410,12 +408,12 @@ const { media } = Astro.props;
 
         const isIframe = isIframeTransformContainer(transformElement);
 
-        const isMobileAndLandscape =
-          window.innerWidth < 800 &&
+        const isTouchDeviceAndLandscape =
+          checkIsTouchDevice() &&
           (window.orientation === 90 || window.orientation === -90);
 
         const maxDimensionDecimal =
-          isIframe && isMobileAndLandscape ? 0.8 : 0.98;
+          isIframe && isTouchDeviceAndLandscape ? 0.8 : 0.98;
 
         const fillScreenRect = calcFillScreenRect({
           element: transformElement,
@@ -907,8 +905,13 @@ const { media } = Astro.props;
       return;
     }
 
-    const iframes = Array.from(document.getElementsByClassName("iframe"));
-    const iframe = iframes[index];
+    const iframe = Array.from(document.getElementsByClassName("iframe"))[index];
+    const overlay = Array.from(
+      document.getElementsByClassName("iframe-overlay")
+    )[index];
+    const loadingText = Array.from(
+      document.getElementsByClassName("player-loading")
+    )[index];
 
     iframe.classList.add("yt-player-loading");
 
@@ -919,11 +922,10 @@ const { media } = Astro.props;
     });
 
     function onReady(event) {
-      event.target.setVolume(0);
-
-      const overlay = Array.from(
-        document.getElementsByClassName("iframe-overlay")
-      )[index];
+      loadingText.style.opacity = "0";
+      setTimeout(() => {
+        loadingText.style.zIndex = "-1";
+      }, 200);
 
       overlay.style.opacity = "0";
 
@@ -931,6 +933,8 @@ const { media } = Astro.props;
 
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
+
+      event.target.setVolume(0);
 
       // time for opacity transition
       setTimeout(() => {

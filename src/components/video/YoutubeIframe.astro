@@ -40,20 +40,18 @@ const coverImageYPosition = coverImage?.yPosition || 50;
       loading="lazy"
       allowfullscreen></iframe>
     <div class="iframe-helper">
-      <div id="volume-message" class="iframe-helper-overlay volume-message">
+      <div id="volume-message" class="iframe-helper-item volume-message">
         <VolumeIcon />
         <span>use youtube controls for volume</span>
       </div>
-      <div id="close-button" class="iframe-helper-overlay close-button">
+      <div id="close-button" class="iframe-helper-item close-button">
         <span>close</span>
         <CloseIcon />
       </div>
     </div>
   </div>
   <div class="iframe-overlay">
-    <div id="player-loading" class="player-loading">
-      Connecting to youtube...
-    </div>
+    <div id="player-loading" class="player-loading">Loading youtube...</div>
     {
       coverImage ? (
         <Image
@@ -130,11 +128,13 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     z-index: -1;
     opacity: 0;
     position: absolute;
-    left: 2%;
-    top: 2%;
+    left: 0.5em;
+    top: 0.5em;
     padding: 0.2em 0.5em;
     border-radius: 3px;
     transition: opacity 0.2s ease-in-out;
+    backdrop-filter: blur(20px);
+    background-color: rgba(255, 255, 255, 0.5);
   }
   .iframe-helper {
     opacity: 0;
@@ -148,15 +148,15 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     align-items: center;
     justify-content: space-between;
     font-size: small;
-    backdrop-filter: blur(60px);
-    background-color: hsla(360, 100%, 100%, 0.31);
-    border-radius: 3px;
     transition: opacity 0.2s ease-in-out;
   }
-  .iframe-helper-overlay {
+  .iframe-helper-item {
+    border-radius: 3px;
     display: flex;
     align-items: center;
     gap: 0.5em;
+    backdrop-filter: blur(20px);
+    background-color: rgba(255, 255, 255, 0.5);
   }
   .close-button {
     cursor: pointer;
