@@ -123,131 +123,109 @@ const { media } = Astro.props;
 <script>
   // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
   // _________________________________
+  function main() {
+    const mediaContainer = document.getElementById("media-container")!;
+    const media = mediaContainer.getElementsByClassName(
+      "media-transform"
+    ) as HTMLCollectionOf<HTMLElement>;
 
-  const mediaContainer = document.getElementById("media-container")!;
-  const media = mediaContainer.getElementsByClassName(
-    "media-transform"
-  ) as HTMLCollectionOf<HTMLElement>;
-
-  // avoid image flashing in
-  for (let i = 0; i < media.length; i++) {
-    const mediaElement = media[i];
-    mediaElement.style.opacity = "1";
+    // avoid image flashing in
+    for (let i = 0; i < media.length; i++) {
+      const mediaElement = media[i];
+      mediaElement.style.opacity = "1";
+    }
   }
+  main();
 </script>
 
 <script>
   // MEDIA TRANSFORM
   // _________________________________
-  const isTransformingOutClass = "is-transforming-out";
-  const isTransformedOutClass = "is-transformed-out";
-  const isTransformingInClass = "is-transforming-in";
-  const isTransformedInClass = "is-transformed-in";
+  function main() {
+    // FLAGS
+    const isTransformingOutClass = "is-transforming-out";
+    const isTransformedOutClass = "is-transformed-out";
+    const isTransformingInClass = "is-transforming-in";
+    const isTransformedInClass = "is-transformed-in";
 
-  function checkIsTransformingOut(element: HTMLElement) {
-    return element.classList.contains(isTransformingOutClass);
-  }
-  function checkIsTransformedOut(element: HTMLElement) {
-    return element.classList.contains(isTransformedOutClass);
-  }
-  function checkIsTransformingIn(element: HTMLElement) {
-    return element.classList.contains(isTransformingInClass);
-  }
-  function checkIsTransformedIn(element: HTMLElement) {
-    return element.classList.contains(isTransformedInClass);
-  }
+    // TYPES
+    type Mutable<T> = {
+      -readonly [k in keyof T]: T[k];
+    };
+    type CustomRect = Mutable<{
+      width: number;
+      height: number;
+      left: number;
+      top: number;
+    }>;
 
-  //
-
-  function getContainedSize(img: HTMLImageElement) {
-    var ratio = img.naturalWidth / img.naturalHeight;
-    var width = img.height * ratio;
-    var height = img.height;
-    if (width > img.width) {
-      width = img.width;
-      height = img.width / ratio;
+    // HELPERS
+    function checkIsTransformingOut(element: HTMLElement) {
+      return element.classList.contains(isTransformingOutClass);
     }
-    return [width, height];
-  }
+    function checkIsTransformedOut(element: HTMLElement) {
+      return element.classList.contains(isTransformedOutClass);
+    }
+    function checkIsTransformingIn(element: HTMLElement) {
+      return element.classList.contains(isTransformingInClass);
+    }
+    function checkIsTransformedIn(element: HTMLElement) {
+      return element.classList.contains(isTransformedInClass);
+    }
 
-  //
-  function getTransitionDurationMs(element: HTMLElement) {
-    return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
-  }
+    function getContainedSize(img: HTMLImageElement) {
+      var ratio = img.naturalWidth / img.naturalHeight;
+      var width = img.height * ratio;
+      var height = img.height;
+      if (width > img.width) {
+        width = img.width;
+        height = img.width / ratio;
+      }
+      return [width, height];
+    }
+    function getTransitionDurationMs(element: HTMLElement) {
+      return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
+    }
 
-  function isIframeTransformContainer(element: HTMLElement) {
-    return element.classList.contains("iframe-container");
-  }
+    function isIframeTransformContainer(element: HTMLElement) {
+      return element.classList.contains("iframe-container");
+    }
 
-  //
-  function fixElementPosition(element: HTMLElement) {
-    const rect = element.getBoundingClientRect();
+    function calcFillScreenRect({
+      element,
+      maxHeightDecimal = 0.98,
+      maxWidthDecimal = 0.98,
+    }: {
+      element: HTMLElement;
+      maxWidthDecimal?: number;
+      maxHeightDecimal?: number;
+    }) {
+      const elementRect = element.getBoundingClientRect();
 
-    element.style.left = `${rect.left}px`;
-    element.style.top = `${rect.top}px`;
-    element.style.width = `${rect.width}px`;
-    element.style.height = `${rect.height}px`;
+      const maxWidth = window.innerWidth * maxWidthDecimal;
+      const maxHeight = window.innerHeight * maxHeightDecimal;
 
-    element.style.position = "fixed";
-  }
+      const fillWidthHeight =
+        elementRect.height * (maxWidth / elementRect.width);
 
-  function revertIframeToInitialPlacement(element: HTMLElement) {
-    element.style.zIndex = "0";
+      if (fillWidthHeight <= maxHeight) {
+        const width = maxWidth;
+        const height = fillWidthHeight;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+        return {
+          width,
+          height,
+          left,
+          top,
+        } as CustomRect;
+      }
 
-    element.style.transform = "";
-    element.style.left = "0";
-    element.style.top = "0";
-
-    element.style.maxHeight = "1000px";
-    element.style.height = "100%";
-    element.style.width = "";
-    element.style.marginTop = "0";
-    element.style.marginLeft = "0";
-    element.style.position = "relative";
-  }
-  function revertImageToInitialPlacement(element: HTMLElement) {
-    element.style.zIndex = "0";
-
-    element.style.transform = "";
-    element.style.left = "0";
-    element.style.top = "0";
-
-    element.style.width = "";
-    element.style.height = "";
-    element.style.position = "static";
-  }
-
-  type Mutable<T> = {
-    -readonly [k in keyof T]: T[k];
-  };
-  type CustomRect = Mutable<{
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-  }>;
-
-  function calcFillScreenRect({
-    element,
-    maxHeightDecimal = 0.98,
-    maxWidthDecimal = 0.98,
-  }: {
-    element: HTMLElement;
-    maxWidthDecimal?: number;
-    maxHeightDecimal?: number;
-  }) {
-    const elementRect = element.getBoundingClientRect();
-
-    const maxWidth = window.innerWidth * maxWidthDecimal;
-    const maxHeight = window.innerHeight * maxHeightDecimal;
-
-    const fillWidthHeight = elementRect.height * (maxWidth / elementRect.width);
-
-    if (fillWidthHeight <= maxHeight) {
-      const width = maxWidth;
-      const height = fillWidthHeight;
+      const width = elementRect.width * (maxHeight / elementRect.height);
+      const height = maxHeight;
       const left = (window.innerWidth - width) / 2;
       const top = (window.innerHeight - height) / 2;
+
       return {
         width,
         height,
@@ -256,452 +234,486 @@ const { media } = Astro.props;
       } as CustomRect;
     }
 
-    const width = elementRect.width * (maxHeight / elementRect.height);
-    const height = maxHeight;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
+    function calcElementTransform({
+      destinationRect,
+      element,
+    }: {
+      element: HTMLElement;
+      destinationRect: CustomRect;
+    }) {
+      // destination rect has same aspect-ratio as elementRect
 
-    return {
-      width,
-      height,
-      left,
-      top,
-    } as CustomRect;
-  }
+      const initialRect = element.getBoundingClientRect();
 
-  function calcElementTransform({
-    destinationRect,
-    element,
-  }: {
-    element: HTMLElement;
-    destinationRect: CustomRect;
-  }) {
-    // destination rect has same aspect-ratio as elementRect
+      const scale = destinationRect.width / initialRect.width;
 
-    const initialRect = element.getBoundingClientRect();
+      const heightChangeFromScale =
+        initialRect.height * scale - initialRect.height;
+      const topChangeFromScale = heightChangeFromScale / 2;
+      // must minus to go up for 'top'
+      const topAfterScale = initialRect.top - topChangeFromScale;
+      const translateY = destinationRect.top - topAfterScale;
 
-    const scale = destinationRect.width / initialRect.width;
+      let translateX: number;
+      const transformDirection =
+        destinationRect.left < initialRect.left ? "left" : "right";
 
-    const heightChangeFromScale =
-      initialRect.height * scale - initialRect.height;
-    const topChangeFromScale = heightChangeFromScale / 2;
-    // must minus to go up for 'top'
-    const topAfterScale = initialRect.top - topChangeFromScale;
-    const translateY = destinationRect.top - topAfterScale;
+      if (transformDirection === "left") {
+        const widthChangeFromScale =
+          initialRect.width * scale - initialRect.width;
+        const leftAfterScale = initialRect.left - widthChangeFromScale;
+        translateX = destinationRect.left - leftAfterScale;
+      } else {
+        translateX = destinationRect.left - initialRect.left;
+      }
 
-    let translateX: number;
-    const transformDirection =
-      destinationRect.left < initialRect.left ? "left" : "right";
+      const totalX = Math.abs(initialRect.left - destinationRect.left);
+      const totalY = Math.abs(initialRect.top - destinationRect.top);
+      const translateDistance = Math.sqrt(
+        Math.pow(totalX, 2) + Math.pow(totalY, 2)
+      );
 
-    if (transformDirection === "left") {
-      const widthChangeFromScale =
-        initialRect.width * scale - initialRect.width;
-      const leftAfterScale = initialRect.left - widthChangeFromScale;
-      translateX = destinationRect.left - leftAfterScale;
-    } else {
-      translateX = destinationRect.left - initialRect.left;
+      return {
+        scale,
+        translateX,
+        translateY,
+        transformOrigin: transformDirection === "left" ? "right" : "left",
+        translateDistance,
+        width: destinationRect.width,
+        height: destinationRect.height,
+        marginTop: destinationRect.top - initialRect.top,
+        marginLeft: destinationRect.left - initialRect.left,
+      };
     }
 
-    const totalX = Math.abs(initialRect.left - destinationRect.left);
-    const totalY = Math.abs(initialRect.top - destinationRect.top);
-    const translateDistance = Math.sqrt(
-      Math.pow(totalX, 2) + Math.pow(totalY, 2)
+    function fixElementPosition(element: HTMLElement) {
+      const rect = element.getBoundingClientRect();
+
+      element.style.left = `${rect.left}px`;
+      element.style.top = `${rect.top}px`;
+      element.style.width = `${rect.width}px`;
+      element.style.height = `${rect.height}px`;
+
+      element.style.position = "fixed";
+    }
+    function revertIframeToInitialPlacement(element: HTMLElement) {
+      element.style.zIndex = "0";
+
+      element.style.transform = "";
+      element.style.left = "0";
+      element.style.top = "0";
+
+      element.style.maxHeight = "1000px";
+      element.style.height = "100%";
+      element.style.width = "";
+      element.style.marginTop = "0";
+      element.style.marginLeft = "0";
+      element.style.position = "relative";
+    }
+    function revertImageToInitialPlacement(element: HTMLElement) {
+      element.style.zIndex = "0";
+
+      element.style.transform = "";
+      element.style.left = "0";
+      element.style.top = "0";
+
+      element.style.width = "";
+      element.style.height = "";
+      element.style.position = "static";
+    }
+    function transform({
+      transformingElement,
+      destinationRect,
+      transformBy,
+    }: {
+      transformingElement: HTMLElement;
+      destinationRect: CustomRect;
+      transformBy: "width-height-margin" | "scale-translate";
+    }) {
+      const {
+        scale,
+        transformOrigin,
+        translateDistance,
+        translateX,
+        translateY,
+        width,
+        height,
+        marginLeft,
+        marginTop,
+      } = calcElementTransform({
+        destinationRect,
+        element: transformingElement,
+      });
+
+      const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+
+      transformingElement.style.transitionDuration = `${transitionDuration}ms`;
+
+      if (transformBy === "width-height-margin") {
+        transformingElement.style.width = `${width}px`;
+        transformingElement.style.height = `${height}px`;
+        transformingElement.style.marginTop = `${marginTop}px`;
+        transformingElement.style.marginLeft = `${marginLeft}px`;
+        return;
+      }
+
+      transformingElement.style.transformOrigin = `${transformOrigin}`;
+      transformingElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    // ELEMENTS
+    const mediaContainer = document.getElementById("media-container")!;
+    const background = document.getElementById("background")!;
+    const transformElements = Array.from(
+      mediaContainer.getElementsByClassName(
+        "media-transform"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const duplicates = Array.from(
+      mediaContainer.getElementsByClassName(
+        "duplicate"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const closeButtons = Array.from(
+      mediaContainer.getElementsByClassName(
+        "close-button"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframeTransformContainers = Array.from(
+      mediaContainer.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframeInnerContainers = Array.from(
+      mediaContainer.getElementsByClassName(
+        "inner-container"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframes = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const overlays = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe-overlay"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframeHelperPanels = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe-helper"
+      ) as HTMLCollectionOf<HTMLElement>
     );
 
-    return {
-      scale,
-      translateX,
-      translateY,
-      transformOrigin: transformDirection === "left" ? "right" : "left",
-      translateDistance,
-      width: destinationRect.width,
-      height: destinationRect.height,
-      marginTop: destinationRect.top - initialRect.top,
-      marginLeft: destinationRect.left - initialRect.left,
-    };
-  }
-
-  //
-  function transform({
-    transformingElement,
-    destinationRect,
-    transformBy,
-  }: {
-    transformingElement: HTMLElement;
-    destinationRect: CustomRect;
-    transformBy: "width-height-margin" | "scale-translate";
-  }) {
-    const {
-      scale,
-      transformOrigin,
-      translateDistance,
-      translateX,
-      translateY,
-      width,
-      height,
-      marginLeft,
-      marginTop,
-    } = calcElementTransform({
-      destinationRect,
-      element: transformingElement,
-    });
-
-    const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
-
-    transformingElement.style.transitionDuration = `${transitionDuration}ms`;
-
-    if (transformBy === "width-height-margin") {
-      transformingElement.style.width = `${width}px`;
-      transformingElement.style.height = `${height}px`;
-      transformingElement.style.marginTop = `${marginTop}px`;
-      transformingElement.style.marginLeft = `${marginLeft}px`;
-      return;
+    // ELEMENT PRESENTATION HELPERS
+    function showBackground() {
+      background.style.position = "fixed";
+      background.style.zIndex = "5";
+      background.style.opacity = "1";
     }
 
-    transformingElement.style.transformOrigin = `${transformOrigin}`;
-    transformingElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-  }
+    // FUNCTIONALITY
+    transformElements.forEach((transformElement, index) => {
+      transformElement.addEventListener("click", () => {
+        const isInInitialPosition = !checkIsTransformingOut(transformElement);
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
 
-  //
-  function showBackground() {
-    const background = document.getElementById("background")!;
-    background.style.position = "fixed";
-    background.style.zIndex = "5";
-    background.style.opacity = "1";
-  }
+        if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
+          // TRANSFORM OUT: start
 
-  //
-  const mediaContainer = document.getElementById("media-container")!;
-  const background = document.getElementById("background")!;
-  const transformElements = Array.from(
-    mediaContainer.getElementsByClassName(
-      "media-transform"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const duplicates = Array.from(
-    mediaContainer.getElementsByClassName(
-      "duplicate"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
+          transformElement.classList.add(isTransformingOutClass);
+          transformElement.classList.remove(isTransformedInClass);
 
-  //
-  transformElements.forEach((transformElement, index) => {
-    transformElement.addEventListener("click", () => {
-      const isInInitialPosition = !checkIsTransformingOut(transformElement);
-      const isTransformedOut = checkIsTransformedOut(transformElement);
-      const isTransformingIn = checkIsTransformingIn(transformElement);
+          transformElement.style.pointerEvents = "none";
 
-      if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
-        // TRANSFORM OUT: start
+          for (let j = transformElements.length - 1; j >= index; j--) {
+            fixElementPosition(transformElements[j]);
+          }
 
-        transformElement.classList.add(isTransformingOutClass);
-        transformElement.classList.remove(isTransformedInClass);
+          transformElement.style.zIndex = "10";
 
-        transformElement.style.pointerEvents = "none";
+          const isIframe = isIframeTransformContainer(transformElement);
 
-        for (let j = transformElements.length - 1; j >= index; j--) {
-          fixElementPosition(transformElements[j]);
-        }
+          const innerWidth = window.innerWidth;
+          const innerHeight = window.innerHeight;
 
-        transformElement.style.zIndex = "10";
+          const isLandscape = innerWidth >= innerHeight;
 
-        const isIframe = isIframeTransformContainer(transformElement);
+          const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
 
-        const innerWidth = window.innerWidth;
-        const innerHeight = window.innerHeight;
+          const fillScreenRect = calcFillScreenRect({
+            element: transformElement,
+            maxHeightDecimal: maxDimensionDecimal,
+            maxWidthDecimal: maxDimensionDecimal,
+          });
 
-        const isLandscape = innerWidth >= innerHeight;
+          transform({
+            destinationRect: fillScreenRect,
+            transformBy: isIframe ? "width-height-margin" : "scale-translate",
+            transformingElement: transformElement,
+          });
 
-        const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
+          showBackground();
 
-        const fillScreenRect = calcFillScreenRect({
-          element: transformElement,
-          maxHeightDecimal: maxDimensionDecimal,
-          maxWidthDecimal: maxDimensionDecimal,
-        });
+          // time for bg to show
+          setTimeout(() => {
+            // prevent scrolling
+            mediaContainer.style.overflowX = "hidden";
+          }, 200);
 
-        transform({
-          destinationRect: fillScreenRect,
-          transformBy: isIframe ? "width-height-margin" : "scale-translate",
-          transformingElement: transformElement,
-        });
+          const transitionDuration = getTransitionDurationMs(transformElement);
 
-        showBackground();
+          // timeout until transform transition end
+          setTimeout(() => {
+            // orientation + resize considerations: start
 
-        // time for bg to show
-        setTimeout(() => {
-          // prevent scrolling
-          mediaContainer.style.overflowX = "hidden";
-        }, 200);
+            transformElement.style.transitionDuration = "0ms";
 
-        const transitionDuration = getTransitionDurationMs(transformElement);
+            if (isIframe) {
+              transformElement.style.marginTop = "0";
+              transformElement.style.marginLeft = "0";
 
-        // timeout until transform transition end
-        setTimeout(() => {
-          // orientation + resize considerations: start
+              // maybe don't need this---
+              const deviceBiggestSide =
+                window.innerWidth > window.innerHeight
+                  ? window.innerWidth
+                  : window.innerHeight;
+
+              const maxWidth = deviceBiggestSide * 0.8;
+
+              transformElement.style.maxWidth = `${maxWidth}px`;
+              transformElement.style.maxHeight = "100vh";
+
+              const innerContainer = transformElement.getElementsByClassName(
+                "inner-container"
+              )[0] as HTMLElement;
+
+              innerContainer.style.left = "50%";
+              innerContainer.style.top = "50%";
+              innerContainer.style.transform = "translate(-50%, -50%)";
+
+              const iframeOverlay = transformElement.getElementsByClassName(
+                "iframe-overlay"
+              )[0] as HTMLElement;
+              iframeOverlay.style.left = "50%";
+              iframeOverlay.style.top = "50%";
+              iframeOverlay.style.transform = "translate(-50%, -50%)";
+            }
+
+            transformElement.style.width = `98%`;
+            transformElement.style.height = `98vh`;
+            transformElement.style.left = `50%`;
+            transformElement.style.top = `50%`;
+            transformElement.style.transform = "translate(-50%, -50%)";
+
+            // orientation + resize considerations: end
+
+            transformElement.style.pointerEvents = "auto";
+            transformElement.classList.add(isTransformedOutClass);
+            transformElement.classList.remove(isTransformingOutClass);
+          }, transitionDuration);
+
+          // TRANSFORM OUT: END
+        } else {
+          const isIframe = isIframeTransformContainer(transformElement);
+          if (isIframe) {
+            // iframe handled by close button click listener
+            return;
+          }
+          // RETURN TO INITIAL POSITION: start
+
+          transformElement.classList.remove(isTransformedOutClass);
+          transformElement.classList.add(isTransformingInClass);
+
+          transformElement.style.pointerEvents = "none";
 
           transformElement.style.transitionDuration = "0ms";
 
-          if (isIframe) {
-            transformElement.style.marginTop = "0";
-            transformElement.style.marginLeft = "0";
+          const [width, height] = getContainedSize(
+            transformElement as HTMLImageElement
+          );
 
-            // maybe don't need this---
-            const deviceBiggestSide =
-              window.innerWidth > window.innerHeight
-                ? window.innerWidth
-                : window.innerHeight;
+          transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
+          transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
+          transformElement.style.width = `${width}px`;
+          transformElement.style.height = `${height}px`;
 
-            const maxWidth = deviceBiggestSide * 0.8;
+          transformElement.style.position = "fixed";
 
-            transformElement.style.maxWidth = `${maxWidth}px`;
-            transformElement.style.maxHeight = "100vh";
+          transformElement.style.transform = "";
 
-            const innerContainer = transformElement.getElementsByClassName(
-              "inner-container"
-            )[0] as HTMLElement;
+          const duplicate = duplicates[index];
+          const duplicateRect = duplicate.getBoundingClientRect();
 
-            innerContainer.style.left = "50%";
-            innerContainer.style.top = "50%";
-            innerContainer.style.transform = "translate(-50%, -50%)";
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: "scale-translate",
+            transformingElement: transformElement,
+          });
 
-            const iframeOverlay = transformElement.getElementsByClassName(
-              "iframe-overlay"
-            )[0] as HTMLElement;
-            iframeOverlay.style.left = "50%";
-            iframeOverlay.style.top = "50%";
-            iframeOverlay.style.transform = "translate(-50%, -50%)";
-          }
+          const transitionDuration = getTransitionDurationMs(transformElement);
 
-          transformElement.style.width = `98%`;
-          transformElement.style.height = `98vh`;
-          transformElement.style.left = `50%`;
-          transformElement.style.top = `50%`;
-          transformElement.style.transform = "translate(-50%, -50%)";
+          setTimeout(() => {
+            mediaContainer.style.overflowX = "auto";
+          }, transitionDuration - 300);
 
-          // orientation + resize considerations: end
+          background.style.transitionDuration = `${transitionDuration}ms`;
+          background.style.opacity = "0";
 
-          transformElement.style.pointerEvents = "auto";
-          transformElement.classList.add(isTransformedOutClass);
-          transformElement.classList.remove(isTransformingOutClass);
-        }, transitionDuration);
+          // revert to initial, untransformed css
+          setTimeout(() => {
+            transformElement.style.transitionDuration = "0ms";
 
-        // TRANSFORM OUT: END
-      } else {
-        const isIframe = isIframeTransformContainer(transformElement);
-        if (isIframe) {
-          // iframe handled by close button click listener
+            revertImageToInitialPlacement(transformElement);
+
+            for (let j = transformElements.length - 1; j > index; j--) {
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
+
+              if (isIframe) {
+                revertIframeToInitialPlacement(transformElement);
+              } else {
+                revertImageToInitialPlacement(transformElement);
+              }
+            }
+
+            background.style.zIndex = "-1";
+            background.style.position = "static";
+
+            transformElement.style.pointerEvents = "auto";
+
+            transformElement.classList.add(isTransformedInClass);
+            transformElement.classList.remove(isTransformingInClass);
+          }, transitionDuration);
+
+          setTimeout(() => {}, transitionDuration);
+
+          // RETURN TO INITIAL POSITON: END
+        }
+      });
+    });
+
+    closeButtons.forEach((closeButton, iframeIndex) => {
+      // TRANSFORM IN FOR IFRAMES
+
+      const transformElement = iframeTransformContainers[
+        iframeIndex
+      ] as HTMLElement;
+
+      closeButton.addEventListener("click", () => {
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
+        const isTransformedIn = checkIsTransformedIn(transformElement);
+
+        if (!isTransformedOut || isTransformingIn || isTransformedIn) {
           return;
         }
-        // RETURN TO INITIAL POSITION: start
-
         transformElement.classList.remove(isTransformedOutClass);
         transformElement.classList.add(isTransformingInClass);
 
         transformElement.style.pointerEvents = "none";
+        //
+        const innerContainer = iframeInnerContainers[iframeIndex];
+        const overlay = overlays[iframeIndex];
+        const iframeHelperPanel = iframeHelperPanels[iframeIndex];
 
-        transformElement.style.transitionDuration = "0ms";
+        overlay.style.zIndex = "2";
+        overlay.style.opacity = "1";
 
-        const [width, height] = getContainedSize(
-          transformElement as HTMLImageElement
-        );
-
-        transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
-        transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
-        transformElement.style.width = `${width}px`;
-        transformElement.style.height = `${height}px`;
-
-        transformElement.style.position = "fixed";
-
-        transformElement.style.transform = "";
-
-        const duplicate = duplicates[index];
-        const duplicateRect = duplicate.getBoundingClientRect();
-
-        transform({
-          destinationRect: duplicateRect,
-          transformBy: "scale-translate",
-          transformingElement: transformElement,
-        });
-
-        const transitionDuration = getTransitionDurationMs(transformElement);
-
+        iframeHelperPanel.style.opacity = "0";
         setTimeout(() => {
-          mediaContainer.style.overflowX = "auto";
-        }, transitionDuration - 300);
+          iframeHelperPanel.style.zIndex = "-1";
+        }, 200);
 
-        background.style.transitionDuration = `${transitionDuration}ms`;
-        background.style.opacity = "0";
+        const iframe = iframes[iframeIndex];
+        // @ts-ignore: Unreachable code error
+        const player = window[`player-${iframe.id}`];
 
-        // revert to initial, untransformed css
+        if (player) {
+          player.stopVideo();
+        }
+
+        // time for iframe overlay
         setTimeout(() => {
+          iframe.style.display = "none";
+
+          const allElementsIndex = Number(transformElement.id);
+
           transformElement.style.transitionDuration = "0ms";
+          fixElementPosition(transformElement);
+          transformElement.style.transform = "";
+          transformElement.style.maxWidth = "";
 
-          revertImageToInitialPlacement(transformElement);
+          const duplicate = duplicates[allElementsIndex];
+          const duplicateRect = duplicate.getBoundingClientRect();
 
-          for (let j = transformElements.length - 1; j > index; j--) {
-            const transformElement = transformElements[j];
-            const isIframe = isIframeTransformContainer(transformElement);
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: "width-height-margin",
+            transformingElement: transformElement,
+          });
 
-            if (isIframe) {
-              revertIframeToInitialPlacement(transformElement);
-            } else {
-              revertImageToInitialPlacement(transformElement);
+          const transitionDuration = getTransitionDurationMs(transformElement);
+
+          setTimeout(() => {
+            mediaContainer.style.overflowX = "auto";
+          }, transitionDuration / 2);
+
+          background.style.opacity = "0";
+
+          // revert to initial, untransformed css
+          setTimeout(() => {
+            transformElement.style.transitionDuration = "0ms";
+
+            revertIframeToInitialPlacement(transformElement);
+            innerContainer.style.left = "";
+            innerContainer.style.top = "";
+            innerContainer.style.transform = "";
+
+            overlay.style.left = "";
+            overlay.style.top = "";
+            overlay.style.transform = "";
+
+            for (
+              let j = transformElements.length - 1;
+              j > allElementsIndex;
+              j--
+            ) {
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
+
+              if (isIframe) {
+                revertIframeToInitialPlacement(transformElement);
+              } else {
+                revertImageToInitialPlacement(transformElement);
+              }
             }
-          }
 
-          background.style.zIndex = "-1";
-          background.style.position = "static";
+            background.style.zIndex = "-1";
+            background.style.position = "static";
 
-          transformElement.style.pointerEvents = "auto";
+            transformElement.style.pointerEvents = "auto";
 
-          transformElement.classList.add(isTransformedInClass);
-          transformElement.classList.remove(isTransformingInClass);
-        }, transitionDuration);
-
-        setTimeout(() => {}, transitionDuration);
-
-        // RETURN TO INITIAL POSITON: END
-      }
+            transformElement.classList.remove(isTransformingInClass);
+            transformElement.classList.add(isTransformedInClass);
+          }, transitionDuration);
+        }, 200);
+      });
     });
-  });
+    // main end----
+  }
 
-  const closeButtons = Array.from(
-    mediaContainer.getElementsByClassName(
-      "close-button"
-    ) as HTMLCollectionOf<HTMLElement>
+  const mediaContainer = document.getElementById("media-container")!;
+
+  mediaContainer.addEventListener(
+    "mousedown",
+    () => {
+      main();
+    },
+    {
+      once: true,
+      passive: true,
+    }
   );
-  const iframeTransformContainers = Array.from(
-    mediaContainer.getElementsByClassName("iframe-container media-transform")
-  );
-  const iframeInnerContainers = Array.from(
-    mediaContainer.getElementsByClassName(
-      "inner-container"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const iframes = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const overlays = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe-overlay"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const iframeHelperPanels = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe-helper"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-
-  closeButtons.forEach((closeButton, iframeIndex) => {
-    // TRANSFORM IN FOR IFRAMES
-
-    const transformElement = iframeTransformContainers[
-      iframeIndex
-    ] as HTMLElement;
-
-    closeButton.addEventListener("click", () => {
-      const isTransformedOut = checkIsTransformedOut(transformElement);
-      const isTransformingIn = checkIsTransformingIn(transformElement);
-      const isTransformedIn = checkIsTransformedIn(transformElement);
-
-      if (!isTransformedOut || isTransformingIn || isTransformedIn) {
-        return;
-      }
-      transformElement.classList.remove(isTransformedOutClass);
-      transformElement.classList.add(isTransformingInClass);
-
-      transformElement.style.pointerEvents = "none";
-      //
-      const innerContainer = iframeInnerContainers[iframeIndex];
-      const overlay = overlays[iframeIndex];
-      const iframeHelperPanel = iframeHelperPanels[iframeIndex];
-
-      overlay.style.zIndex = "2";
-      overlay.style.opacity = "1";
-
-      iframeHelperPanel.style.opacity = "0";
-      setTimeout(() => {
-        iframeHelperPanel.style.zIndex = "-1";
-      }, 200);
-
-      const iframe = iframes[iframeIndex];
-      // @ts-ignore: Unreachable code error
-      const player = window[`player-${iframe.id}`];
-
-      if (player) {
-        player.stopVideo();
-      }
-
-      // time for iframe overlay
-      setTimeout(() => {
-        iframe.style.display = "none";
-
-        const allElementsIndex = Number(transformElement.id);
-
-        transformElement.style.transitionDuration = "0ms";
-        fixElementPosition(transformElement);
-        transformElement.style.transform = "";
-        transformElement.style.maxWidth = "";
-
-        const duplicate = duplicates[allElementsIndex];
-        const duplicateRect = duplicate.getBoundingClientRect();
-
-        transform({
-          destinationRect: duplicateRect,
-          transformBy: "width-height-margin",
-          transformingElement: transformElement,
-        });
-
-        const transitionDuration = getTransitionDurationMs(transformElement);
-
-        setTimeout(() => {
-          mediaContainer.style.overflowX = "auto";
-        }, transitionDuration / 2);
-
-        background.style.opacity = "0";
-
-        // revert to initial, untransformed css
-        setTimeout(() => {
-          transformElement.style.transitionDuration = "0ms";
-
-          revertIframeToInitialPlacement(transformElement);
-          innerContainer.style.left = "";
-          innerContainer.style.top = "";
-          innerContainer.style.transform = "";
-
-          overlay.style.left = "";
-          overlay.style.top = "";
-          overlay.style.transform = "";
-
-          for (
-            let j = transformElements.length - 1;
-            j > allElementsIndex;
-            j--
-          ) {
-            const transformElement = transformElements[j];
-            const isIframe = isIframeTransformContainer(transformElement);
-
-            if (isIframe) {
-              revertIframeToInitialPlacement(transformElement);
-            } else {
-              revertImageToInitialPlacement(transformElement);
-            }
-          }
-
-          background.style.zIndex = "-1";
-          background.style.position = "static";
-
-          transformElement.style.pointerEvents = "auto";
-
-          transformElement.classList.remove(isTransformingInClass);
-          transformElement.classList.add(isTransformedInClass);
-        }, transitionDuration);
-      }, 200);
-    });
-  });
 </script>
 
 <script type="text/javascript">
