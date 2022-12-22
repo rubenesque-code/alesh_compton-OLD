@@ -728,6 +728,7 @@ const { media } = Astro.props;
     const isTransformedOutClass = "is-transformed-out";
     const youtubePlayerLoadingFlag = "yt-player-loading";
     const volumeSetClass = "volume-set";
+    const videoPlayingClass = "video-playing";
 
     // HELPERS
     function checkYoutubeApiIsInitiated(mediaContainer) {
@@ -827,7 +828,7 @@ const { media } = Astro.props;
       const loadingText = loadingTexts[index];
       const helperPanel = helperPanels[index];
       const innerContainer = iframeInnerContainers[index];
-      // const volumeMessage = volumeMessages[index];
+      const volumeMessage = volumeMessages[index];
 
       iframe.classList.add(youtubePlayerLoadingFlag);
 
@@ -841,6 +842,7 @@ const { media } = Astro.props;
               innerContainer,
               loadingText,
               overlay,
+              volumeMessage,
             }),
         },
       });
@@ -853,6 +855,7 @@ const { media } = Astro.props;
       loadingText,
       overlay,
       helperPanel,
+      volumeMessage,
     }) {
       event.target.setVolume(0);
 
@@ -869,6 +872,27 @@ const { media } = Astro.props;
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
 
+      //
+      if (
+        checkIsTouchDevice() &&
+        !mediaContainer.classList.contains(volumeSetClass)
+      ) {
+        const volumeController = new AbortController();
+        window["vol-controller"] = volumeController;
+        window.addEventListener(
+          "message",
+          (messageEvent) =>
+            handleSetVolumeForTouchDevice(
+              messageEvent,
+              event.target,
+              volumeMessage,
+              volumeController
+            ),
+          { signal: volumeController.signal, passive: true }
+        );
+      }
+      //
+
       // time for opacity transition
       setTimeout(() => {
         overlay.style.zIndex = "-1";
@@ -877,7 +901,16 @@ const { media } = Astro.props;
       }, 200);
     }
 
-    function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
+    function handleSetVolumeForTouchDevice(
+      event,
+      player,
+      volumeMessage,
+      controller
+    ) {
+      if (!checkIsTouchDevice()) {
+        return;
+      }
+
       const volumeSet = mediaContainer.classList.contains(volumeSetClass);
 
       if (volumeSet) {
@@ -888,20 +921,17 @@ const { media } = Astro.props;
       if (event.source === iframeWindow) {
         var data = JSON.parse(event.data);
         if (data.event === "infoDelivery" && data.info && data.info.volume) {
-          if (checkIsTouchDevice()) {
-            if (Number(data.info.volume) !== 100) {
-              setTimeout(() => {
-                player.setVolume(100);
-                mediaContainer.classList.add(volumeSetClass);
+          if (Number(data.info.volume) !== 100) {
+            player.setVolume(100);
+            mediaContainer.classList.add(volumeSetClass);
 
-                volumeMessage.style.opacity = 0;
-                setTimeout(() => {
-                  volumeMessage.style.zIndex = "-1";
-                }, 200);
-              }, 200);
-            }
+            volumeMessage.style.opacity = 0;
+            setTimeout(() => {
+              volumeMessage.style.zIndex = "-1";
+            }, 200);
+
+            controller.abort();
           }
-          // only want to set to 100 once
         }
       }
     }
@@ -982,6 +1012,7 @@ const { media } = Astro.props;
         setTimeout(() => {
           overlay.style.zIndex = "-1";
 
+          mediaContainer.classList.add(videoPlaying);
           player.playVideo();
         }, 200);
 
