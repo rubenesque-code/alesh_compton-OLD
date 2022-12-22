@@ -630,6 +630,8 @@ const { media } = Astro.props;
 
           if (player) {
             player.stopVideo();
+            // @ts-ignore: Unreachable code error
+            window["vol-controller"].abort();
           }
           iframe.style.display = "none";
 
@@ -728,7 +730,6 @@ const { media } = Astro.props;
     const isTransformedOutClass = "is-transformed-out";
     const youtubePlayerLoadingFlag = "yt-player-loading";
     const volumeSetClass = "volume-set";
-    const videoPlayingClass = "video-playing";
 
     // HELPERS
     function checkYoutubeApiIsInitiated(mediaContainer) {
@@ -882,12 +883,12 @@ const { media } = Astro.props;
         window.addEventListener(
           "message",
           (messageEvent) =>
-            handleSetVolumeForTouchDevice(
-              messageEvent,
-              event.target,
+            handleSetVolumeForTouchDevice({
+              controller: volumeController,
+              event: messageEvent,
+              player: event.target,
               volumeMessage,
-              volumeController
-            ),
+            }),
           { signal: volumeController.signal, passive: true }
         );
       }
@@ -901,12 +902,12 @@ const { media } = Astro.props;
       }, 200);
     }
 
-    function handleSetVolumeForTouchDevice(
+    function handleSetVolumeForTouchDevice({
       event,
       player,
       volumeMessage,
-      controller
-    ) {
+      controller,
+    }) {
       if (!checkIsTouchDevice()) {
         return;
       }
@@ -965,6 +966,7 @@ const { media } = Astro.props;
       const overlay = overlays[iframeIndex];
       const loadingText = loadingTexts[iframeIndex];
       const helperPanel = helperPanels[iframeIndex];
+      const volumeMessage = volumeMessages[iframeIndex];
 
       //
       const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
@@ -1012,7 +1014,6 @@ const { media } = Astro.props;
         setTimeout(() => {
           overlay.style.zIndex = "-1";
 
-          mediaContainer.classList.add(videoPlaying);
           player.playVideo();
         }, 200);
 
@@ -1033,6 +1034,7 @@ const { media } = Astro.props;
               innerContainer,
               loadingText,
               overlay,
+              volumeMessage,
             }),
         },
       });
