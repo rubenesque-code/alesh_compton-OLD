@@ -1019,4 +1019,16 @@ const { media } = Astro.props;
   }
 
   main();
+
+  const visibleMediaContainer = document.getElementById("visible-media");
+  visibleMediaContainer.addEventListener(
+    "mousedown",
+    () => {
+      main();
+    },
+    {
+      once: true,
+      passive: true,
+    }
+  );
 </script>
