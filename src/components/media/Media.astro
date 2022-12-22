@@ -473,15 +473,7 @@ const { media } = Astro.props;
               transformElement.style.marginTop = "0";
               transformElement.style.marginLeft = "0";
 
-              const deviceBiggestSide =
-                window.innerWidth > window.innerHeight
-                  ? window.innerWidth
-                  : window.innerHeight;
-
-              const maxWidth = deviceBiggestSide * 0.8;
-
-              transformElement.style.maxWidth = `${maxWidth}px`;
-              transformElement.style.maxHeight = "98vh";
+              transformElement.style.maxWidth = "98vw";
 
               const innerContainer = transformElement.getElementsByClassName(
                 "inner-container"
@@ -498,7 +490,6 @@ const { media } = Astro.props;
               iframeOverlay.style.top = "50%";
               iframeOverlay.style.transform = "translate(-50%, -50%)";
 
-              transformElement.style.width = `98vw`;
               transformElement.style.height = `80vh`;
             } else {
               transformElement.style.width = `98%`;
