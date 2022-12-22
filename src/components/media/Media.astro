@@ -935,7 +935,11 @@ const { media } = Astro.props;
 
                   function handleVolumeDown() {
                     const currentVolume = player.getVolume();
+                    if (currentVolume === 100) {
+                      upButton.style.color = "black";
+                    }
                     if (currentVolume === 0) {
+                      downButton.style.color = "gray";
                       return;
                     }
                     player.setVolume(currentVolume - volumeCrement);
@@ -944,7 +948,11 @@ const { media } = Astro.props;
 
                   function handleVolumeUp() {
                     const currentVolume = player.getVolume();
+                    if (currentVolume === 0) {
+                      downButton.style.color = "black";
+                    }
                     if (currentVolume === 100) {
+                      upButton.style.color = "gray";
                       return;
                     }
                     player.setVolume(currentVolume + volumeCrement);

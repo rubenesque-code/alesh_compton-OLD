@@ -176,14 +176,22 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     pointer-events: none;
   }
   .volume-buttons {
-    display: flex;
+    display: none;
     opacity: 0;
+    gap: 1em;
+    padding-right: 0.5em;
+    padding-left: 0.5em;
     /* gap: 1em; */
   }
   .volume-button {
     font-size: larger;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+
+    transition: background-color 100ms ease-in-out;
   }
   .play-icon {
     position: absolute;
@@ -197,7 +205,10 @@ const coverImageYPosition = coverImage?.yPosition || 50;
 
   @media (orientation: landscape) and (max-width: 800px) {
     .iframe-helper {
-      /* bottom: 0; */
+      bottom: -2px;
+    }
+    .volume-button:active {
+      background-color: #d1d5db;
     }
   }
 </style>
