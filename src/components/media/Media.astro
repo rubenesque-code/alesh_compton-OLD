@@ -874,69 +874,61 @@ const { media } = Astro.props;
       helperPanel.style.opacity = "1";
 
       //
-      if (
-        checkIsTouchDevice() &&
-        !mediaContainer.classList.contains(volumeSetClass)
-      ) {
-        const volumeController = new AbortController();
-        window["vol-controller"] = volumeController;
-        window.addEventListener(
-          "message",
-          (messageEvent) =>
-            handleSetVolumeForTouchDevice({
-              controller: volumeController,
-              event: messageEvent,
-              player: event.target,
-              volumeMessage,
-              iframe,
-            }),
-          { signal: volumeController.signal, passive: true }
-        );
-      }
-      //
+      handleVolumeListenerAndSetVolume({
+        player: event.target,
+        volumeMessage,
+        iframe,
+      }),
+        //
 
-      // time for opacity transition
-      setTimeout(() => {
-        overlay.style.zIndex = "-1";
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
 
-        event.target.playVideo();
-      }, 200);
+          event.target.playVideo();
+        }, 200);
     }
 
-    function handleSetVolumeForTouchDevice({
-      event,
+    function handleVolumeListenerAndSetVolume({
       player,
       volumeMessage,
-      controller,
       iframe,
     }) {
-      if (!checkIsTouchDevice()) {
+      if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
         return;
       }
+      console.log("SETTING VOL CONTROLLER..");
+      const volumeController = new AbortController();
+      window["vol-controller"] = volumeController;
+      window.addEventListener(
+        "message",
+        (event) => {
+          console.log("HELLO FROM VOLUME LISTENER");
+          const iframeWindow = player.getIframe().contentWindow;
+          if (event.source === iframeWindow) {
+            var data = JSON.parse(event.data);
+            if (
+              data.event === "infoDelivery" &&
+              data.info &&
+              data.info.volume
+            ) {
+              if (Number(data.info.volume) !== 100) {
+                console.log("SETTING VOLUME");
+                player.setVolume(100);
+                iframe.classList.add(volumeSetClass);
 
-      const volumeSet = iframe.classList.contains(volumeSetClass);
+                volumeMessage.style.opacity = 0;
+                setTimeout(() => {
+                  volumeMessage.style.zIndex = "-1";
+                }, 200);
 
-      if (volumeSet) {
-        return;
-      }
-
-      const iframeWindow = player.getIframe().contentWindow;
-      if (event.source === iframeWindow) {
-        var data = JSON.parse(event.data);
-        if (data.event === "infoDelivery" && data.info && data.info.volume) {
-          if (Number(data.info.volume) !== 100) {
-            player.setVolume(100);
-            iframe.classList.add(volumeSetClass);
-
-            volumeMessage.style.opacity = 0;
-            setTimeout(() => {
-              volumeMessage.style.zIndex = "-1";
-            }, 200);
-
-            controller.abort();
+                volumeController.abort();
+              }
+            }
           }
-        }
-      }
+        },
+        { signal: volumeController.signal, passive: true }
+      );
     }
 
     // ELEMENTS
@@ -1012,12 +1004,17 @@ const { media } = Astro.props;
         helperPanel.style.zIndex = "10";
         helperPanel.style.opacity = "1";
 
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
+        handleVolumeListenerAndSetVolume({
+          player,
+          volumeMessage,
+          iframe,
+        }),
+          // time for opacity transition
+          setTimeout(() => {
+            overlay.style.zIndex = "-1";
 
-          player.playVideo();
-        }, 200);
+            player.playVideo();
+          }, 200);
 
         return;
       }
