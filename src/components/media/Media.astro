@@ -828,6 +828,7 @@ const { media } = Astro.props;
       const helperPanel = helperPanels[index];
       const innerContainer = iframeInnerContainers[index];
       const volumeMessage = volumeMessages[index];
+      const volumeControlPanel = volumeControlPanels[index];
 
       iframe.classList.add(youtubePlayerLoadingFlag);
 
@@ -842,6 +843,7 @@ const { media } = Astro.props;
               loadingText,
               overlay,
               volumeMessage,
+              volumeControlPanel,
             }),
         },
       });
@@ -855,8 +857,11 @@ const { media } = Astro.props;
       overlay,
       helperPanel,
       volumeMessage,
+      volumeControlPanel,
     }) {
-      event.target.setVolume(0);
+      const player = event.target;
+
+      player.setVolume(0);
 
       iframe.classList.remove(youtubePlayerLoadingFlag);
 
@@ -873,35 +878,34 @@ const { media } = Astro.props;
 
       //
       handleVolumeListenerAndSetVolume({
-        player: event.target,
+        player,
         volumeMessage,
         iframe,
-      }),
-        //
+        volumeControlPanel,
+      });
 
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
+      // time for opacity transition
+      setTimeout(() => {
+        overlay.style.zIndex = "-1";
 
-          event.target.playVideo();
-        }, 200);
+        player.playVideo();
+      }, 200);
     }
 
     function handleVolumeListenerAndSetVolume({
       player,
       volumeMessage,
+      volumeControlPanel,
       iframe,
     }) {
       if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
         return;
       }
-      console.log("SETTING VOL CONTROLLER..");
       const volumeController = new AbortController();
       window["vol-controller"] = volumeController;
       window.addEventListener(
         "message",
         (event) => {
-          console.log("HELLO FROM VOLUME LISTENER");
           const iframeWindow = player.getIframe().contentWindow;
           if (event.source === iframeWindow) {
             var data = JSON.parse(event.data);
@@ -911,13 +915,47 @@ const { media } = Astro.props;
               data.info.volume
             ) {
               if (Number(data.info.volume) !== 100) {
-                console.log("SETTING VOLUME");
                 player.setVolume(100);
                 iframe.classList.add(volumeSetClass);
 
                 volumeMessage.style.opacity = 0;
                 setTimeout(() => {
-                  volumeMessage.style.zIndex = "-1";
+                  volumeMessage.style.display = "none";
+
+                  //
+                  volumeControlPanel.style.display = "flex";
+                  volumeControlPanel.style.opacity = "1";
+
+                  const downButton =
+                    volumeControlPanel.querySelector("#volume-down");
+                  const upButton =
+                    volumeControlPanel.querySelector("#volume-up");
+
+                  const volumeCrement = 10;
+
+                  function handleVolumeDown() {
+                    const currentVolume = player.getVolume();
+                    if (currentVolume === 0) {
+                      return;
+                    }
+                    player.setVolume(currentVolume - volumeCrement);
+                    console.log(player.getVolume());
+                  }
+
+                  function handleVolumeUp() {
+                    const currentVolume = player.getVolume();
+                    if (currentVolume === 100) {
+                      return;
+                    }
+                    player.setVolume(currentVolume + volumeCrement);
+                  }
+
+                  downButton.addEventListener("click", handleVolumeDown, {
+                    passive: true,
+                  });
+                  upButton.addEventListener("click", handleVolumeUp, {
+                    passive: true,
+                  });
                 }, 200);
 
                 volumeController.abort();
@@ -942,6 +980,8 @@ const { media } = Astro.props;
     const loadingTexts = document.getElementsByClassName("player-loading");
     const volumeMessages =
       mediaContainer.getElementsByClassName("volume-message");
+    const volumeControlPanels =
+      mediaContainer.getElementsByClassName("volume-buttons");
 
     // FUNCTIONALITY
     function onIsTransformedOut({ iframeIndex }) {
@@ -959,6 +999,7 @@ const { media } = Astro.props;
       const loadingText = loadingTexts[iframeIndex];
       const helperPanel = helperPanels[iframeIndex];
       const volumeMessage = volumeMessages[iframeIndex];
+      const volumeControlPanel = volumeControlPanels[iframeIndex];
 
       //
       const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
@@ -1006,6 +1047,7 @@ const { media } = Astro.props;
           player,
           volumeMessage,
           iframe,
+          volumeControlPanel,
         }),
           // time for opacity transition
           setTimeout(() => {

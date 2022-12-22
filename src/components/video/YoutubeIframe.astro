@@ -44,6 +44,11 @@ const coverImageYPosition = coverImage?.yPosition || 50;
         <VolumeIcon />
         <span>use youtube controls for volume</span>
       </div>
+      <div class="iframe-helper-item volume-buttons">
+        <div class="volume-button" id="volume-down">-</div>
+        <VolumeIcon />
+        <div class="volume-button" id="volume-up">+</div>
+      </div>
       <div id="close-button" class="iframe-helper-item close-button">
         <span>close</span>
         <CloseIcon />
@@ -170,6 +175,16 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     white-space: wrap;
     pointer-events: none;
   }
+  .volume-buttons {
+    display: flex;
+    opacity: 0;
+    /* gap: 1em; */
+  }
+  .volume-button {
+    font-size: larger;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
   .play-icon {
     position: absolute;
     left: 50%;
@@ -182,7 +197,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
 
   @media (orientation: landscape) and (max-width: 800px) {
     .iframe-helper {
-      bottom: 0;
+      /* bottom: 0; */
     }
   }
 </style>
