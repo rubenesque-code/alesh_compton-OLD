@@ -554,7 +554,7 @@ const { media } = Astro.props;
 
           setTimeout(() => {
             mediaContainer.style.overflowX = "auto";
-          }, transitionDuration - 300);
+          }, transitionDuration / 2);
 
           background.style.transitionDuration = `${transitionDuration}ms`;
           background.style.opacity = "0";
@@ -584,8 +584,6 @@ const { media } = Astro.props;
             transformElement.classList.add(isTransformedInClass);
             transformElement.classList.remove(isTransformingInClass);
           }, transitionDuration);
-
-          setTimeout(() => {}, transitionDuration);
 
           // RETURN TO INITIAL POSITON: END
         }
@@ -657,9 +655,9 @@ const { media } = Astro.props;
             mediaContainer.style.overflowX = "auto";
           }, transitionDuration / 2);
 
+          background.style.transitionDuration = `${transitionDuration}ms`;
           background.style.opacity = "0";
 
-          // revert to initial, untransformed css
           setTimeout(() => {
             transformElement.style.transitionDuration = "0ms";
 
@@ -695,6 +693,8 @@ const { media } = Astro.props;
             transformElement.classList.remove(isTransformingInClass);
             transformElement.classList.add(isTransformedInClass);
           }, transitionDuration);
+
+          // overlay transition timeout end ---
         }, 200);
       });
     });
@@ -721,7 +721,6 @@ const { media } = Astro.props;
 <script type="text/javascript">
   // YOUTUBE STUFF
   // _____________
-
   function ytJsMain() {
     // FLAGS
     const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
@@ -834,34 +833,50 @@ const { media } = Astro.props;
 
       window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
-          onReady,
+          onReady: (event) =>
+            onYoutubePlayerReady({
+              event,
+              helperPanel,
+              iframe,
+              innerContainer,
+              loadingText,
+              overlay,
+            }),
         },
       });
-
-      function onReady(event) {
-        iframe.classList.remove(youtubePlayerLoadingFlag);
-
-        innerContainer.style.cursor = "auto";
-        loadingText.style.opacity = "0";
-        setTimeout(() => {
-          loadingText.style.zIndex = "-1";
-        }, 200);
-
-        overlay.style.opacity = "0";
-
-        helperPanel.style.zIndex = "10";
-        helperPanel.style.opacity = "1";
-
-        event.target.setVolume(0);
-
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-
-          event.target.playVideo();
-        }, 200);
-      }
     }
+
+    function onYoutubePlayerReady({
+      event,
+      iframe,
+      innerContainer,
+      loadingText,
+      overlay,
+      helperPanel,
+    }) {
+      event.target.setVolume(0);
+
+      iframe.classList.remove(youtubePlayerLoadingFlag);
+
+      innerContainer.style.cursor = "auto";
+      loadingText.style.opacity = "0";
+      setTimeout(() => {
+        loadingText.style.zIndex = "-1";
+      }, 200);
+
+      overlay.style.opacity = "0";
+
+      helperPanel.style.zIndex = "10";
+      helperPanel.style.opacity = "1";
+
+      // time for opacity transition
+      setTimeout(() => {
+        overlay.style.zIndex = "-1";
+
+        event.target.playVideo();
+      }, 200);
+    }
+
     function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
       const volumeSet = mediaContainer.classList.contains(volumeSetClass);
 
@@ -931,13 +946,6 @@ const { media } = Astro.props;
         loadingText.style.zIndex = "10";
         loadingText.style.opacity = "1";
       }
-      function hideLoading() {
-        innerContainer.style.cursor = "auto";
-        loadingText.style.opacity = "0";
-        setTimeout(() => {
-          loadingText.style.zIndex = "-1";
-        }, 200);
-      }
 
       // functionality start
       iframe.style.display = "block";
@@ -986,28 +994,17 @@ const { media } = Astro.props;
 
       window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
-          onReady,
+          onReady: (event) =>
+            onYoutubePlayerReady({
+              event,
+              helperPanel,
+              iframe,
+              innerContainer,
+              loadingText,
+              overlay,
+            }),
         },
       });
-
-      function onReady(event) {
-        iframe.classList.remove(youtubePlayerLoadingFlag);
-
-        hideLoading();
-
-        event.target.setVolume(0);
-
-        overlay.style.opacity = "0";
-
-        helperPanel.style.zIndex = "10";
-        helperPanel.style.opacity = "1";
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-
-          event.target.playVideo();
-        }, 200);
-      }
     }
 
     iframeTransformContainers.forEach((transformContainer, i) => {
