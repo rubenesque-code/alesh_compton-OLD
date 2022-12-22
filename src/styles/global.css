@@ -5,6 +5,34 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "LM";
+  src: url("/fonts/LM.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KR";
+  src: url("/fonts/KR.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "FM";
+  src: url("/fonts/FM.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "VG";
+  src: url("/fonts/VG.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 * {
   box-sizing: border-box;
@@ -13,7 +41,7 @@
 }
 
 body {
-  font-family: "RobotoMonoLight", sans-serif;
+  font-family: "KR", sans-serif;
   font-size: smaller;
 }
 
