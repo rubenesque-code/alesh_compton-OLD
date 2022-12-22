@@ -32,7 +32,7 @@ const coverImageYPosition = coverImage?.yPosition || 50;
 
 <div class="iframe-container media-transform" id={`${index}`}>
   <div class="inner-container">
-    <span class="bg-loading-text">Loading video...</span>
+    <span class="bg-loading-text">Loading...</span>
     <iframe
       id={youtubeId}
       class="iframe"
@@ -93,12 +93,12 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     aspect-ratio: 16/9;
   }
   .inner-container {
-    /* visibility: hidden; */
     position: absolute;
     width: 100%;
     aspect-ratio: 16/9;
   }
   .iframe {
+    display: none;
     z-index: 1;
     position: absolute;
     width: 100%;

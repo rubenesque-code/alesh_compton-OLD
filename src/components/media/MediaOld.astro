@@ -596,8 +596,6 @@ const { media } = Astro.props;
   );
 
   closeButtons.forEach((closeButton, iframeIndex) => {
-    // TRANSFORM IN FOR IFRAMES
-
     const transformElement = iframeTransformContainers[
       iframeIndex
     ] as HTMLElement;
@@ -637,8 +635,6 @@ const { media } = Astro.props;
 
       // time for iframe overlay
       setTimeout(() => {
-        iframe.style.display = "none";
-
         const allElementsIndex = Number(transformElement.id);
 
         transformElement.style.transitionDuration = "0ms";
@@ -699,7 +695,7 @@ const { media } = Astro.props;
           transformElement.classList.remove(isTransformingInClass);
           transformElement.classList.add(isTransformedInClass);
         }, transitionDuration);
-      }, 200);
+      }, 100);
     });
   });
 </script>
@@ -872,9 +868,6 @@ const { media } = Astro.props;
           loadingText.style.zIndex = "-1";
         }, 200);
       }
-
-      // functionality start
-      iframe.style.display = "block";
 
       if (!youtubeApiIsInitiated || !youtubeApiIsReady) {
         showLoading();
