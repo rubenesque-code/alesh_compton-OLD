@@ -888,6 +888,7 @@ const { media } = Astro.props;
               event: messageEvent,
               player: event.target,
               volumeMessage,
+              iframe,
             }),
           { signal: volumeController.signal, passive: true }
         );
@@ -907,12 +908,13 @@ const { media } = Astro.props;
       player,
       volumeMessage,
       controller,
+      iframe,
     }) {
       if (!checkIsTouchDevice()) {
         return;
       }
 
-      const volumeSet = mediaContainer.classList.contains(volumeSetClass);
+      const volumeSet = iframe.classList.contains(volumeSetClass);
 
       if (volumeSet) {
         return;
@@ -924,7 +926,7 @@ const { media } = Astro.props;
         if (data.event === "infoDelivery" && data.info && data.info.volume) {
           if (Number(data.info.volume) !== 100) {
             player.setVolume(100);
-            mediaContainer.classList.add(volumeSetClass);
+            iframe.classList.add(volumeSetClass);
 
             volumeMessage.style.opacity = 0;
             setTimeout(() => {
