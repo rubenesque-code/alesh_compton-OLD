@@ -624,16 +624,15 @@ const { media } = Astro.props;
           iframeHelperPanel.style.zIndex = "-1";
         }, 200);
 
-        const iframe = iframes[iframeIndex];
-        // @ts-ignore: Unreachable code error
-        const player = window[`player-${iframe.id}`];
-
-        if (player) {
-          player.stopVideo();
-        }
-
         // time for iframe overlay
         setTimeout(() => {
+          const iframe = iframes[iframeIndex];
+          // @ts-ignore: Unreachable code error
+          const player = window[`player-${iframe.id}`];
+
+          if (player) {
+            player.stopVideo();
+          }
           iframe.style.display = "none";
 
           const allElementsIndex = Number(transformElement.id);
@@ -718,123 +717,89 @@ const { media } = Astro.props;
 
 <script type="text/javascript">
   // YOUTUBE STUFF
+  // _____________
 
-  //
-  class ClassWatcher {
-    constructor(
-      targetNode,
-      classToWatch,
-      classAddedCallback,
-      classRemovedCallback
-    ) {
-      this.targetNode = targetNode;
-      this.classToWatch = classToWatch;
-      this.classAddedCallback = classAddedCallback;
-      this.classRemovedCallback = classRemovedCallback;
-      this.observer = null;
-      this.lastClassState = targetNode.classList.contains(this.classToWatch);
+  function main() {
+    // FLAGS
+    const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
+    const youtubeApiReadyFlag = "yt-api-ready";
+    const isTransformedOutClass = "is-transformed-out";
+    const youtubePlayerLoadingFlag = "yt-player-loading";
+    const volumeSetClass = "volume-set";
 
-      this.init();
+    // HELPERS
+    function checkYoutubeApiIsInitiated(mediaContainer) {
+      return mediaContainer.classList.contains(youtubeApiCodeInitiatedClass);
+    }
+    function checkYoutubeApiIsReady(mediaContainer) {
+      return mediaContainer.classList.contains(youtubeApiReadyFlag);
+    }
+    function checkIsTransformedOut(element) {
+      return element.classList.contains(isTransformedOutClass);
     }
 
-    init() {
-      this.observer = new MutationObserver(this.mutationCallback);
-      this.observe();
-    }
+    class ClassWatcher {
+      constructor(
+        targetNode,
+        classToWatch,
+        classAddedCallback,
+        classRemovedCallback
+      ) {
+        this.targetNode = targetNode;
+        this.classToWatch = classToWatch;
+        this.classAddedCallback = classAddedCallback;
+        this.classRemovedCallback = classRemovedCallback;
+        this.observer = null;
+        this.lastClassState = targetNode.classList.contains(this.classToWatch);
 
-    observe() {
-      this.observer.observe(this.targetNode, { attributes: true });
-    }
+        this.init();
+      }
 
-    disconnect() {
-      this.observer.disconnect();
-    }
+      init() {
+        this.observer = new MutationObserver(this.mutationCallback);
+        this.observe();
+      }
 
-    mutationCallback = (mutationsList) => {
-      for (let mutation of mutationsList) {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class"
-        ) {
-          let currentClassState = mutation.target.classList.contains(
-            this.classToWatch
-          );
-          if (this.lastClassState !== currentClassState) {
-            this.lastClassState = currentClassState;
-            if (currentClassState) {
-              this.classAddedCallback();
-            } else {
-              if (this.classRemovedCallback) {
-                this.classRemovedCallback();
+      observe() {
+        this.observer.observe(this.targetNode, { attributes: true });
+      }
+
+      disconnect() {
+        this.observer.disconnect();
+      }
+
+      mutationCallback = (mutationsList) => {
+        for (let mutation of mutationsList) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            let currentClassState = mutation.target.classList.contains(
+              this.classToWatch
+            );
+            if (this.lastClassState !== currentClassState) {
+              this.lastClassState = currentClassState;
+              if (currentClassState) {
+                this.classAddedCallback();
+              } else {
+                if (this.classRemovedCallback) {
+                  this.classRemovedCallback();
+                }
               }
             }
           }
         }
-      }
-    };
-  }
-
-  function checkIsTouchDevice() {
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      // @ts-ignore: Unreachable code error
-      navigator.msMaxTouchPoints > 0
-    );
-  }
-
-  //
-  function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
-    const volumeSet = mediaContainer.classList.contains(volumeSetClass);
-
-    if (volumeSet) {
-      return;
+      };
+    }
+    function checkIsTouchDevice() {
+      return (
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        // @ts-ignore: Unreachable code error
+        navigator.msMaxTouchPoints > 0
+      );
     }
 
-    const iframeWindow = player.getIframe().contentWindow;
-    if (event.source === iframeWindow) {
-      var data = JSON.parse(event.data);
-      if (data.event === "infoDelivery" && data.info && data.info.volume) {
-        if (checkIsTouchDevice()) {
-          if (Number(data.info.volume) !== 100) {
-            setTimeout(() => {
-              player.setVolume(100);
-              mediaContainer.classList.add(volumeSetClass);
-
-              volumeMessage.style.opacity = 0;
-              setTimeout(() => {
-                volumeMessage.style.zIndex = "-1";
-              }, 200);
-            }, 200);
-          }
-        }
-        // only want to set to 100 once
-      }
-    }
-  }
-
-  //
-  const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
-  const youtubeApiReadyFlag = "yt-api-ready";
-  const isTransformedOutClass = "is-transformed-out";
-  const youtubePlayerLoadingFlag = "yt-player-loading";
-  const volumeSetClass = "volume-set";
-
-  //
-  // const mediaContainer = document.getElementById("media-container");
-  const iframeTransformContainers = Array.from(
-    document.getElementsByClassName("iframe-container media-transform")
-  );
-  const iframeInnerContainers =
-    document.getElementsByClassName("inner-container");
-  const iframes = document.getElementsByClassName("iframe");
-  const overlays = document.getElementsByClassName("iframe-overlay");
-  const helperPanels = document.getElementsByClassName("iframe-helper");
-  const loadingTexts = document.getElementsByClassName("player-loading");
-  const volumeMessages =
-    mediaContainer.getElementsByClassName("volume-message");
-
-  function main() {
     function handleLoadYoutubeApiCode() {
       var tag = document.createElement("script");
       tag.id = "iframe-demo";
@@ -842,25 +807,111 @@ const { media } = Astro.props;
       var firstScriptTag = document.getElementsByTagName("script")[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
+    function onYouTubeIframeAPIReady() {
+      // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
+      // the API's js is loaded after the first iframe container is transformed
+      mediaContainer.classList.add(youtubeApiReadyFlag);
 
-    //
-    function checkYoutubeApiIsInitiated() {
-      return mediaContainer.classList.contains(youtubeApiCodeInitiatedClass);
+      const index = iframeTransformContainers.findIndex((node) =>
+        node.classList.contains(isTransformedOutClass)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const iframe = iframes[index];
+      const overlay = overlays[index];
+      const loadingText = loadingTexts[index];
+      const helperPanel = helperPanels[index];
+      const innerContainer = iframeInnerContainers[index];
+      // const volumeMessage = volumeMessages[index];
+
+      iframe.classList.add(youtubePlayerLoadingFlag);
+
+      window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
+        events: {
+          onReady,
+        },
+      });
+
+      function onReady(event) {
+        iframe.classList.remove(youtubePlayerLoadingFlag);
+
+        innerContainer.style.cursor = "auto";
+        loadingText.style.opacity = "0";
+        setTimeout(() => {
+          loadingText.style.zIndex = "-1";
+        }, 200);
+
+        overlay.style.opacity = "0";
+
+        helperPanel.style.zIndex = "10";
+        helperPanel.style.opacity = "1";
+
+        event.target.setVolume(0);
+
+        // time for opacity transition
+        setTimeout(() => {
+          overlay.style.zIndex = "-1";
+
+          event.target.playVideo();
+        }, 200);
+      }
     }
-    function checkYoutubeApiIsReady() {
-      return mediaContainer.classList.contains(youtubeApiReadyFlag);
+    function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
+      const volumeSet = mediaContainer.classList.contains(volumeSetClass);
+
+      if (volumeSet) {
+        return;
+      }
+
+      const iframeWindow = player.getIframe().contentWindow;
+      if (event.source === iframeWindow) {
+        var data = JSON.parse(event.data);
+        if (data.event === "infoDelivery" && data.info && data.info.volume) {
+          if (checkIsTouchDevice()) {
+            if (Number(data.info.volume) !== 100) {
+              setTimeout(() => {
+                player.setVolume(100);
+                mediaContainer.classList.add(volumeSetClass);
+
+                volumeMessage.style.opacity = 0;
+                setTimeout(() => {
+                  volumeMessage.style.zIndex = "-1";
+                }, 200);
+              }, 200);
+            }
+          }
+          // only want to set to 100 once
+        }
+      }
     }
 
-    //
+    // ELEMENTS
+    const mediaContainer = document.getElementById("media-container");
+    const iframeTransformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframeInnerContainers =
+      document.getElementsByClassName("inner-container");
+    const iframes = document.getElementsByClassName("iframe");
+    const overlays = document.getElementsByClassName("iframe-overlay");
+    const helperPanels = document.getElementsByClassName("iframe-helper");
+    const loadingTexts = document.getElementsByClassName("player-loading");
+    const volumeMessages =
+      mediaContainer.getElementsByClassName("volume-message");
+
+    // FUNCTIONALITY
     function onIsTransformedOut({ iframeIndex }) {
       const transformContainer = iframeTransformContainers[iframeIndex];
-      const isTransformedOut = transformContainer.classList.contains(
-        isTransformedOutClass
-      );
+      const isTransformedOut = checkIsTransformedOut(transformContainer);
+
       if (!isTransformedOut) {
         return;
       }
 
+      // elements
       const iframe = iframes[iframeIndex];
       const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
@@ -868,10 +919,10 @@ const { media } = Astro.props;
       const helperPanel = helperPanels[iframeIndex];
 
       //
-      const youtubeApiIsInitiated = checkYoutubeApiIsInitiated();
-      const youtubeApiIsReady = checkYoutubeApiIsReady();
+      const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
+      const youtubeApiIsReady = checkYoutubeApiIsReady(mediaContainer);
 
-      //
+      // element style helpers
       function showLoading() {
         innerContainer.style.cursor = "wait";
         loadingText.style.zIndex = "10";
@@ -894,6 +945,7 @@ const { media } = Astro.props;
 
       if (!youtubeApiIsInitiated) {
         mediaContainer.classList.add(youtubeApiCodeInitiatedClass);
+        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
         handleLoadYoutubeApiCode();
         return;
       }
@@ -962,68 +1014,9 @@ const { media } = Astro.props;
         })
       );
     });
+
+    // main end---
   }
+
   main();
-
-  // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
-  // the API's js is loaded after the first iframe container is transformed
-  function onYouTubeIframeAPIReady() {
-    // const mediaContainer = document.getElementById("media-container");
-
-    mediaContainer.classList.add(youtubeApiReadyFlag);
-
-    const index = iframeTransformContainers.findIndex((node) =>
-      node.classList.contains(isTransformedOutClass)
-    );
-
-    if (index < 0) {
-      return;
-    }
-
-    const iframe = iframes[index];
-    const overlay = overlays[index];
-    const loadingText = loadingTexts[index];
-    const helperPanel = helperPanels[index];
-    const innerContainer = iframeInnerContainers[index];
-    // const volumeMessage = volumeMessages[index];
-
-    iframe.classList.add(youtubePlayerLoadingFlag);
-
-    window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
-      events: {
-        onReady,
-      },
-    });
-    // const player = window[`player-${iframe.id}`];
-
-    function onReady(event) {
-      /*       if (checkIsTouchDevice()) {
-        window.addEventListener("message", (event) =>
-          handleSetVolumeForTouchDevice(event, player, volumeMessage)
-        );
-      } */
-
-      iframe.classList.remove(youtubePlayerLoadingFlag);
-
-      innerContainer.style.cursor = "auto";
-      loadingText.style.opacity = "0";
-      setTimeout(() => {
-        loadingText.style.zIndex = "-1";
-      }, 200);
-
-      overlay.style.opacity = "0";
-
-      helperPanel.style.zIndex = "10";
-      helperPanel.style.opacity = "1";
-
-      event.target.setVolume(0);
-
-      // time for opacity transition
-      setTimeout(() => {
-        overlay.style.zIndex = "-1";
-
-        event.target.playVideo();
-      }, 200);
-    }
-  }
 </script>
