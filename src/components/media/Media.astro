@@ -40,7 +40,7 @@ const { media } = Astro.props;
         )
       )
     }
-    <div class="spacer">helloo</div>
+    <div class="spacer">iii</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, index) =>
@@ -63,7 +63,7 @@ const { media } = Astro.props;
           )
         )
       }
-      <div class="spacer">helloo</div>
+      <div class="spacer">iii</div>
       <Background />
     </div>
   </div>
@@ -123,7 +123,7 @@ const { media } = Astro.props;
 <script>
   // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
   // _________________________________
-  function main() {
+  function fadeInMediaJsMain() {
     const mediaContainer = document.getElementById("media-container")!;
     const media = mediaContainer.getElementsByClassName(
       "media-transform"
@@ -135,13 +135,13 @@ const { media } = Astro.props;
       mediaElement.style.opacity = "1";
     }
   }
-  main();
+  fadeInMediaJsMain();
 </script>
 
 <script>
   // MEDIA TRANSFORM
   // _________________________________
-  function main() {
+  function transformJsMain() {
     // FLAGS
     const isTransformingOutClass = "is-transforming-out";
     const isTransformedOutClass = "is-transformed-out";
@@ -701,25 +701,28 @@ const { media } = Astro.props;
     // main end----
   }
 
-  const mediaContainer = document.getElementById("media-container")!;
+  function transformJsInitiator() {
+    const mediaContainer = document.getElementById("media-container")!;
 
-  mediaContainer.addEventListener(
-    "mousedown",
-    () => {
-      main();
-    },
-    {
-      once: true,
-      passive: true,
-    }
-  );
+    mediaContainer.addEventListener(
+      "mousedown",
+      () => {
+        transformJsMain();
+      },
+      {
+        once: true,
+        passive: true,
+      }
+    );
+  }
+  transformJsInitiator();
 </script>
 
 <script type="text/javascript">
   // YOUTUBE STUFF
   // _____________
 
-  function main() {
+  function ytJsMain() {
     // FLAGS
     const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
     const youtubeApiReadyFlag = "yt-api-ready";
@@ -1018,17 +1021,18 @@ const { media } = Astro.props;
     // main end---
   }
 
-  main();
-
-  const visibleMediaContainer = document.getElementById("visible-media");
-  visibleMediaContainer.addEventListener(
-    "mousedown",
-    () => {
-      main();
-    },
-    {
-      once: true,
-      passive: true,
-    }
-  );
+  function ytJsInitiator() {
+    const visibleMediaContainer = document.getElementById("visible-media");
+    visibleMediaContainer.addEventListener(
+      "mousedown",
+      () => {
+        ytJsMain();
+      },
+      {
+        once: true,
+        passive: true,
+      }
+    );
+  }
+  ytJsInitiator();
 </script>
