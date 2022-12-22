@@ -3,7 +3,7 @@ import Navigation from "./Navigation.astro";
 ---
 
 <div class="header-container" id="header">
-  <a class="header-name" href="/">Alesh Compton</a>
+  <a class="header-name" href="/"><span>Alesh Compton</span></a>
   <Navigation />
 </div>
 
@@ -18,7 +18,13 @@ import Navigation from "./Navigation.astro";
     padding-right: 2.5vw;
   }
   .header-name {
+    position: relative;
+  }
+  .header-name > span {
+    position: absolute;
+    top: -6px;
     font-family: "LM", sans-serif;
     white-space: nowrap;
+    /* transform: translateY(12px); */
   }
 </style>

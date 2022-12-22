@@ -13,6 +13,7 @@ import PlayIcon from "./PlayIcon.astro";
 import VolumeIcon from "./VolumeIcon.astro";
 
 import type { YoutubeVideo } from "~types/index";
+import Mute from "~components/icons/Mute.astro";
 
 type Props = { isFirst: boolean; index: number } & YoutubeVideo;
 
@@ -41,8 +42,8 @@ const coverImageYPosition = coverImage?.yPosition || 50;
       allowfullscreen></iframe>
     <div class="iframe-helper">
       <div id="volume-message" class="iframe-helper-item volume-message">
-        <VolumeIcon />
-        <span>use youtube controls for volume</span>
+        <Mute />
+        <span>use youtube controls to unmute</span>
       </div>
       <div class="iframe-helper-item volume-buttons">
         <div class="volume-button" id="volume-down">-</div>
