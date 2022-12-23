@@ -41,9 +41,14 @@ const coverImageYPosition = coverImage?.yPosition || 50;
       loading="lazy"
       allowfullscreen></iframe>
     <div class="iframe-helper">
-      <div id="volume-message" class="volume-message">
-        <Mute />
-        <span>use youtube controls to unmute</span>
+      <div id="volume-message" class="iframe-helper-item volume-message">
+        <span id="volume-message-icon-mute">
+          <Mute />
+        </span>
+        <span id="volume-message-icon-volume">
+          <VolumeIcon />
+        </span>
+        <span id="volume-message-text">use youtube controls for volume</span>
       </div>
       <div class="iframe-helper-item volume-buttons">
         <div class="volume-button" id="volume-down">-</div>
@@ -199,6 +204,9 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     align-items: center;
     gap: 0.5em;
   }
+  #volume-message-icon-mute {
+    display: none;
+  }
   .volume-buttons {
     display: none;
     opacity: 0;
@@ -233,6 +241,14 @@ const coverImageYPosition = coverImage?.yPosition || 50;
     }
     .volume-button:active {
       background-color: #d1d5db;
+    }
+  }
+  @media (hover: none) {
+    #volume-message-icon-mute {
+      display: block;
+    }
+    #volume-message-icon-volume {
+      display: none;
     }
   }
 </style>

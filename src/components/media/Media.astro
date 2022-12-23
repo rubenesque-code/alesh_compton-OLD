@@ -617,7 +617,7 @@ const { media } = Astro.props;
         transformElement.style.pointerEvents = "none";
         overlayCloseButton.style.pointerEvents = "none";
 
-        iframe.classList.add("stop-video");
+        mediaContainer.classList.add("stop-video");
 
         loadingText.style.opacity = "0";
         overlayCloseButton.style.opacity = "0";
@@ -941,6 +941,12 @@ const { media } = Astro.props;
       // the API's js is loaded after the first iframe container is transformed
       mediaContainer.classList.add(youtubeApiReadyFlag);
 
+      const stopped = mediaContainer.classList.contains("stop-video");
+      if (stopped) {
+        mediaContainer.classList.remove("stop-video");
+        return;
+      }
+
       const index = iframeTransformContainers.findIndex((node) =>
         node.classList.contains(isTransformedOutClass)
       );
@@ -957,7 +963,7 @@ const { media } = Astro.props;
       const volumeControlPanel = volumeControlPanels[index];
       const overlayCloseButton = overlayCloseButtons[index];
 
-      iframe.classList.add(youtubePlayerLoadingFlag);
+      mediaContainer.classList.add(youtubePlayerLoadingFlag);
 
       window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
@@ -986,11 +992,11 @@ const { media } = Astro.props;
       volumeControlPanel,
       overlayCloseButton,
     }) {
-      iframe.classList.remove(youtubePlayerLoadingFlag);
+      mediaContainer.classList.remove(youtubePlayerLoadingFlag);
 
-      const stopped = iframe.classList.contains("stop-video");
+      const stopped = mediaContainer.classList.contains("stop-video");
       if (stopped) {
-        iframe.classList.remove("stop-video");
+        mediaContainer.classList.remove("stop-video");
         return;
       }
 
@@ -1026,6 +1032,12 @@ const { media } = Astro.props;
     }) {
       overlay.style.opacity = "0";
 
+      if (checkIsTouchDevice()) {
+        const volumeMessageText = volumeMessage.querySelector(
+          "#volume-message-text"
+        );
+        volumeMessageText.textContent = "use youtube controls to unmute";
+      }
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
       setTimeout(() => {
@@ -1100,7 +1112,6 @@ const { media } = Astro.props;
                       return;
                     }
                     player.setVolume(currentVolume - volumeCrement);
-                    console.log(player.getVolume());
                   }
 
                   function handleVolumeUp() {
@@ -1167,9 +1178,9 @@ const { media } = Astro.props;
       const volumeControlPanel = volumeControlPanels[iframeIndex];
       const overlayCloseButton = overlayCloseButtons[iframeIndex];
 
-      const wasStopped = iframe.classList.contains("stop-video");
+      const wasStopped = mediaContainer.classList.contains("stop-video");
       if (wasStopped) {
-        iframe.classList.remove("stop-video");
+        mediaContainer.classList.remove("stop-video");
       }
 
       //
@@ -1208,7 +1219,7 @@ const { media } = Astro.props;
         return;
       }
 
-      if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
+      if (mediaContainer.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
       // first youtube video (when youtube api is iniitialising) will run from onYoutubeApiReady; following ones will run with code below.
@@ -1229,7 +1240,7 @@ const { media } = Astro.props;
         return;
       }
 
-      iframe.classList.add(youtubePlayerLoadingFlag);
+      mediaContainer.classList.add(youtubePlayerLoadingFlag);
 
       showLoading();
 

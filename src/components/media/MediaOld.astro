@@ -40,7 +40,6 @@ const { media } = Astro.props;
         )
       )
     }
-    <div class="spacer">helloo</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, index) =>
@@ -63,7 +62,6 @@ const { media } = Astro.props;
           )
         )
       }
-      <div class="spacer">helloo</div>
       <Background />
     </div>
   </div>
@@ -123,131 +121,109 @@ const { media } = Astro.props;
 <script>
   // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
   // _________________________________
+  function fadeInMediaJsMain() {
+    const mediaContainer = document.getElementById("media-container")!;
+    const media = mediaContainer.getElementsByClassName(
+      "media-transform"
+    ) as HTMLCollectionOf<HTMLElement>;
 
-  const mediaContainer = document.getElementById("media-container")!;
-  const media = mediaContainer.getElementsByClassName(
-    "media-transform"
-  ) as HTMLCollectionOf<HTMLElement>;
-
-  // avoid image flashing in
-  for (let i = 0; i < media.length; i++) {
-    const mediaElement = media[i];
-    mediaElement.style.opacity = "1";
+    // avoid image flashing in
+    for (let i = 0; i < media.length; i++) {
+      const mediaElement = media[i];
+      mediaElement.style.opacity = "1";
+    }
   }
+  fadeInMediaJsMain();
 </script>
 
 <script>
   // MEDIA TRANSFORM
   // _________________________________
-  const isTransformingOutClass = "is-transforming-out";
-  const isTransformedOutClass = "is-transformed-out";
-  const isTransformingInClass = "is-transforming-in";
-  const isTransformedInClass = "is-transformed-in";
+  function transformJsMain() {
+    // FLAGS
+    const isTransformingOutClass = "is-transforming-out";
+    const isTransformedOutClass = "is-transformed-out";
+    const isTransformingInClass = "is-transforming-in";
+    const isTransformedInClass = "is-transformed-in";
 
-  function checkIsTransformingOut(element: HTMLElement) {
-    return element.classList.contains(isTransformingOutClass);
-  }
-  function checkIsTransformedOut(element: HTMLElement) {
-    return element.classList.contains(isTransformedOutClass);
-  }
-  function checkIsTransformingIn(element: HTMLElement) {
-    return element.classList.contains(isTransformingInClass);
-  }
-  function checkIsTransformedIn(element: HTMLElement) {
-    return element.classList.contains(isTransformedInClass);
-  }
+    // TYPES
+    type Mutable<T> = {
+      -readonly [k in keyof T]: T[k];
+    };
+    type CustomRect = Mutable<{
+      width: number;
+      height: number;
+      left: number;
+      top: number;
+    }>;
 
-  //
-
-  function getContainedSize(img: HTMLImageElement) {
-    var ratio = img.naturalWidth / img.naturalHeight;
-    var width = img.height * ratio;
-    var height = img.height;
-    if (width > img.width) {
-      width = img.width;
-      height = img.width / ratio;
+    // HELPERS
+    function checkIsTransformingOut(element: HTMLElement) {
+      return element.classList.contains(isTransformingOutClass);
     }
-    return [width, height];
-  }
+    function checkIsTransformedOut(element: HTMLElement) {
+      return element.classList.contains(isTransformedOutClass);
+    }
+    function checkIsTransformingIn(element: HTMLElement) {
+      return element.classList.contains(isTransformingInClass);
+    }
+    function checkIsTransformedIn(element: HTMLElement) {
+      return element.classList.contains(isTransformedInClass);
+    }
 
-  //
-  function getTransitionDurationMs(element: HTMLElement) {
-    return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
-  }
+    function getContainedSize(img: HTMLImageElement) {
+      var ratio = img.naturalWidth / img.naturalHeight;
+      var width = img.height * ratio;
+      var height = img.height;
+      if (width > img.width) {
+        width = img.width;
+        height = img.width / ratio;
+      }
+      return [width, height];
+    }
+    function getTransitionDurationMs(element: HTMLElement) {
+      return parseFloat(getComputedStyle(element).transitionDuration) * 1000;
+    }
 
-  function isIframeTransformContainer(element: HTMLElement) {
-    return element.classList.contains("iframe-container");
-  }
+    function isIframeTransformContainer(element: HTMLElement) {
+      return element.classList.contains("iframe-container");
+    }
 
-  //
-  function fixElementPosition(element: HTMLElement) {
-    const rect = element.getBoundingClientRect();
+    function calcFillScreenRect({
+      element,
+      maxHeightDecimal = 0.98,
+      maxWidthDecimal = 0.98,
+    }: {
+      element: HTMLElement;
+      maxWidthDecimal?: number;
+      maxHeightDecimal?: number;
+    }) {
+      const elementRect = element.getBoundingClientRect();
 
-    element.style.left = `${rect.left}px`;
-    element.style.top = `${rect.top}px`;
-    element.style.width = `${rect.width}px`;
-    element.style.height = `${rect.height}px`;
+      const maxWidth = window.innerWidth * maxWidthDecimal;
+      const maxHeight = window.innerHeight * maxHeightDecimal;
 
-    element.style.position = "fixed";
-  }
+      const fillWidthHeight =
+        elementRect.height * (maxWidth / elementRect.width);
 
-  function revertIframeToInitialPlacement(element: HTMLElement) {
-    element.style.zIndex = "0";
+      if (fillWidthHeight <= maxHeight) {
+        const width = maxWidth;
+        const height = fillWidthHeight;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+        return {
+          width,
+          height,
+          left,
+          top,
+        } as CustomRect;
+      }
 
-    element.style.transform = "";
-    element.style.left = "0";
-    element.style.top = "0";
-
-    element.style.maxHeight = "1000px";
-    element.style.height = "100%";
-    element.style.width = "";
-    element.style.marginTop = "0";
-    element.style.marginLeft = "0";
-    element.style.position = "relative";
-  }
-  function revertImageToInitialPlacement(element: HTMLElement) {
-    element.style.zIndex = "0";
-
-    element.style.transform = "";
-    element.style.left = "0";
-    element.style.top = "0";
-
-    element.style.width = "";
-    element.style.height = "";
-    element.style.position = "static";
-  }
-
-  type Mutable<T> = {
-    -readonly [k in keyof T]: T[k];
-  };
-  type CustomRect = Mutable<{
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-  }>;
-
-  function calcFillScreenRect({
-    element,
-    maxHeightDecimal = 0.98,
-    maxWidthDecimal = 0.98,
-  }: {
-    element: HTMLElement;
-    maxWidthDecimal?: number;
-    maxHeightDecimal?: number;
-  }) {
-    const elementRect = element.getBoundingClientRect();
-
-    const maxWidth = window.innerWidth * maxWidthDecimal;
-    const maxHeight = window.innerHeight * maxHeightDecimal;
-
-    const fillWidthHeight = elementRect.height * (maxWidth / elementRect.width);
-
-    if (fillWidthHeight <= maxHeight) {
-      const width = maxWidth;
-      const height = fillWidthHeight;
+      const width = elementRect.width * (maxHeight / elementRect.height);
+      const height = maxHeight;
       const left = (window.innerWidth - width) / 2;
       const top = (window.innerHeight - height) / 2;
+
       return {
         width,
         height,
@@ -256,391 +232,421 @@ const { media } = Astro.props;
       } as CustomRect;
     }
 
-    const width = elementRect.width * (maxHeight / elementRect.height);
-    const height = maxHeight;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
-
-    return {
-      width,
-      height,
-      left,
-      top,
-    } as CustomRect;
-  }
-
-  function calcElementTransform({
-    destinationRect,
-    element,
-  }: {
-    element: HTMLElement;
-    destinationRect: CustomRect;
-  }) {
-    // destination rect has same aspect-ratio as elementRect
-
-    const initialRect = element.getBoundingClientRect();
-
-    const scale = destinationRect.width / initialRect.width;
-
-    const heightChangeFromScale =
-      initialRect.height * scale - initialRect.height;
-    const topChangeFromScale = heightChangeFromScale / 2;
-    // must minus to go up for 'top'
-    const topAfterScale = initialRect.top - topChangeFromScale;
-    const translateY = destinationRect.top - topAfterScale;
-
-    let translateX: number;
-    const transformDirection =
-      destinationRect.left < initialRect.left ? "left" : "right";
-
-    if (transformDirection === "left") {
-      const widthChangeFromScale =
-        initialRect.width * scale - initialRect.width;
-      const leftAfterScale = initialRect.left - widthChangeFromScale;
-      translateX = destinationRect.left - leftAfterScale;
-    } else {
-      translateX = destinationRect.left - initialRect.left;
-    }
-
-    const totalX = Math.abs(initialRect.left - destinationRect.left);
-    const totalY = Math.abs(initialRect.top - destinationRect.top);
-    const translateDistance = Math.sqrt(
-      Math.pow(totalX, 2) + Math.pow(totalY, 2)
-    );
-
-    return {
-      scale,
-      translateX,
-      translateY,
-      transformOrigin: transformDirection === "left" ? "right" : "left",
-      translateDistance,
-      width: destinationRect.width,
-      height: destinationRect.height,
-      marginTop: destinationRect.top - initialRect.top,
-      marginLeft: destinationRect.left - initialRect.left,
-    };
-  }
-
-  //
-  function transform({
-    transformingElement,
-    destinationRect,
-    transformBy,
-  }: {
-    transformingElement: HTMLElement;
-    destinationRect: CustomRect;
-    transformBy: "width-height-margin" | "scale-translate";
-  }) {
-    const {
-      scale,
-      transformOrigin,
-      translateDistance,
-      translateX,
-      translateY,
-      width,
-      height,
-      marginLeft,
-      marginTop,
-    } = calcElementTransform({
+    function calcElementTransform({
       destinationRect,
-      element: transformingElement,
-    });
+      element,
+    }: {
+      element: HTMLElement;
+      destinationRect: CustomRect;
+    }) {
+      // destination rect has same aspect-ratio as elementRect
 
-    const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+      const initialRect = element.getBoundingClientRect();
 
-    transformingElement.style.transitionDuration = `${transitionDuration}ms`;
+      const scale = destinationRect.width / initialRect.width;
 
-    if (transformBy === "width-height-margin") {
-      transformingElement.style.width = `${width}px`;
-      transformingElement.style.height = `${height}px`;
-      transformingElement.style.marginTop = `${marginTop}px`;
-      transformingElement.style.marginLeft = `${marginLeft}px`;
-      return;
+      const heightChangeFromScale =
+        initialRect.height * scale - initialRect.height;
+      const topChangeFromScale = heightChangeFromScale / 2;
+      // must minus to go up for 'top'
+      const topAfterScale = initialRect.top - topChangeFromScale;
+      const translateY = destinationRect.top - topAfterScale;
+
+      let translateX: number;
+      const transformDirection =
+        destinationRect.left < initialRect.left ? "left" : "right";
+
+      if (transformDirection === "left") {
+        const widthChangeFromScale =
+          initialRect.width * scale - initialRect.width;
+        const leftAfterScale = initialRect.left - widthChangeFromScale;
+        translateX = destinationRect.left - leftAfterScale;
+      } else {
+        translateX = destinationRect.left - initialRect.left;
+      }
+
+      const totalX = Math.abs(initialRect.left - destinationRect.left);
+      const totalY = Math.abs(initialRect.top - destinationRect.top);
+      const translateDistance = Math.sqrt(
+        Math.pow(totalX, 2) + Math.pow(totalY, 2)
+      );
+
+      return {
+        scale,
+        translateX,
+        translateY,
+        transformOrigin: transformDirection === "left" ? "right" : "left",
+        translateDistance,
+        width: destinationRect.width,
+        height: destinationRect.height,
+        marginTop: destinationRect.top - initialRect.top,
+        marginLeft: destinationRect.left - initialRect.left,
+      };
     }
 
-    transformingElement.style.transformOrigin = `${transformOrigin}`;
-    transformingElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-  }
+    function fixElementPosition(element: HTMLElement) {
+      const rect = element.getBoundingClientRect();
 
-  //
-  function showBackground() {
+      element.style.left = `${rect.left}px`;
+      element.style.top = `${rect.top}px`;
+      element.style.width = `${rect.width}px`;
+      element.style.height = `${rect.height}px`;
+
+      element.style.position = "fixed";
+    }
+    function revertIframeToInitialPlacement(element: HTMLElement) {
+      element.style.zIndex = "0";
+
+      element.style.transform = "";
+      element.style.left = "0";
+      element.style.top = "0";
+
+      element.style.maxHeight = "1000px";
+      element.style.height = "100%";
+      element.style.width = "";
+      element.style.marginTop = "0";
+      element.style.marginLeft = "0";
+      element.style.position = "relative";
+    }
+    function revertImageToInitialPlacement(element: HTMLElement) {
+      element.style.zIndex = "0";
+
+      element.style.transform = "";
+      element.style.left = "0";
+      element.style.top = "0";
+
+      element.style.width = "";
+      element.style.height = "";
+      element.style.position = "static";
+    }
+    function transform({
+      transformingElement,
+      destinationRect,
+      transformBy,
+    }: {
+      transformingElement: HTMLElement;
+      destinationRect: CustomRect;
+      transformBy: "width-height-margin" | "scale-translate";
+    }) {
+      const {
+        scale,
+        transformOrigin,
+        translateDistance,
+        translateX,
+        translateY,
+        width,
+        height,
+        marginLeft,
+        marginTop,
+      } = calcElementTransform({
+        destinationRect,
+        element: transformingElement,
+      });
+
+      const transitionDuration = 300 + Math.sqrt(translateDistance) * 15;
+
+      transformingElement.style.transitionDuration = `${transitionDuration}ms`;
+
+      if (transformBy === "width-height-margin") {
+        transformingElement.style.width = `${width}px`;
+        transformingElement.style.height = `${height}px`;
+        transformingElement.style.marginTop = `${marginTop}px`;
+        transformingElement.style.marginLeft = `${marginLeft}px`;
+        return;
+      }
+
+      transformingElement.style.transformOrigin = `${transformOrigin}`;
+      transformingElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    // ELEMENTS
+    const mediaContainer = document.getElementById("media-container")!;
     const background = document.getElementById("background")!;
-    background.style.position = "fixed";
-    background.style.zIndex = "5";
-    background.style.opacity = "1";
-  }
+    const transformElements = Array.from(
+      mediaContainer.getElementsByClassName(
+        "media-transform"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const duplicates = Array.from(
+      mediaContainer.getElementsByClassName(
+        "duplicate"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframeOverlayCloseButtons = Array.from(
+      mediaContainer.getElementsByClassName(
+        "overlay-close-button"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const videoPlayingCloseButtons = Array.from(
+      mediaContainer.getElementsByClassName(
+        "close-button"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframeTransformContainers = Array.from(
+      mediaContainer.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframeInnerContainers = Array.from(
+      mediaContainer.getElementsByClassName(
+        "inner-container"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframes = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const overlays = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe-overlay"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const iframeHelperPanels = Array.from(
+      mediaContainer.getElementsByClassName(
+        "iframe-helper"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const loadingTexts = mediaContainer.getElementsByClassName(
+      "player-loading"
+    ) as HTMLCollectionOf<HTMLElement>;
 
-  //
-  const mediaContainer = document.getElementById("media-container")!;
-  const background = document.getElementById("background")!;
-  const transformElements = Array.from(
-    mediaContainer.getElementsByClassName(
-      "media-transform"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const duplicates = Array.from(
-    mediaContainer.getElementsByClassName(
-      "duplicate"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
+    // ELEMENT PRESENTATION HELPERS
+    function showBackground() {
+      background.style.position = "fixed";
+      background.style.zIndex = "5";
+      background.style.opacity = "1";
+    }
 
-  //
-  transformElements.forEach((transformElement, index) => {
-    transformElement.addEventListener("click", () => {
-      const isInInitialPosition = !checkIsTransformingOut(transformElement);
-      const isTransformedOut = checkIsTransformedOut(transformElement);
-      const isTransformingIn = checkIsTransformingIn(transformElement);
+    // FUNCTIONALITY
+    transformElements.forEach((transformElement, index) => {
+      transformElement.addEventListener("click", () => {
+        const isInInitialPosition = !checkIsTransformingOut(transformElement);
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
 
-      if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
-        // TRANSFORM OUT: start
+        if (isInInitialPosition && !isTransformedOut && !isTransformingIn) {
+          // TRANSFORM OUT: start
 
-        transformElement.classList.add(isTransformingOutClass);
-        transformElement.classList.remove(isTransformedInClass);
+          transformElement.classList.add(isTransformingOutClass);
+          transformElement.classList.remove(isTransformedInClass);
 
-        transformElement.style.pointerEvents = "none";
+          transformElement.style.pointerEvents = "none";
 
-        for (let j = transformElements.length - 1; j >= index; j--) {
-          fixElementPosition(transformElements[j]);
-        }
+          for (let j = transformElements.length - 1; j >= index; j--) {
+            fixElementPosition(transformElements[j]);
+          }
 
-        transformElement.style.zIndex = "10";
+          transformElement.style.zIndex = "10";
 
-        const isIframe = isIframeTransformContainer(transformElement);
+          const isIframe = isIframeTransformContainer(transformElement);
 
-        const innerWidth = window.innerWidth;
-        const innerHeight = window.innerHeight;
+          const innerWidth = window.innerWidth;
+          const innerHeight = window.innerHeight;
 
-        const isLandscape = innerWidth >= innerHeight;
+          const isLandscape = innerWidth >= innerHeight;
 
-        const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
+          const maxDimensionDecimal = isIframe && isLandscape ? 0.8 : 0.98;
+          // const maxDimensionDecimal = 0.98;
 
-        const fillScreenRect = calcFillScreenRect({
-          element: transformElement,
-          maxHeightDecimal: maxDimensionDecimal,
-          maxWidthDecimal: maxDimensionDecimal,
-        });
+          const fillScreenRect = calcFillScreenRect({
+            element: transformElement,
+            maxHeightDecimal: maxDimensionDecimal,
+            maxWidthDecimal: maxDimensionDecimal,
+          });
 
-        transform({
-          destinationRect: fillScreenRect,
-          transformBy: isIframe ? "width-height-margin" : "scale-translate",
-          transformingElement: transformElement,
-        });
+          transform({
+            destinationRect: fillScreenRect,
+            transformBy: isIframe ? "width-height-margin" : "scale-translate",
+            transformingElement: transformElement,
+          });
 
-        showBackground();
+          showBackground();
 
-        // time for bg to show
-        setTimeout(() => {
-          // prevent scrolling
-          mediaContainer.style.overflowX = "hidden";
-        }, 200);
+          // time for bg to show
+          setTimeout(() => {
+            // prevent scrolling
+            mediaContainer.style.overflowX = "hidden";
+          }, 200);
 
-        const transitionDuration = getTransitionDurationMs(transformElement);
+          const transitionDuration = getTransitionDurationMs(transformElement);
 
-        // timeout until transform transition end
-        setTimeout(() => {
-          // orientation + resize considerations: start
+          // timeout until transform transition end
+          setTimeout(() => {
+            // orientation + resize considerations: start
+
+            transformElement.style.transitionDuration = "0ms";
+
+            if (isIframe) {
+              transformElement.style.marginTop = "0";
+              transformElement.style.marginLeft = "0";
+
+              transformElement.style.maxWidth = "98vw";
+
+              const innerContainer = transformElement.getElementsByClassName(
+                "inner-container"
+              )[0] as HTMLElement;
+
+              innerContainer.style.left = "50%";
+              innerContainer.style.top = "50%";
+              innerContainer.style.transform = "translate(-50%, -50%)";
+
+              const iframeOverlay = transformElement.getElementsByClassName(
+                "iframe-overlay"
+              )[0] as HTMLElement;
+              iframeOverlay.style.left = "50%";
+              iframeOverlay.style.top = "50%";
+              iframeOverlay.style.transform = "translate(-50%, -50%)";
+
+              transformElement.style.height = `80vh`;
+            } else {
+              transformElement.style.width = `98%`;
+              transformElement.style.height = `98vh`;
+            }
+
+            transformElement.style.left = `50%`;
+            transformElement.style.top = `50%`;
+            transformElement.style.transform = "translate(-50%, -50%)";
+
+            // orientation + resize considerations: end
+
+            transformElement.style.pointerEvents = "auto";
+            transformElement.classList.add(isTransformedOutClass);
+            transformElement.classList.remove(isTransformingOutClass);
+          }, transitionDuration);
+
+          // TRANSFORM OUT: END
+        } else {
+          const isIframe = isIframeTransformContainer(transformElement);
+          if (isIframe) {
+            // iframe handled by close button click listener
+            return;
+          }
+          // RETURN TO INITIAL POSITION: start
+
+          transformElement.classList.remove(isTransformedOutClass);
+          transformElement.classList.add(isTransformingInClass);
+
+          transformElement.style.pointerEvents = "none";
 
           transformElement.style.transitionDuration = "0ms";
 
-          if (isIframe) {
-            transformElement.style.marginTop = "0";
-            transformElement.style.marginLeft = "0";
+          const [width, height] = getContainedSize(
+            transformElement as HTMLImageElement
+          );
 
-            // maybe don't need this---
-            const deviceBiggestSide =
-              window.innerWidth > window.innerHeight
-                ? window.innerWidth
-                : window.innerHeight;
+          transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
+          transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
+          transformElement.style.width = `${width}px`;
+          transformElement.style.height = `${height}px`;
 
-            const maxWidth = deviceBiggestSide * 0.8;
+          transformElement.style.position = "fixed";
 
-            transformElement.style.maxWidth = `${maxWidth}px`;
-            transformElement.style.maxHeight = "100vh";
+          transformElement.style.transform = "";
 
-            const innerContainer = transformElement.getElementsByClassName(
-              "inner-container"
-            )[0] as HTMLElement;
+          const duplicate = duplicates[index];
+          const duplicateRect = duplicate.getBoundingClientRect();
 
-            innerContainer.style.left = "50%";
-            innerContainer.style.top = "50%";
-            innerContainer.style.transform = "translate(-50%, -50%)";
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: "scale-translate",
+            transformingElement: transformElement,
+          });
 
-            const iframeOverlay = transformElement.getElementsByClassName(
-              "iframe-overlay"
-            )[0] as HTMLElement;
-            iframeOverlay.style.left = "50%";
-            iframeOverlay.style.top = "50%";
-            iframeOverlay.style.transform = "translate(-50%, -50%)";
-          }
+          const transitionDuration = getTransitionDurationMs(transformElement);
 
-          transformElement.style.width = `98%`;
-          transformElement.style.height = `98vh`;
-          transformElement.style.left = `50%`;
-          transformElement.style.top = `50%`;
-          transformElement.style.transform = "translate(-50%, -50%)";
+          setTimeout(() => {
+            mediaContainer.style.overflowX = "auto";
+          }, transitionDuration / 2);
 
-          // orientation + resize considerations: end
+          background.style.transitionDuration = `${transitionDuration}ms`;
+          background.style.opacity = "0";
 
-          transformElement.style.pointerEvents = "auto";
-          transformElement.classList.add(isTransformedOutClass);
-          transformElement.classList.remove(isTransformingOutClass);
-        }, transitionDuration);
+          // revert to initial, untransformed css
+          setTimeout(() => {
+            transformElement.style.transitionDuration = "0ms";
 
-        // TRANSFORM OUT: END
-      } else {
-        const isIframe = isIframeTransformContainer(transformElement);
-        if (isIframe) {
-          // iframe handled by close button click listener
+            revertImageToInitialPlacement(transformElement);
+
+            for (let j = transformElements.length - 1; j > index; j--) {
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
+
+              if (isIframe) {
+                revertIframeToInitialPlacement(transformElement);
+              } else {
+                revertImageToInitialPlacement(transformElement);
+              }
+            }
+
+            background.style.zIndex = "-1";
+            background.style.position = "static";
+
+            transformElement.style.pointerEvents = "auto";
+
+            transformElement.classList.add(isTransformedInClass);
+            transformElement.classList.remove(isTransformingInClass);
+          }, transitionDuration);
+
+          // RETURN TO INITIAL POSITON: END
+        }
+      });
+    });
+
+    iframeOverlayCloseButtons.forEach((overlayCloseButton, iframeIndex) => {
+      const transformElement = iframeTransformContainers[
+        iframeIndex
+      ] as HTMLElement;
+
+      overlayCloseButton.addEventListener("click", () => {
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
+        const isTransformedIn = checkIsTransformedIn(transformElement);
+
+        if (!isTransformedOut || isTransformingIn || isTransformedIn) {
           return;
         }
-        // RETURN TO INITIAL POSITION: start
-
         transformElement.classList.remove(isTransformedOutClass);
         transformElement.classList.add(isTransformingInClass);
 
+        //
+        const innerContainer = iframeInnerContainers[iframeIndex];
+        const overlay = overlays[iframeIndex];
+        const iframe = iframes[iframeIndex];
+        const loadingText = loadingTexts[iframeIndex];
+
+        // functionality start
         transformElement.style.pointerEvents = "none";
+        overlayCloseButton.style.pointerEvents = "none";
 
-        transformElement.style.transitionDuration = "0ms";
+        iframe.classList.add("stop-video");
 
-        const [width, height] = getContainedSize(
-          transformElement as HTMLImageElement
-        );
-
-        transformElement.style.left = `${(window.innerWidth - width) / 2}px`;
-        transformElement.style.top = `${(window.innerHeight - height) / 2}px`;
-        transformElement.style.width = `${width}px`;
-        transformElement.style.height = `${height}px`;
-
-        transformElement.style.position = "fixed";
-
-        transformElement.style.transform = "";
-
-        const duplicate = duplicates[index];
-        const duplicateRect = duplicate.getBoundingClientRect();
-
-        transform({
-          destinationRect: duplicateRect,
-          transformBy: "scale-translate",
-          transformingElement: transformElement,
-        });
-
-        const transitionDuration = getTransitionDurationMs(transformElement);
-
+        loadingText.style.opacity = "0";
+        overlayCloseButton.style.opacity = "0";
         setTimeout(() => {
-          mediaContainer.style.overflowX = "auto";
-        }, transitionDuration - 300);
+          loadingText.style.zIndex = "-1";
+          overlayCloseButton.style.zIndex = "-1";
+        }, 200);
 
-        background.style.transitionDuration = `${transitionDuration}ms`;
-        background.style.opacity = "0";
+        // @ts-ignore: Unreachable code error
+        const player = window[`player-${iframe.id}`];
 
-        // revert to initial, untransformed css
-        setTimeout(() => {
-          transformElement.style.transitionDuration = "0ms";
-
-          revertImageToInitialPlacement(transformElement);
-
-          for (let j = transformElements.length - 1; j > index; j--) {
-            const transformElement = transformElements[j];
-            const isIframe = isIframeTransformContainer(transformElement);
-
-            if (isIframe) {
-              revertIframeToInitialPlacement(transformElement);
-            } else {
-              revertImageToInitialPlacement(transformElement);
-            }
+        if (player) {
+          if (player.stopVideo) {
+            player.stopVideo();
           }
-
-          background.style.zIndex = "-1";
-          background.style.position = "static";
-
-          transformElement.style.pointerEvents = "auto";
-
-          transformElement.classList.add(isTransformedInClass);
-          transformElement.classList.remove(isTransformingInClass);
-        }, transitionDuration);
-
-        setTimeout(() => {}, transitionDuration);
-
-        // RETURN TO INITIAL POSITON: END
-      }
-    });
-  });
-
-  const closeButtons = Array.from(
-    mediaContainer.getElementsByClassName(
-      "close-button"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const iframeTransformContainers = Array.from(
-    mediaContainer.getElementsByClassName("iframe-container media-transform")
-  );
-  const iframeInnerContainers = Array.from(
-    mediaContainer.getElementsByClassName(
-      "inner-container"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const iframes = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const overlays = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe-overlay"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-  const iframeHelperPanels = Array.from(
-    mediaContainer.getElementsByClassName(
-      "iframe-helper"
-    ) as HTMLCollectionOf<HTMLElement>
-  );
-
-  closeButtons.forEach((closeButton, iframeIndex) => {
-    const transformElement = iframeTransformContainers[
-      iframeIndex
-    ] as HTMLElement;
-
-    closeButton.addEventListener("click", () => {
-      const isTransformedOut = checkIsTransformedOut(transformElement);
-      const isTransformingIn = checkIsTransformingIn(transformElement);
-      const isTransformedIn = checkIsTransformedIn(transformElement);
-
-      if (!isTransformedOut || isTransformingIn || isTransformedIn) {
-        return;
-      }
-      transformElement.classList.remove(isTransformedOutClass);
-      transformElement.classList.add(isTransformingInClass);
-
-      transformElement.style.pointerEvents = "none";
-      //
-      const innerContainer = iframeInnerContainers[iframeIndex];
-      const overlay = overlays[iframeIndex];
-      const iframeHelperPanel = iframeHelperPanels[iframeIndex];
-
-      overlay.style.zIndex = "2";
-      overlay.style.opacity = "1";
-
-      iframeHelperPanel.style.opacity = "0";
-      setTimeout(() => {
-        iframeHelperPanel.style.zIndex = "-1";
-      }, 200);
-
-      const iframe = iframes[iframeIndex];
-      // @ts-ignore: Unreachable code error
-      const player = window[`player-${iframe.id}`];
-
-      if (player) {
-        player.stopVideo();
-      }
-
-      // time for iframe overlay
-      setTimeout(() => {
-        const allElementsIndex = Number(transformElement.id);
+          // @ts-ignore: Unreachable code error
+          if (window["vol-controller"]) {
+            // @ts-ignore: Unreachable code error
+            window["vol-controller"].abort();
+          }
+        }
+        iframe.style.display = "none";
 
         transformElement.style.transitionDuration = "0ms";
         fixElementPosition(transformElement);
         transformElement.style.transform = "";
         transformElement.style.maxWidth = "";
+
+        const allElementsIndex = Number(transformElement.id);
 
         const duplicate = duplicates[allElementsIndex];
         const duplicateRect = duplicate.getBoundingClientRect();
@@ -657,9 +663,9 @@ const { media } = Astro.props;
           mediaContainer.style.overflowX = "auto";
         }, transitionDuration / 2);
 
+        background.style.transitionDuration = `${transitionDuration}ms`;
         background.style.opacity = "0";
 
-        // revert to initial, untransformed css
         setTimeout(() => {
           transformElement.style.transitionDuration = "0ms";
 
@@ -695,130 +701,234 @@ const { media } = Astro.props;
           transformElement.classList.remove(isTransformingInClass);
           transformElement.classList.add(isTransformedInClass);
         }, transitionDuration);
-      }, 100);
+
+        // overlay transition timeout end ---
+      });
     });
-  });
+
+    videoPlayingCloseButtons.forEach((videoPlayingCloseButton, iframeIndex) => {
+      // TRANSFORM IN FOR IFRAMES
+
+      const transformElement = iframeTransformContainers[
+        iframeIndex
+      ] as HTMLElement;
+
+      videoPlayingCloseButton.addEventListener("click", () => {
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
+        const isTransformedIn = checkIsTransformedIn(transformElement);
+
+        if (!isTransformedOut || isTransformingIn || isTransformedIn) {
+          return;
+        }
+        transformElement.classList.remove(isTransformedOutClass);
+        transformElement.classList.add(isTransformingInClass);
+
+        const innerContainer = iframeInnerContainers[iframeIndex];
+        const overlay = overlays[iframeIndex];
+        const iframeHelperPanel = iframeHelperPanels[iframeIndex];
+
+        // functionality start
+        transformElement.style.pointerEvents = "none";
+        iframeHelperPanel.style.pointerEvents = "none";
+        //
+
+        overlay.style.zIndex = "2";
+        overlay.style.opacity = "1";
+
+        iframeHelperPanel.style.opacity = "0";
+        setTimeout(() => {
+          iframeHelperPanel.style.zIndex = "-1";
+        }, 200);
+
+        // time for iframe overlay
+        setTimeout(() => {
+          const iframe = iframes[iframeIndex];
+          // @ts-ignore: Unreachable code error
+          const player = window[`player-${iframe.id}`];
+
+          if (player) {
+            player.stopVideo();
+            // @ts-ignore: Unreachable code error
+            if (window["vol-controller"]) {
+              // @ts-ignore: Unreachable code error
+              window["vol-controller"].abort();
+            }
+          }
+          iframe.style.display = "none";
+
+          const allElementsIndex = Number(transformElement.id);
+
+          transformElement.style.transitionDuration = "0ms";
+          fixElementPosition(transformElement);
+          transformElement.style.transform = "";
+          transformElement.style.maxWidth = "";
+
+          const duplicate = duplicates[allElementsIndex];
+          const duplicateRect = duplicate.getBoundingClientRect();
+
+          transform({
+            destinationRect: duplicateRect,
+            transformBy: "width-height-margin",
+            transformingElement: transformElement,
+          });
+
+          const transitionDuration = getTransitionDurationMs(transformElement);
+
+          setTimeout(() => {
+            mediaContainer.style.overflowX = "auto";
+          }, transitionDuration / 2);
+
+          background.style.transitionDuration = `${transitionDuration}ms`;
+          background.style.opacity = "0";
+
+          setTimeout(() => {
+            transformElement.style.transitionDuration = "0ms";
+
+            revertIframeToInitialPlacement(transformElement);
+            innerContainer.style.left = "";
+            innerContainer.style.top = "";
+            innerContainer.style.transform = "";
+
+            overlay.style.left = "";
+            overlay.style.top = "";
+            overlay.style.transform = "";
+
+            for (
+              let j = transformElements.length - 1;
+              j > allElementsIndex;
+              j--
+            ) {
+              const transformElement = transformElements[j];
+              const isIframe = isIframeTransformContainer(transformElement);
+
+              if (isIframe) {
+                revertIframeToInitialPlacement(transformElement);
+              } else {
+                revertImageToInitialPlacement(transformElement);
+              }
+            }
+
+            background.style.zIndex = "-1";
+            background.style.position = "static";
+
+            transformElement.style.pointerEvents = "auto";
+
+            transformElement.classList.remove(isTransformingInClass);
+            transformElement.classList.add(isTransformedInClass);
+          }, transitionDuration);
+
+          // overlay transition timeout end ---
+        }, 200);
+      });
+    });
+    // main end----
+  }
+
+  function transformJsInitiator() {
+    const mediaContainer = document.getElementById("media-container")!;
+
+    mediaContainer.addEventListener(
+      "mousedown",
+      () => {
+        transformJsMain();
+      },
+      {
+        once: true,
+        passive: true,
+      }
+    );
+  }
+  transformJsInitiator();
 </script>
 
 <script type="text/javascript">
   // YOUTUBE STUFF
+  // _____________
+  // Notes:
+  // - overlay close button will only show if youtube api not ready or player not ready: can handle in onYoutubePlayerReady
 
-  //
-  class ClassWatcher {
-    constructor(
-      targetNode,
-      classToWatch,
-      classAddedCallback,
-      classRemovedCallback
-    ) {
-      this.targetNode = targetNode;
-      this.classToWatch = classToWatch;
-      this.classAddedCallback = classAddedCallback;
-      this.classRemovedCallback = classRemovedCallback;
-      this.observer = null;
-      this.lastClassState = targetNode.classList.contains(this.classToWatch);
+  function ytJsMain() {
+    // FLAGS
+    const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
+    const youtubeApiReadyFlag = "yt-api-ready";
+    const isTransformedOutClass = "is-transformed-out";
+    const youtubePlayerLoadingFlag = "yt-player-loading";
+    const volumeSetClass = "volume-set";
 
-      this.init();
+    // HELPERS
+    function checkYoutubeApiIsInitiated(mediaContainer) {
+      return mediaContainer.classList.contains(youtubeApiCodeInitiatedClass);
+    }
+    function checkYoutubeApiIsReady(mediaContainer) {
+      return mediaContainer.classList.contains(youtubeApiReadyFlag);
+    }
+    function checkIsTransformedOut(element) {
+      return element.classList.contains(isTransformedOutClass);
     }
 
-    init() {
-      this.observer = new MutationObserver(this.mutationCallback);
-      this.observe();
-    }
+    class ClassWatcher {
+      constructor(
+        targetNode,
+        classToWatch,
+        classAddedCallback,
+        classRemovedCallback
+      ) {
+        this.targetNode = targetNode;
+        this.classToWatch = classToWatch;
+        this.classAddedCallback = classAddedCallback;
+        this.classRemovedCallback = classRemovedCallback;
+        this.observer = null;
+        this.lastClassState = targetNode.classList.contains(this.classToWatch);
 
-    observe() {
-      this.observer.observe(this.targetNode, { attributes: true });
-    }
+        this.init();
+      }
 
-    disconnect() {
-      this.observer.disconnect();
-    }
+      init() {
+        this.observer = new MutationObserver(this.mutationCallback);
+        this.observe();
+      }
 
-    mutationCallback = (mutationsList) => {
-      for (let mutation of mutationsList) {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class"
-        ) {
-          let currentClassState = mutation.target.classList.contains(
-            this.classToWatch
-          );
-          if (this.lastClassState !== currentClassState) {
-            this.lastClassState = currentClassState;
-            if (currentClassState) {
-              this.classAddedCallback();
-            } else {
-              if (this.classRemovedCallback) {
-                this.classRemovedCallback();
+      observe() {
+        this.observer.observe(this.targetNode, { attributes: true });
+      }
+
+      disconnect() {
+        this.observer.disconnect();
+      }
+
+      mutationCallback = (mutationsList) => {
+        for (let mutation of mutationsList) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            let currentClassState = mutation.target.classList.contains(
+              this.classToWatch
+            );
+            if (this.lastClassState !== currentClassState) {
+              this.lastClassState = currentClassState;
+              if (currentClassState) {
+                this.classAddedCallback();
+              } else {
+                if (this.classRemovedCallback) {
+                  this.classRemovedCallback();
+                }
               }
             }
           }
         }
-      }
-    };
-  }
-
-  function checkIsTouchDevice() {
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      // @ts-ignore: Unreachable code error
-      navigator.msMaxTouchPoints > 0
-    );
-  }
-
-  //
-  function handleSetVolumeForTouchDevice(event, player, volumeMessage) {
-    const volumeSet = mediaContainer.classList.contains(volumeSetClass);
-
-    if (volumeSet) {
-      return;
+      };
+    }
+    function checkIsTouchDevice() {
+      return (
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        // @ts-ignore: Unreachable code error
+        navigator.msMaxTouchPoints > 0
+      );
     }
 
-    const iframeWindow = player.getIframe().contentWindow;
-    if (event.source === iframeWindow) {
-      var data = JSON.parse(event.data);
-      if (data.event === "infoDelivery" && data.info && data.info.volume) {
-        if (checkIsTouchDevice()) {
-          if (Number(data.info.volume) !== 100) {
-            setTimeout(() => {
-              player.setVolume(100);
-              mediaContainer.classList.add(volumeSetClass);
-
-              volumeMessage.style.opacity = 0;
-              setTimeout(() => {
-                volumeMessage.style.zIndex = "-1";
-              }, 200);
-            }, 200);
-          }
-        }
-        // only want to set to 100 once
-      }
-    }
-  }
-
-  //
-  const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
-  const youtubeApiReadyFlag = "yt-api-ready";
-  const isTransformedOutClass = "is-transformed-out";
-  const youtubePlayerLoadingFlag = "yt-player-loading";
-  const volumeSetClass = "volume-set";
-
-  //
-  // const mediaContainer = document.getElementById("media-container");
-  const iframeTransformContainers = Array.from(
-    document.getElementsByClassName("iframe-container media-transform")
-  );
-  const iframeInnerContainers =
-    document.getElementsByClassName("inner-container");
-  const iframes = document.getElementsByClassName("iframe");
-  const overlays = document.getElementsByClassName("iframe-overlay");
-  const helperPanels = document.getElementsByClassName("iframe-helper");
-  const loadingTexts = document.getElementsByClassName("player-loading");
-  const volumeMessages =
-    mediaContainer.getElementsByClassName("volume-message");
-
-  function main() {
     function handleLoadYoutubeApiCode() {
       var tag = document.createElement("script");
       tag.id = "iframe-demo";
@@ -826,55 +936,270 @@ const { media } = Astro.props;
       var firstScriptTag = document.getElementsByTagName("script")[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
+    function onYouTubeIframeAPIReady() {
+      // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
+      // the API's js is loaded after the first iframe container is transformed
+      mediaContainer.classList.add(youtubeApiReadyFlag);
 
-    //
-    function checkYoutubeApiIsInitiated() {
-      return mediaContainer.classList.contains(youtubeApiCodeInitiatedClass);
-    }
-    function checkYoutubeApiIsReady() {
-      return mediaContainer.classList.contains(youtubeApiReadyFlag);
+      const index = iframeTransformContainers.findIndex((node) =>
+        node.classList.contains(isTransformedOutClass)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const iframe = iframes[index];
+      const overlay = overlays[index];
+      const loadingText = loadingTexts[index];
+      const helperPanel = helperPanels[index];
+      const volumeMessage = volumeMessages[index];
+      const volumeControlPanel = volumeControlPanels[index];
+      const overlayCloseButton = overlayCloseButtons[index];
+
+      iframe.classList.add(youtubePlayerLoadingFlag);
+
+      window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
+        events: {
+          onReady: (event) =>
+            onYoutubePlayerReady({
+              event,
+              helperPanel,
+              iframe,
+              loadingText,
+              overlay,
+              volumeMessage,
+              volumeControlPanel,
+              overlayCloseButton,
+            }),
+        },
+      });
     }
 
-    //
+    function onYoutubePlayerReady({
+      event,
+      iframe,
+      loadingText,
+      overlay,
+      helperPanel,
+      volumeMessage,
+      volumeControlPanel,
+      overlayCloseButton,
+    }) {
+      iframe.classList.remove(youtubePlayerLoadingFlag);
+
+      const stopped = iframe.classList.contains("stop-video");
+      if (stopped) {
+        iframe.classList.remove("stop-video");
+        return;
+      }
+
+      overlayCloseButton.style.pointerEvents = "none";
+      loadingText.style.opacity = "0";
+      overlayCloseButton.style.opacity = "0";
+      setTimeout(() => {
+        loadingText.style.zIndex = "-1";
+        overlayCloseButton.style.zIndex = "-1";
+      }, 200);
+
+      const player = event.target;
+
+      player.setVolume(0);
+
+      handlePlayVideo({
+        player,
+        overlay,
+        helperPanel,
+        iframe,
+        volumeControlPanel,
+        volumeMessage,
+      });
+    }
+
+    function handlePlayVideo({
+      player,
+      overlay,
+      helperPanel,
+      iframe,
+      volumeMessage,
+      volumeControlPanel,
+    }) {
+      overlay.style.opacity = "0";
+
+      helperPanel.style.zIndex = "10";
+      helperPanel.style.opacity = "1";
+      setTimeout(() => {
+        helperPanel.style.pointerEvents = "auto";
+      }, 200);
+
+      //
+      handleVolumeListenerAndSetVolume({
+        iframe,
+        player,
+        volumeMessage,
+        volumeControlPanel,
+      });
+
+      // time for opacity transition
+      setTimeout(() => {
+        overlay.style.zIndex = "-1";
+
+        player.playVideo();
+      }, 200);
+    }
+
+    function handleVolumeListenerAndSetVolume({
+      player,
+      volumeMessage,
+      volumeControlPanel,
+      iframe,
+    }) {
+      if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
+        return;
+      }
+      const volumeController = new AbortController();
+      window["vol-controller"] = volumeController;
+      window.addEventListener(
+        "message",
+        (event) => {
+          const iframeWindow = player.getIframe().contentWindow;
+          if (event.source === iframeWindow) {
+            var data = JSON.parse(event.data);
+            if (
+              data.event === "infoDelivery" &&
+              data.info &&
+              data.info.volume
+            ) {
+              //
+              if (Number(data.info.volume) < 60) {
+                player.setVolume(60);
+                iframe.classList.add(volumeSetClass);
+
+                volumeMessage.style.opacity = 0;
+                setTimeout(() => {
+                  volumeMessage.style.display = "none";
+
+                  //
+                  volumeControlPanel.style.display = "flex";
+                  volumeControlPanel.style.opacity = "1";
+
+                  const downButton =
+                    volumeControlPanel.querySelector("#volume-down");
+                  const upButton =
+                    volumeControlPanel.querySelector("#volume-up");
+
+                  const volumeCrement = 10;
+
+                  function handleVolumeDown() {
+                    const currentVolume = player.getVolume();
+                    if (currentVolume === 100) {
+                      upButton.style.color = "black";
+                    }
+                    if (currentVolume === 0) {
+                      downButton.style.color = "gray";
+                      return;
+                    }
+                    player.setVolume(currentVolume - volumeCrement);
+                    console.log(player.getVolume());
+                  }
+
+                  function handleVolumeUp() {
+                    const currentVolume = player.getVolume();
+                    if (currentVolume === 0) {
+                      downButton.style.color = "black";
+                    }
+                    if (currentVolume === 100) {
+                      upButton.style.color = "gray";
+                      return;
+                    }
+                    player.setVolume(currentVolume + volumeCrement);
+                  }
+
+                  downButton.addEventListener("click", handleVolumeDown, {
+                    passive: true,
+                  });
+                  upButton.addEventListener("click", handleVolumeUp, {
+                    passive: true,
+                  });
+                }, 200);
+
+                volumeController.abort();
+              }
+            }
+          }
+        },
+        { signal: volumeController.signal, passive: true }
+      );
+    }
+
+    // ELEMENTS
+    const mediaContainer = document.getElementById("media-container");
+    const iframeTransformContainers = Array.from(
+      document.getElementsByClassName("iframe-container media-transform")
+    );
+    const iframes = document.getElementsByClassName("iframe");
+    const overlays = document.getElementsByClassName("iframe-overlay");
+    const helperPanels = document.getElementsByClassName("iframe-helper");
+    const loadingTexts = document.getElementsByClassName("player-loading");
+    const volumeMessages =
+      mediaContainer.getElementsByClassName("volume-message");
+    const volumeControlPanels =
+      mediaContainer.getElementsByClassName("volume-buttons");
+    const overlayCloseButtons = mediaContainer.getElementsByClassName(
+      "overlay-close-button"
+    );
+
+    // FUNCTIONALITY
     function onIsTransformedOut({ iframeIndex }) {
       const transformContainer = iframeTransformContainers[iframeIndex];
-      const isTransformedOut = transformContainer.classList.contains(
-        isTransformedOutClass
-      );
+      const isTransformedOut = checkIsTransformedOut(transformContainer);
+
       if (!isTransformedOut) {
         return;
       }
 
+      // elements
       const iframe = iframes[iframeIndex];
-      const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
       const loadingText = loadingTexts[iframeIndex];
       const helperPanel = helperPanels[iframeIndex];
+      const volumeMessage = volumeMessages[iframeIndex];
+      const volumeControlPanel = volumeControlPanels[iframeIndex];
+      const overlayCloseButton = overlayCloseButtons[iframeIndex];
+
+      const wasStopped = iframe.classList.contains("stop-video");
+      if (wasStopped) {
+        iframe.classList.remove("stop-video");
+      }
 
       //
-      const youtubeApiIsInitiated = checkYoutubeApiIsInitiated();
-      const youtubeApiIsReady = checkYoutubeApiIsReady();
+      const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
+      const youtubeApiIsReady = checkYoutubeApiIsReady(mediaContainer);
 
-      //
+      // element style helpers
       function showLoading() {
-        innerContainer.style.cursor = "wait";
         loadingText.style.zIndex = "10";
         loadingText.style.opacity = "1";
-      }
-      function hideLoading() {
-        innerContainer.style.cursor = "auto";
-        loadingText.style.opacity = "0";
+        overlayCloseButton.style.zIndex = "10";
+        overlayCloseButton.style.opacity = "1";
+
+        // opacity transition timeout to prevent click on invisible button.
         setTimeout(() => {
-          loadingText.style.zIndex = "-1";
+          overlayCloseButton.style.pointerEvents = "auto";
         }, 200);
       }
+
+      // functionality start
 
       if (!youtubeApiIsInitiated || !youtubeApiIsReady) {
         showLoading();
       }
 
+      iframe.style.display = "block";
+
       if (!youtubeApiIsInitiated) {
         mediaContainer.classList.add(youtubeApiCodeInitiatedClass);
+        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
         handleLoadYoutubeApiCode();
         return;
       }
@@ -886,22 +1211,20 @@ const { media } = Astro.props;
       if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
+      // first youtube video (when youtube api is iniitialising) will run from onYoutubeApiReady; following ones will run with code below.
 
       const player = window[`player-${iframe.id}`];
 
       // TODO: could have a player that isn't ready - but then would have an onReady handler
       if (player) {
-        overlay.style.opacity = "0";
-
-        helperPanel.style.zIndex = "10";
-        helperPanel.style.opacity = "1";
-
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-
-          player.playVideo();
-        }, 200);
+        handlePlayVideo({
+          player,
+          overlay,
+          helperPanel,
+          iframe,
+          volumeControlPanel,
+          volumeMessage,
+        });
 
         return;
       }
@@ -912,28 +1235,19 @@ const { media } = Astro.props;
 
       window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
-          onReady,
+          onReady: (event) =>
+            onYoutubePlayerReady({
+              event,
+              helperPanel,
+              iframe,
+              loadingText,
+              overlay,
+              volumeMessage,
+              volumeControlPanel,
+              overlayCloseButton,
+            }),
         },
       });
-
-      function onReady(event) {
-        iframe.classList.remove(youtubePlayerLoadingFlag);
-
-        hideLoading();
-
-        event.target.setVolume(0);
-
-        overlay.style.opacity = "0";
-
-        helperPanel.style.zIndex = "10";
-        helperPanel.style.opacity = "1";
-        // time for opacity transition
-        setTimeout(() => {
-          overlay.style.zIndex = "-1";
-
-          event.target.playVideo();
-        }, 200);
-      }
     }
 
     iframeTransformContainers.forEach((transformContainer, i) => {
@@ -943,68 +1257,22 @@ const { media } = Astro.props;
         })
       );
     });
+
+    // main end---
   }
-  main();
 
-  // The API will call this function when the page has finished downloading the JavaScript for the player API, which enables you to then use the API on your page.
-  // the API's js is loaded after the first iframe container is transformed
-  function onYouTubeIframeAPIReady() {
-    // const mediaContainer = document.getElementById("media-container");
-
-    mediaContainer.classList.add(youtubeApiReadyFlag);
-
-    const index = iframeTransformContainers.findIndex((node) =>
-      node.classList.contains(isTransformedOutClass)
-    );
-
-    if (index < 0) {
-      return;
-    }
-
-    const iframe = iframes[index];
-    const overlay = overlays[index];
-    const loadingText = loadingTexts[index];
-    const helperPanel = helperPanels[index];
-    const innerContainer = iframeInnerContainers[index];
-    // const volumeMessage = volumeMessages[index];
-
-    iframe.classList.add(youtubePlayerLoadingFlag);
-
-    window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
-      events: {
-        onReady,
+  function ytJsInitiator() {
+    const visibleMediaContainer = document.getElementById("visible-media");
+    visibleMediaContainer.addEventListener(
+      "mousedown",
+      () => {
+        ytJsMain();
       },
-    });
-    // const player = window[`player-${iframe.id}`];
-
-    function onReady(event) {
-      /*       if (checkIsTouchDevice()) {
-        window.addEventListener("message", (event) =>
-          handleSetVolumeForTouchDevice(event, player, volumeMessage)
-        );
-      } */
-
-      iframe.classList.remove(youtubePlayerLoadingFlag);
-
-      innerContainer.style.cursor = "auto";
-      loadingText.style.opacity = "0";
-      setTimeout(() => {
-        loadingText.style.zIndex = "-1";
-      }, 200);
-
-      overlay.style.opacity = "0";
-
-      helperPanel.style.zIndex = "10";
-      helperPanel.style.opacity = "1";
-
-      event.target.setVolume(0);
-
-      // time for opacity transition
-      setTimeout(() => {
-        overlay.style.zIndex = "-1";
-
-        event.target.playVideo();
-      }, 200);
-    }
+      {
+        once: true,
+        passive: true,
+      }
+    );
   }
+  ytJsInitiator();
 </script>
