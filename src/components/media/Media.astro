@@ -1066,7 +1066,8 @@ const { media } = Astro.props;
       volumeControlPanel,
       iframe,
     }) {
-      if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
+      if (iframe.classList.contains(volumeSetClass)) {
+        // if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
         return;
       }
       const volumeController = new AbortController();
@@ -1084,54 +1085,58 @@ const { media } = Astro.props;
             ) {
               //
               if (Number(data.info.volume) < 60) {
-                player.setVolume(60);
-                iframe.classList.add(volumeSetClass);
+                if (checkIsTouchDevice()) {
+                  player.setVolume(60);
+                  iframe.classList.add(volumeSetClass);
+                }
 
                 volumeMessage.style.opacity = 0;
                 setTimeout(() => {
-                  volumeMessage.style.display = "none";
+                  if (checkIsTouchDevice()) {
+                    volumeMessage.style.display = "none";
+                    volumeControlPanel.style.display = "flex";
+                    volumeControlPanel.style.opacity = "1";
 
-                  //
-                  volumeControlPanel.style.display = "flex";
-                  volumeControlPanel.style.opacity = "1";
+                    const downButton =
+                      volumeControlPanel.querySelector("#volume-down");
+                    const upButton =
+                      volumeControlPanel.querySelector("#volume-up");
 
-                  const downButton =
-                    volumeControlPanel.querySelector("#volume-down");
-                  const upButton =
-                    volumeControlPanel.querySelector("#volume-up");
+                    const volumeCrement = 10;
 
-                  const volumeCrement = 10;
-
-                  function handleVolumeDown() {
-                    const currentVolume = player.getVolume();
-                    if (currentVolume === 100) {
-                      upButton.style.color = "black";
+                    function handleVolumeDown() {
+                      const currentVolume = player.getVolume();
+                      if (currentVolume === 100) {
+                        upButton.style.color = "black";
+                      }
+                      if (currentVolume === 0) {
+                        downButton.style.color = "gray";
+                        return;
+                      }
+                      player.setVolume(currentVolume - volumeCrement);
                     }
-                    if (currentVolume === 0) {
-                      downButton.style.color = "gray";
-                      return;
+
+                    function handleVolumeUp() {
+                      const currentVolume = player.getVolume();
+                      if (currentVolume === 0) {
+                        downButton.style.color = "black";
+                      }
+                      if (currentVolume === 100) {
+                        upButton.style.color = "gray";
+                        return;
+                      }
+                      player.setVolume(currentVolume + volumeCrement);
                     }
-                    player.setVolume(currentVolume - volumeCrement);
+
+                    downButton.addEventListener("click", handleVolumeDown, {
+                      passive: true,
+                    });
+                    upButton.addEventListener("click", handleVolumeUp, {
+                      passive: true,
+                    });
+                  } else {
+                    volumeMessage.style.zIndex = "-1";
                   }
-
-                  function handleVolumeUp() {
-                    const currentVolume = player.getVolume();
-                    if (currentVolume === 0) {
-                      downButton.style.color = "black";
-                    }
-                    if (currentVolume === 100) {
-                      upButton.style.color = "gray";
-                      return;
-                    }
-                    player.setVolume(currentVolume + volumeCrement);
-                  }
-
-                  downButton.addEventListener("click", handleVolumeDown, {
-                    passive: true,
-                  });
-                  upButton.addEventListener("click", handleVolumeUp, {
-                    passive: true,
-                  });
                 }, 200);
 
                 volumeController.abort();
