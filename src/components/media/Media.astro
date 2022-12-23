@@ -162,6 +162,9 @@ const { media } = Astro.props;
       const duplicateOffsetLeft = duplicate.offsetLeft;
       const relativeDistance =
         (duplicateOffsetLeft - scrollOffsetLeft) / mediaContainer.scrollWidth;
+      /*       const dupeLeftDistanceToScreenRightDecimal =
+        (window.innerWidth - duplicate.getBoundingClientRect().left) /
+        window.innerWidth; */
 
       // timout to get element data after orientation change
       setTimeout(() => {
@@ -169,7 +172,7 @@ const { media } = Astro.props;
           duplicate.offsetLeft - relativeDistance * mediaContainer.scrollWidth;
         mediaContainer.scroll(newPos, 0);
         // @ts-ignore: Unreachable code error
-        window.pos = newPos;
+        window.mediaContainerScroll.pos = newPos;
       }, 50);
     });
   }
@@ -522,7 +525,7 @@ const { media } = Astro.props;
           // time for bg to show
           setTimeout(() => {
             // prevent scrolling
-            // mediaContainer.style.overflowX = "hidden";
+            mediaContainer.style.overflowX = "hidden";
           }, 200);
 
           const transitionDuration = getTransitionDurationMs(transformElement);

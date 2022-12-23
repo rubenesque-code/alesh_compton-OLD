@@ -63,9 +63,11 @@
   }
 
   function SmoothScroll(target, speed, smooth) {
-    window.moving = false;
-    window.pos = target.scrollLeft;
-    window.frame = target;
+    window.mediaContainerScroll = {
+      moving: false,
+      pos: target.scrollLeft,
+      frame: target,
+    };
 
     target.addEventListener("mousewheel", scrolled, { passive: false });
     target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
@@ -76,15 +78,21 @@
       }
       e.preventDefault(); // disable default scrolling
 
-      window.delta = normalizeWheelDelta(e);
+      const delta = normalizeWheelDelta(e);
       // console.log("pos:", pos);
 
-      pos += -delta * speed;
-      pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
+      window.mediaContainerScroll.pos += -delta * speed;
+      window.mediaContainerScroll.pos = Math.max(
+        0,
+        Math.min(
+          window.mediaContainerScroll.pos,
+          target.scrollWidth - window.mediaContainerScroll.frame.clientWidth
+        )
+      ); // limit scrolling
 
       handlePreloadNextImage();
 
-      if (!moving) update();
+      if (!window.mediaContainerScroll.moving) update();
     }
 
     function normalizeWheelDelta(e) {
@@ -97,14 +105,15 @@
     }
 
     function update() {
-      moving = true;
+      window.mediaContainerScroll.moving = true;
 
-      var delta = (pos - target.scrollLeft) / smooth;
+      var delta =
+        (window.mediaContainerScroll.pos - target.scrollLeft) / smooth;
 
       target.scrollLeft += delta;
 
       if (Math.abs(delta) > 0.5) requestFrame(update);
-      else moving = false;
+      else window.mediaContainerScroll.moving = false;
     }
 
     var requestFrame = (function () {
