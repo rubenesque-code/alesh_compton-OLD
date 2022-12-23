@@ -23,7 +23,7 @@ const page = Astro.props;
     <div class="body-outer-container">
       <div class="body-inner-container">
         <div class="text-container">
-          <p class="text">
+          <p class="text title">
             {page.title}
           </p>
           {
@@ -70,6 +70,9 @@ const page = Astro.props;
   .text {
     width: 405px;
     max-width: 100%;
+  }
+  .title {
+    /* font-family: "VG", sans-serif; */
   }
   .description {
     display: flex;

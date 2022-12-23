@@ -826,7 +826,6 @@ const { media } = Astro.props;
       const overlay = overlays[index];
       const loadingText = loadingTexts[index];
       const helperPanel = helperPanels[index];
-      const innerContainer = iframeInnerContainers[index];
       const volumeMessage = volumeMessages[index];
       const volumeControlPanel = volumeControlPanels[index];
 
@@ -839,7 +838,6 @@ const { media } = Astro.props;
               event,
               helperPanel,
               iframe,
-              innerContainer,
               loadingText,
               overlay,
               volumeMessage,
@@ -852,25 +850,41 @@ const { media } = Astro.props;
     function onYoutubePlayerReady({
       event,
       iframe,
-      innerContainer,
       loadingText,
       overlay,
       helperPanel,
       volumeMessage,
       volumeControlPanel,
     }) {
-      const player = event.target;
-
-      player.setVolume(0);
-
       iframe.classList.remove(youtubePlayerLoadingFlag);
 
-      innerContainer.style.cursor = "auto";
       loadingText.style.opacity = "0";
       setTimeout(() => {
         loadingText.style.zIndex = "-1";
       }, 200);
 
+      const player = event.target;
+
+      player.setVolume(0);
+
+      handlePlayVideo({
+        player,
+        overlay,
+        helperPanel,
+        iframe,
+        volumeControlPanel,
+        volumeMessage,
+      });
+    }
+
+    function handlePlayVideo({
+      player,
+      overlay,
+      helperPanel,
+      iframe,
+      volumeMessage,
+      volumeControlPanel,
+    }) {
       overlay.style.opacity = "0";
 
       helperPanel.style.zIndex = "10";
@@ -878,9 +892,9 @@ const { media } = Astro.props;
 
       //
       handleVolumeListenerAndSetVolume({
+        iframe,
         player,
         volumeMessage,
-        iframe,
         volumeControlPanel,
       });
 
@@ -914,8 +928,9 @@ const { media } = Astro.props;
               data.info &&
               data.info.volume
             ) {
-              if (Number(data.info.volume) !== 100) {
-                player.setVolume(100);
+              //
+              if (Number(data.info.volume) < 60) {
+                player.setVolume(60);
                 iframe.classList.add(volumeSetClass);
 
                 volumeMessage.style.opacity = 0;
@@ -980,8 +995,6 @@ const { media } = Astro.props;
     const iframeTransformContainers = Array.from(
       document.getElementsByClassName("iframe-container media-transform")
     );
-    const iframeInnerContainers =
-      document.getElementsByClassName("inner-container");
     const iframes = document.getElementsByClassName("iframe");
     const overlays = document.getElementsByClassName("iframe-overlay");
     const helperPanels = document.getElementsByClassName("iframe-helper");
@@ -1002,7 +1015,6 @@ const { media } = Astro.props;
 
       // elements
       const iframe = iframes[iframeIndex];
-      const innerContainer = iframeInnerContainers[iframeIndex];
       const overlay = overlays[iframeIndex];
       const loadingText = loadingTexts[iframeIndex];
       const helperPanel = helperPanels[iframeIndex];
@@ -1015,7 +1027,6 @@ const { media } = Astro.props;
 
       // element style helpers
       function showLoading() {
-        innerContainer.style.cursor = "wait";
         loadingText.style.zIndex = "10";
         loadingText.style.opacity = "1";
       }
@@ -1046,23 +1057,14 @@ const { media } = Astro.props;
 
       // TODO: could have a player that isn't ready - but then would have an onReady handler
       if (player) {
-        overlay.style.opacity = "0";
-
-        helperPanel.style.zIndex = "10";
-        helperPanel.style.opacity = "1";
-
-        handleVolumeListenerAndSetVolume({
+        handlePlayVideo({
           player,
-          volumeMessage,
+          overlay,
+          helperPanel,
           iframe,
           volumeControlPanel,
-        }),
-          // time for opacity transition
-          setTimeout(() => {
-            overlay.style.zIndex = "-1";
-
-            player.playVideo();
-          }, 200);
+          volumeMessage,
+        });
 
         return;
       }
@@ -1078,10 +1080,10 @@ const { media } = Astro.props;
               event,
               helperPanel,
               iframe,
-              innerContainer,
               loadingText,
               overlay,
               volumeMessage,
+              volumeControlPanel,
             }),
         },
       });
