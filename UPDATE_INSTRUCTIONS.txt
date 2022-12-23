@@ -12,8 +12,8 @@ ADD DATA
 - Add data for the page.
   - change the title and description.
   - add image.
-    - you need to add any images to the /src/images folder.
-    - make sure you get the import path correct.
+    - add any images to the /src/images folder (simply copy and paste into folder).
+    - in the page file, make sure you get the import path correct.
       - follow the format already there.
     - the size of the image as it appears on the site is largely defined by the size of the original image.
       - this is true on large devices (devices in which the image display is larger in height than the image).
@@ -39,15 +39,11 @@ ADD PAGE TO NAVIGATION
 - links in the array must be seperated by a comma.
 - you can reorder the array however you want to reorder the links as they appear on the navigation panel.
 
-ADD FONT
---------
-- add font to public/fonts
-- copy the format in styles/global.css
 
 SEO
 -------
 - add a site description in /layouts/Layout.astro
   - inside of the meta tag in then content string. 
-    - currently is "Joshua Gordon is a photographer and a director currently based in London, United Kingdom."
+    - currently is "Alesh Compton portfolio."
   - this appears in search engines.
   - info: https://developers.google.com/search/docs/appearance/snippet#:~:text=A%20meta%20description%20tag%20generally,what%20they're%20looking%20for.

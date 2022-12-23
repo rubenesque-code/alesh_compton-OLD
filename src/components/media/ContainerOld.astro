@@ -44,28 +44,10 @@
 
 <script type="text/javascript">
   // MEDIA CONTAINER HORIZONTAL SCROLL_________________
-  function handlePreloadNextImage() {
-    const visibleContainer = document.getElementById("visible-media");
-    const images = Array.from(
-      visibleContainer.querySelectorAll(".image-img, .iframe-img")
-    ).filter((image) => image.loading === "lazy");
-
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      const rect = image.getBoundingClientRect();
-
-      const isNearViewport = rect.left - rect.width < window.innerWidth;
-
-      if (isNearViewport) {
-        image.loading = "eager";
-      }
-    }
-  }
-
   function SmoothScroll(target, speed, smooth) {
-    window.moving = false;
-    window.pos = target.scrollLeft;
-    window.frame = target;
+    let moving = false;
+    let pos = target.scrollLeft;
+    let frame = target;
 
     target.addEventListener("mousewheel", scrolled, { passive: false });
     target.addEventListener("DOMMouseScroll", scrolled, { passive: false });
@@ -76,13 +58,27 @@
       }
       e.preventDefault(); // disable default scrolling
 
-      window.delta = normalizeWheelDelta(e);
-      // console.log("pos:", pos);
+      var delta = normalizeWheelDelta(e);
 
       pos += -delta * speed;
       pos = Math.max(0, Math.min(pos, target.scrollWidth - frame.clientWidth)); // limit scrolling
 
-      handlePreloadNextImage();
+      // HANDLE PRELOAD NEXT MEDIA
+      const visibleContainer = document.getElementById("visible-media");
+      const images = Array.from(
+        visibleContainer.querySelectorAll(".image-img, .iframe-img")
+      ).filter((image) => image.loading === "lazy");
+
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const rect = image.getBoundingClientRect();
+
+        const isNearViewport = rect.left - rect.width < window.innerWidth;
+
+        if (isNearViewport) {
+          image.loading = "eager";
+        }
+      }
 
       if (!moving) update();
     }

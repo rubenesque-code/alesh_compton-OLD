@@ -65,6 +65,7 @@ const { media } = Astro.props;
       <Background />
     </div>
   </div>
+  <button id="demo-scroll" type="button">SCROLL</button>
 </MediaContainer>
 
 <style is:global>
@@ -77,6 +78,12 @@ const { media } = Astro.props;
 </style>
 
 <style>
+  #demo-scroll {
+    z-index: 100;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+  }
   .media-inner {
     position: relative;
     display: flex;
@@ -117,6 +124,73 @@ const { media } = Astro.props;
     }
   }
 </style>
+
+<script type="text/javascript">
+  const button = document.getElementById("demo-scroll");
+  button.addEventListener("click", () => {
+    const element = document.getElementById("3");
+    const rect = element.getBoundingClientRect();
+    console.log("rect:", rect.left);
+    // const mediaContainer = document.getElementById("media-container");
+    // mediaContainer.scroll(rect.left, 0);
+
+    // window.pos = rect.left;
+  });
+</script>
+
+<script>
+  function repositionScrollMain() {
+    window.addEventListener("orientationchange", () => {
+      const transformContainers = Array.from(
+        document.getElementsByClassName(
+          "media-transform"
+        ) as HTMLCollectionOf<HTMLElement>
+      );
+      const isTransformedOutClass = "is-transformed-out";
+      const index = transformContainers.findIndex((node) =>
+        node.classList.contains(isTransformedOutClass)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const duplicates = Array.from(
+        document.getElementsByClassName(
+          "duplicate"
+        ) as HTMLCollectionOf<HTMLElement>
+      );
+      duplicates.forEach((duplicate) => {
+        // console.log("duplicate rect:", duplicate.getBoundingClientRect());
+      });
+
+      const mediaContainer = document.getElementById("media-container")!;
+      // console.log("sc width", mediaContainer.scrollWidth);
+      // console.log("current scroll left", mediaContainer.scrollLeft);
+
+      const duplicate = duplicates[index];
+      const duplicateRect = duplicate.getBoundingClientRect();
+
+      const scrollPos = mediaContainer.scrollLeft - duplicateRect.left;
+      // console.log("scrollPos:", scrollPos);
+
+      mediaContainer.scrollTo(scrollPos, 0);
+      // @ts-ignore: Unreachable code error
+      window.pos = scrollPos;
+
+      // const duplicate = duplicates[index];
+      // console.log("duplicate:", duplicate);
+      // const duplicateRect = duplicate.getBoundingClientRect();
+      // console.log("duplicateRect:", duplicateRect);
+
+      // const mediaContainer = document.getElementById("media-container")!;
+      // mediaContainer.scroll(duplicateRect.left, 0);
+      // @ts-ignore: Unreachable code error
+      // window.pos = duplicateRect.left;
+    });
+  }
+  repositionScrollMain();
+</script>
 
 <script>
   // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
@@ -464,7 +538,7 @@ const { media } = Astro.props;
           // time for bg to show
           setTimeout(() => {
             // prevent scrolling
-            mediaContainer.style.overflowX = "hidden";
+            // mediaContainer.style.overflowX = "hidden";
           }, 200);
 
           const transitionDuration = getTransitionDurationMs(transformElement);
