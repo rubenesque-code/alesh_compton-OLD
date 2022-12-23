@@ -988,12 +988,14 @@ const { media } = Astro.props;
       volumeControlPanel,
       overlayCloseButton,
     }) {
+      iframe.classList.remove(youtubePlayerLoadingFlag);
+
       const stopped = iframe.classList.contains("stop-video");
       if (stopped) {
+        console.log("EXITING ON YT PLAYER READY");
         iframe.classList.remove("stop-video");
         return;
       }
-      iframe.classList.remove(youtubePlayerLoadingFlag);
 
       overlayCloseButton.style.pointerEvents = "none";
       loadingText.style.opacity = "0";
@@ -1167,6 +1169,11 @@ const { media } = Astro.props;
       const volumeMessage = volumeMessages[iframeIndex];
       const volumeControlPanel = volumeControlPanels[iframeIndex];
       const overlayCloseButton = overlayCloseButtons[iframeIndex];
+
+      const wasStopped = iframe.classList.contains("stop-video");
+      if (wasStopped) {
+        iframe.classList.remove("stop-video");
+      }
 
       //
       const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
