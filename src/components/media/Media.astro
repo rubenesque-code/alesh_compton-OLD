@@ -10,18 +10,6 @@ import type { LocalImage, YoutubeVideo } from "~types/index";
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
-
-// TODO: on landscape, iframe transform out and in still not right (seems perfect in portrait).
-// TODO: undo iframe-inner container transform on contract animation;
-// TODO   what happens if youtube player loading and exit transformation; vol message hide on vol change.
-
-// NOTES
-// - only point of the duplication is to keep the width of the container when image content translated
-// - seems like the hidden images won't be loaded
-
-// CHECK
-// iframe is scaled correctly. Check transform origin to counteract translate works across all devices, etc; position iframe moves from.
-// can click on close iframe if iframe takes up whole screen (on touch screen)?
 ---
 
 <MediaContainer>
