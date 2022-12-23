@@ -374,7 +374,12 @@ const { media } = Astro.props;
         "duplicate"
       ) as HTMLCollectionOf<HTMLElement>
     );
-    const closeButtons = Array.from(
+    const iframeOverlayCloseButtons = Array.from(
+      mediaContainer.getElementsByClassName(
+        "overlay-close-button"
+      ) as HTMLCollectionOf<HTMLElement>
+    );
+    const videoPlayingCloseButtons = Array.from(
       mediaContainer.getElementsByClassName(
         "close-button"
       ) as HTMLCollectionOf<HTMLElement>
@@ -402,6 +407,9 @@ const { media } = Astro.props;
         "iframe-helper"
       ) as HTMLCollectionOf<HTMLElement>
     );
+    const loadingTexts = mediaContainer.getElementsByClassName(
+      "player-loading"
+    ) as HTMLCollectionOf<HTMLElement>;
 
     // ELEMENT PRESENTATION HELPERS
     function showBackground() {
@@ -585,14 +593,12 @@ const { media } = Astro.props;
       });
     });
 
-    closeButtons.forEach((closeButton, iframeIndex) => {
-      // TRANSFORM IN FOR IFRAMES
-
+    iframeOverlayCloseButtons.forEach((overlayCloseButton, iframeIndex) => {
       const transformElement = iframeTransformContainers[
         iframeIndex
       ] as HTMLElement;
 
-      closeButton.addEventListener("click", () => {
+      overlayCloseButton.addEventListener("click", () => {
         const isTransformedOut = checkIsTransformedOut(transformElement);
         const isTransformingIn = checkIsTransformingIn(transformElement);
         const isTransformedIn = checkIsTransformedIn(transformElement);
@@ -603,11 +609,131 @@ const { media } = Astro.props;
         transformElement.classList.remove(isTransformedOutClass);
         transformElement.classList.add(isTransformingInClass);
 
-        transformElement.style.pointerEvents = "none";
         //
         const innerContainer = iframeInnerContainers[iframeIndex];
         const overlay = overlays[iframeIndex];
+        const iframe = iframes[iframeIndex];
+        const loadingText = loadingTexts[iframeIndex];
+
+        // functionality start
+        transformElement.style.pointerEvents = "none";
+        overlayCloseButton.style.pointerEvents = "none";
+
+        iframe.classList.add("stop-video");
+
+        loadingText.style.opacity = "0";
+        overlayCloseButton.style.opacity = "0";
+        setTimeout(() => {
+          loadingText.style.zIndex = "-1";
+          overlayCloseButton.style.zIndex = "-1";
+        }, 200);
+
+        // @ts-ignore: Unreachable code error
+        const player = window[`player-${iframe.id}`];
+
+        if (player) {
+          if (player.stopVideo) {
+            player.stopVideo();
+          }
+          // @ts-ignore: Unreachable code error
+          if (window["vol-controller"]) {
+            // @ts-ignore: Unreachable code error
+            window["vol-controller"].abort();
+          }
+        }
+        iframe.style.display = "none";
+
+        transformElement.style.transitionDuration = "0ms";
+        fixElementPosition(transformElement);
+        transformElement.style.transform = "";
+        transformElement.style.maxWidth = "";
+
+        const allElementsIndex = Number(transformElement.id);
+
+        const duplicate = duplicates[allElementsIndex];
+        const duplicateRect = duplicate.getBoundingClientRect();
+
+        transform({
+          destinationRect: duplicateRect,
+          transformBy: "width-height-margin",
+          transformingElement: transformElement,
+        });
+
+        const transitionDuration = getTransitionDurationMs(transformElement);
+
+        setTimeout(() => {
+          mediaContainer.style.overflowX = "auto";
+        }, transitionDuration / 2);
+
+        background.style.transitionDuration = `${transitionDuration}ms`;
+        background.style.opacity = "0";
+
+        setTimeout(() => {
+          transformElement.style.transitionDuration = "0ms";
+
+          revertIframeToInitialPlacement(transformElement);
+          innerContainer.style.left = "";
+          innerContainer.style.top = "";
+          innerContainer.style.transform = "";
+
+          overlay.style.left = "";
+          overlay.style.top = "";
+          overlay.style.transform = "";
+
+          for (
+            let j = transformElements.length - 1;
+            j > allElementsIndex;
+            j--
+          ) {
+            const transformElement = transformElements[j];
+            const isIframe = isIframeTransformContainer(transformElement);
+
+            if (isIframe) {
+              revertIframeToInitialPlacement(transformElement);
+            } else {
+              revertImageToInitialPlacement(transformElement);
+            }
+          }
+
+          background.style.zIndex = "-1";
+          background.style.position = "static";
+
+          transformElement.style.pointerEvents = "auto";
+
+          transformElement.classList.remove(isTransformingInClass);
+          transformElement.classList.add(isTransformedInClass);
+        }, transitionDuration);
+
+        // overlay transition timeout end ---
+      });
+    });
+
+    videoPlayingCloseButtons.forEach((videoPlayingCloseButton, iframeIndex) => {
+      // TRANSFORM IN FOR IFRAMES
+
+      const transformElement = iframeTransformContainers[
+        iframeIndex
+      ] as HTMLElement;
+
+      videoPlayingCloseButton.addEventListener("click", () => {
+        const isTransformedOut = checkIsTransformedOut(transformElement);
+        const isTransformingIn = checkIsTransformingIn(transformElement);
+        const isTransformedIn = checkIsTransformedIn(transformElement);
+
+        if (!isTransformedOut || isTransformingIn || isTransformedIn) {
+          return;
+        }
+        transformElement.classList.remove(isTransformedOutClass);
+        transformElement.classList.add(isTransformingInClass);
+
+        const innerContainer = iframeInnerContainers[iframeIndex];
+        const overlay = overlays[iframeIndex];
         const iframeHelperPanel = iframeHelperPanels[iframeIndex];
+
+        // functionality start
+        transformElement.style.pointerEvents = "none";
+        iframeHelperPanel.style.pointerEvents = "none";
+        //
 
         overlay.style.zIndex = "2";
         overlay.style.opacity = "1";
@@ -721,6 +847,9 @@ const { media } = Astro.props;
 <script type="text/javascript">
   // YOUTUBE STUFF
   // _____________
+  // Notes:
+  // - overlay close button will only show if youtube api not ready or player not ready: can handle in onYoutubePlayerReady
+
   function ytJsMain() {
     // FLAGS
     const youtubeApiCodeInitiatedClass = "yt-api-code-loading";
@@ -828,6 +957,7 @@ const { media } = Astro.props;
       const helperPanel = helperPanels[index];
       const volumeMessage = volumeMessages[index];
       const volumeControlPanel = volumeControlPanels[index];
+      const overlayCloseButton = overlayCloseButtons[index];
 
       iframe.classList.add(youtubePlayerLoadingFlag);
 
@@ -842,6 +972,7 @@ const { media } = Astro.props;
               overlay,
               volumeMessage,
               volumeControlPanel,
+              overlayCloseButton,
             }),
         },
       });
@@ -855,12 +986,21 @@ const { media } = Astro.props;
       helperPanel,
       volumeMessage,
       volumeControlPanel,
+      overlayCloseButton,
     }) {
+      const stopped = iframe.classList.contains("stop-video");
+      if (stopped) {
+        iframe.classList.remove("stop-video");
+        return;
+      }
       iframe.classList.remove(youtubePlayerLoadingFlag);
 
+      overlayCloseButton.style.pointerEvents = "none";
       loadingText.style.opacity = "0";
+      overlayCloseButton.style.opacity = "0";
       setTimeout(() => {
         loadingText.style.zIndex = "-1";
+        overlayCloseButton.style.zIndex = "-1";
       }, 200);
 
       const player = event.target;
@@ -889,6 +1029,9 @@ const { media } = Astro.props;
 
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
+      setTimeout(() => {
+        helperPanel.style.pointerEvents = "auto";
+      }, 200);
 
       //
       handleVolumeListenerAndSetVolume({
@@ -1003,6 +1146,9 @@ const { media } = Astro.props;
       mediaContainer.getElementsByClassName("volume-message");
     const volumeControlPanels =
       mediaContainer.getElementsByClassName("volume-buttons");
+    const overlayCloseButtons = mediaContainer.getElementsByClassName(
+      "overlay-close-button"
+    );
 
     // FUNCTIONALITY
     function onIsTransformedOut({ iframeIndex }) {
@@ -1020,6 +1166,7 @@ const { media } = Astro.props;
       const helperPanel = helperPanels[iframeIndex];
       const volumeMessage = volumeMessages[iframeIndex];
       const volumeControlPanel = volumeControlPanels[iframeIndex];
+      const overlayCloseButton = overlayCloseButtons[iframeIndex];
 
       //
       const youtubeApiIsInitiated = checkYoutubeApiIsInitiated(mediaContainer);
@@ -1029,14 +1176,22 @@ const { media } = Astro.props;
       function showLoading() {
         loadingText.style.zIndex = "10";
         loadingText.style.opacity = "1";
+        overlayCloseButton.style.zIndex = "10";
+        overlayCloseButton.style.opacity = "1";
+
+        // opacity transition timeout to prevent click on invisible button.
+        setTimeout(() => {
+          overlayCloseButton.style.pointerEvents = "auto";
+        }, 200);
       }
 
       // functionality start
-      iframe.style.display = "block";
 
       if (!youtubeApiIsInitiated || !youtubeApiIsReady) {
         showLoading();
       }
+
+      iframe.style.display = "block";
 
       if (!youtubeApiIsInitiated) {
         mediaContainer.classList.add(youtubeApiCodeInitiatedClass);
@@ -1052,6 +1207,7 @@ const { media } = Astro.props;
       if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
+      // first youtube video (when youtube api is iniitialising) will run from onYoutubeApiReady; following ones will run with code below.
 
       const player = window[`player-${iframe.id}`];
 
@@ -1084,6 +1240,7 @@ const { media } = Astro.props;
               overlay,
               volumeMessage,
               volumeControlPanel,
+              overlayCloseButton,
             }),
         },
       });
