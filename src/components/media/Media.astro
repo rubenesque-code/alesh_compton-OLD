@@ -40,7 +40,6 @@ const { media } = Astro.props;
         )
       )
     }
-    <div class="spacer">iii</div>
     <div class="visible-media" id="visible-media">
       {
         media.map((mediaElement, index) =>
@@ -63,7 +62,6 @@ const { media } = Astro.props;
           )
         )
       }
-      <div class="spacer">iii</div>
       <Background />
     </div>
   </div>
@@ -992,7 +990,6 @@ const { media } = Astro.props;
 
       const stopped = iframe.classList.contains("stop-video");
       if (stopped) {
-        console.log("EXITING ON YT PLAYER READY");
         iframe.classList.remove("stop-video");
         return;
       }
