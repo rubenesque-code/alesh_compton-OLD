@@ -27,7 +27,7 @@ const { media } = Astro.props;
 <MediaContainer>
   <div class="media-inner">
     {
-      media.map((mediaElement) =>
+      media.map((mediaElement, i) =>
         mediaElement.type === "image" ? (
           <Image
             class="image-img-duplicate duplicate"
@@ -36,7 +36,7 @@ const { media } = Astro.props;
             format="avif"
           />
         ) : (
-          <div class="iframe-duplicate duplicate" />
+          <div class="iframe-duplicate duplicate" id={`dupe-${i}`} />
         )
       )
     }
@@ -65,7 +65,7 @@ const { media } = Astro.props;
       <Background />
     </div>
   </div>
-  <button id="demo-scroll" type="button">SCROLL</button>
+  <!-- <button id="demo-scroll" type="button">SCROLL</button> -->
 </MediaContainer>
 
 <style is:global>
@@ -125,20 +125,29 @@ const { media } = Astro.props;
   }
 </style>
 
-<script type="text/javascript">
+<!-- <script type="text/javascript">
   const button = document.getElementById("demo-scroll");
   button.addEventListener("click", () => {
-    const element = document.getElementById("3");
-    const rect = element.getBoundingClientRect();
-    console.log("rect:", rect.left);
-    // const mediaContainer = document.getElementById("media-container");
+    // const element = document.getElementById("3");
+    // const rect = element.getBoundingClientRect();
+    // console.log("rect:", rect.left);
+    const mediaContainer = document.getElementById("media-container");
     // mediaContainer.scroll(rect.left, 0);
+    const duplicate = document.getElementsByClassName("duplicate")[3];
+    const rect = duplicate.getBoundingClientRect();
+    // console.log("rect:", rect);
+    // console.log(`${duplicate.id}.left`, rect.left);
+    console.log(mediaContainer.scrollWidth);
+
+    const mediaContainerRect = mediaContainer.getBoundingClientRect();
+    // console.log("mediaContainerRect:", mediaContainerRect);
 
     // window.pos = rect.left;
   });
-</script>
+</script> -->
 
 <script>
+  // rect.left is position from left side of viewport
   function repositionScrollMain() {
     window.addEventListener("orientationchange", () => {
       const transformContainers = Array.from(
@@ -155,38 +164,25 @@ const { media } = Astro.props;
         return;
       }
 
-      const duplicates = Array.from(
-        document.getElementsByClassName(
-          "duplicate"
-        ) as HTMLCollectionOf<HTMLElement>
-      );
-      duplicates.forEach((duplicate) => {
-        // console.log("duplicate rect:", duplicate.getBoundingClientRect());
-      });
-
-      const mediaContainer = document.getElementById("media-container")!;
-      // console.log("sc width", mediaContainer.scrollWidth);
-      // console.log("current scroll left", mediaContainer.scrollLeft);
-
+      const duplicates = document.getElementsByClassName(
+        "duplicate"
+      ) as HTMLCollectionOf<HTMLElement>;
       const duplicate = duplicates[index];
-      const duplicateRect = duplicate.getBoundingClientRect();
+      const mediaContainer = document.getElementById("media-container")!;
 
-      const scrollPos = mediaContainer.scrollLeft - duplicateRect.left;
-      // console.log("scrollPos:", scrollPos);
+      const scrollOffsetLeft = mediaContainer.scrollLeft;
+      const duplicateOffsetLeft = duplicate.offsetLeft;
+      const relativeDistance =
+        (duplicateOffsetLeft - scrollOffsetLeft) / mediaContainer.scrollWidth;
 
-      mediaContainer.scrollTo(scrollPos, 0);
-      // @ts-ignore: Unreachable code error
-      window.pos = scrollPos;
-
-      // const duplicate = duplicates[index];
-      // console.log("duplicate:", duplicate);
-      // const duplicateRect = duplicate.getBoundingClientRect();
-      // console.log("duplicateRect:", duplicateRect);
-
-      // const mediaContainer = document.getElementById("media-container")!;
-      // mediaContainer.scroll(duplicateRect.left, 0);
-      // @ts-ignore: Unreachable code error
-      // window.pos = duplicateRect.left;
+      // timout to get element data after orientation change
+      setTimeout(() => {
+        const newPos =
+          duplicate.offsetLeft - relativeDistance * mediaContainer.scrollWidth;
+        mediaContainer.scroll(newPos, 0);
+        // @ts-ignore: Unreachable code error
+        window.pos = newPos;
+      }, 50);
     });
   }
   repositionScrollMain();
