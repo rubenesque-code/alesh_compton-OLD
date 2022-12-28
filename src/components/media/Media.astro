@@ -53,7 +53,6 @@ const { media } = Astro.props;
       <Background />
     </div>
   </div>
-  <!-- <button id="demo-scroll" type="button">SCROLL</button> -->
 </MediaContainer>
 
 <style is:global>
@@ -113,74 +112,8 @@ const { media } = Astro.props;
   }
 </style>
 
-<!-- <script type="text/javascript">
-  const button = document.getElementById("demo-scroll");
-  button.addEventListener("click", () => {
-    // const element = document.getElementById("3");
-    // const rect = element.getBoundingClientRect();
-    // console.log("rect:", rect.left);
-    const mediaContainer = document.getElementById("media-container");
-    // mediaContainer.scroll(rect.left, 0);
-    const duplicate = document.getElementsByClassName("duplicate")[3];
-    const rect = duplicate.getBoundingClientRect();
-    // console.log("rect:", rect);
-    // console.log(`${duplicate.id}.left`, rect.left);
-    console.log(mediaContainer.scrollWidth);
-
-    const mediaContainerRect = mediaContainer.getBoundingClientRect();
-    // console.log("mediaContainerRect:", mediaContainerRect);
-
-    // window.pos = rect.left;
-  });
-</script> -->
-
 <script>
-  // rect.left is position from left side of viewport
-  function repositionScrollMain() {
-    window.addEventListener("orientationchange", () => {
-      const transformContainers = Array.from(
-        document.getElementsByClassName(
-          "media-transform"
-        ) as HTMLCollectionOf<HTMLElement>
-      );
-      const isTransformedOutClass = "is-transformed-out";
-      const index = transformContainers.findIndex((node) =>
-        node.classList.contains(isTransformedOutClass)
-      );
-
-      if (index < 0) {
-        return;
-      }
-
-      const duplicates = document.getElementsByClassName(
-        "duplicate"
-      ) as HTMLCollectionOf<HTMLElement>;
-      const duplicate = duplicates[index];
-      const mediaContainer = document.getElementById("media-container")!;
-
-      const scrollOffsetLeft = mediaContainer.scrollLeft;
-      const duplicateOffsetLeft = duplicate.offsetLeft;
-      const relativeDistance =
-        (duplicateOffsetLeft - scrollOffsetLeft) / mediaContainer.scrollWidth;
-      /*       const dupeLeftDistanceToScreenRightDecimal =
-        (window.innerWidth - duplicate.getBoundingClientRect().left) /
-        window.innerWidth; */
-
-      // timout to get element data after orientation change
-      setTimeout(() => {
-        const newPos =
-          duplicate.offsetLeft - relativeDistance * mediaContainer.scrollWidth;
-        mediaContainer.scroll(newPos, 0);
-        // @ts-ignore: Unreachable code error
-        window.mediaContainerScroll.pos = newPos;
-      }, 50);
-    });
-  }
-  repositionScrollMain();
-</script>
-
-<script>
-  // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
+  // FADE IN MEDIA to aviod image flashing in (hacky but should be okay since images are local and so will load in quick)
   // _________________________________
   function fadeInMediaJsMain() {
     const mediaContainer = document.getElementById("media-container")!;
@@ -901,6 +834,45 @@ const { media } = Astro.props;
     );
   }
   transformJsInitiator();
+</script>
+
+<script>
+  function repositionScrollMain() {
+    window.addEventListener("orientationchange", () => {
+      const transformContainers = Array.from(
+        document.getElementsByClassName(
+          "media-transform"
+        ) as HTMLCollectionOf<HTMLElement>
+      );
+      const isTransformedOutClass = "is-transformed-out";
+      const index = transformContainers.findIndex((node) =>
+        node.classList.contains(isTransformedOutClass)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const mediaContainer = document.getElementById("media-container")!;
+
+      const preOrientation = {
+        relativeScrollLeft:
+          mediaContainer.scrollLeft / mediaContainer.scrollWidth,
+      };
+
+      setTimeout(() => {
+        const postOrientation = {
+          scrollLeft:
+            mediaContainer.scrollWidth * preOrientation.relativeScrollLeft,
+        };
+
+        mediaContainer.scroll(postOrientation.scrollLeft, 0);
+        // @ts-ignore: Unreachable code error
+        window.mediaContainerScroll.pos = postOrientation.scrollLeft;
+      }, 50);
+    });
+  }
+  repositionScrollMain();
 </script>
 
 <script type="text/javascript">

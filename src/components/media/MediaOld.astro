@@ -10,24 +10,12 @@ import type { LocalImage, YoutubeVideo } from "~types/index";
 type Props = { media: (LocalImage | YoutubeVideo)[] };
 
 const { media } = Astro.props;
-
-// TODO: on landscape, iframe transform out and in still not right (seems perfect in portrait).
-// TODO: undo iframe-inner container transform on contract animation;
-// TODO   what happens if youtube player loading and exit transformation; vol message hide on vol change.
-
-// NOTES
-// - only point of the duplication is to keep the width of the container when image content translated
-// - seems like the hidden images won't be loaded
-
-// CHECK
-// iframe is scaled correctly. Check transform origin to counteract translate works across all devices, etc; position iframe moves from.
-// can click on close iframe if iframe takes up whole screen (on touch screen)?
 ---
 
 <MediaContainer>
   <div class="media-inner">
     {
-      media.map((mediaElement) =>
+      media.map((mediaElement, i) =>
         mediaElement.type === "image" ? (
           <Image
             class="image-img-duplicate duplicate"
@@ -36,7 +24,7 @@ const { media } = Astro.props;
             format="avif"
           />
         ) : (
-          <div class="iframe-duplicate duplicate" />
+          <div class="iframe-duplicate duplicate" id={`dupe-${i}`} />
         )
       )
     }
@@ -65,6 +53,7 @@ const { media } = Astro.props;
       <Background />
     </div>
   </div>
+  <!-- <button id="demo-scroll" type="button">SCROLL</button> -->
 </MediaContainer>
 
 <style is:global>
@@ -77,6 +66,12 @@ const { media } = Astro.props;
 </style>
 
 <style>
+  #demo-scroll {
+    z-index: 100;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+  }
   .media-inner {
     position: relative;
     display: flex;
@@ -117,6 +112,72 @@ const { media } = Astro.props;
     }
   }
 </style>
+
+<!-- <script type="text/javascript">
+  const button = document.getElementById("demo-scroll");
+  button.addEventListener("click", () => {
+    // const element = document.getElementById("3");
+    // const rect = element.getBoundingClientRect();
+    // console.log("rect:", rect.left);
+    const mediaContainer = document.getElementById("media-container");
+    // mediaContainer.scroll(rect.left, 0);
+    const duplicate = document.getElementsByClassName("duplicate")[3];
+    const rect = duplicate.getBoundingClientRect();
+    // console.log("rect:", rect);
+    // console.log(`${duplicate.id}.left`, rect.left);
+    console.log(mediaContainer.scrollWidth);
+
+    const mediaContainerRect = mediaContainer.getBoundingClientRect();
+    // console.log("mediaContainerRect:", mediaContainerRect);
+
+    // window.pos = rect.left;
+  });
+</script> -->
+
+<script>
+  // rect.left is position from left side of viewport
+  function repositionScrollMain() {
+    window.addEventListener("orientationchange", () => {
+      const transformContainers = Array.from(
+        document.getElementsByClassName(
+          "media-transform"
+        ) as HTMLCollectionOf<HTMLElement>
+      );
+      const isTransformedOutClass = "is-transformed-out";
+      const index = transformContainers.findIndex((node) =>
+        node.classList.contains(isTransformedOutClass)
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      const duplicates = document.getElementsByClassName(
+        "duplicate"
+      ) as HTMLCollectionOf<HTMLElement>;
+      const duplicate = duplicates[index];
+      const mediaContainer = document.getElementById("media-container")!;
+
+      const scrollOffsetLeft = mediaContainer.scrollLeft;
+      const duplicateOffsetLeft = duplicate.offsetLeft;
+      const relativeDistance =
+        (duplicateOffsetLeft - scrollOffsetLeft) / mediaContainer.scrollWidth;
+      /*       const dupeLeftDistanceToScreenRightDecimal =
+        (window.innerWidth - duplicate.getBoundingClientRect().left) /
+        window.innerWidth; */
+
+      // timout to get element data after orientation change
+      setTimeout(() => {
+        const newPos =
+          duplicate.offsetLeft - relativeDistance * mediaContainer.scrollWidth;
+        mediaContainer.scroll(newPos, 0);
+        // @ts-ignore: Unreachable code error
+        window.mediaContainerScroll.pos = newPos;
+      }, 50);
+    });
+  }
+  repositionScrollMain();
+</script>
 
 <script>
   // FADE IN MEDIA (hacky but should be okay since images are local and so will load in quick)
@@ -617,7 +678,7 @@ const { media } = Astro.props;
         transformElement.style.pointerEvents = "none";
         overlayCloseButton.style.pointerEvents = "none";
 
-        iframe.classList.add("stop-video");
+        mediaContainer.classList.add("stop-video");
 
         loadingText.style.opacity = "0";
         overlayCloseButton.style.opacity = "0";
@@ -941,6 +1002,12 @@ const { media } = Astro.props;
       // the API's js is loaded after the first iframe container is transformed
       mediaContainer.classList.add(youtubeApiReadyFlag);
 
+      const stopped = mediaContainer.classList.contains("stop-video");
+      if (stopped) {
+        mediaContainer.classList.remove("stop-video");
+        return;
+      }
+
       const index = iframeTransformContainers.findIndex((node) =>
         node.classList.contains(isTransformedOutClass)
       );
@@ -957,7 +1024,7 @@ const { media } = Astro.props;
       const volumeControlPanel = volumeControlPanels[index];
       const overlayCloseButton = overlayCloseButtons[index];
 
-      iframe.classList.add(youtubePlayerLoadingFlag);
+      mediaContainer.classList.add(youtubePlayerLoadingFlag);
 
       window[`player-${iframe.id}`] = new YT.Player(iframe.id, {
         events: {
@@ -986,11 +1053,11 @@ const { media } = Astro.props;
       volumeControlPanel,
       overlayCloseButton,
     }) {
-      iframe.classList.remove(youtubePlayerLoadingFlag);
+      mediaContainer.classList.remove(youtubePlayerLoadingFlag);
 
-      const stopped = iframe.classList.contains("stop-video");
+      const stopped = mediaContainer.classList.contains("stop-video");
       if (stopped) {
-        iframe.classList.remove("stop-video");
+        mediaContainer.classList.remove("stop-video");
         return;
       }
 
@@ -1026,6 +1093,12 @@ const { media } = Astro.props;
     }) {
       overlay.style.opacity = "0";
 
+      if (checkIsTouchDevice()) {
+        const volumeMessageText = volumeMessage.querySelector(
+          "#volume-message-text"
+        );
+        volumeMessageText.textContent = "use youtube controls to unmute";
+      }
       helperPanel.style.zIndex = "10";
       helperPanel.style.opacity = "1";
       setTimeout(() => {
@@ -1054,7 +1127,8 @@ const { media } = Astro.props;
       volumeControlPanel,
       iframe,
     }) {
-      if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
+      if (iframe.classList.contains(volumeSetClass)) {
+        // if (!checkIsTouchDevice() || iframe.classList.contains(volumeSetClass)) {
         return;
       }
       const volumeController = new AbortController();
@@ -1072,55 +1146,58 @@ const { media } = Astro.props;
             ) {
               //
               if (Number(data.info.volume) < 60) {
-                player.setVolume(60);
-                iframe.classList.add(volumeSetClass);
+                if (checkIsTouchDevice()) {
+                  player.setVolume(60);
+                  iframe.classList.add(volumeSetClass);
+                }
 
                 volumeMessage.style.opacity = 0;
                 setTimeout(() => {
-                  volumeMessage.style.display = "none";
+                  if (checkIsTouchDevice()) {
+                    volumeMessage.style.display = "none";
+                    volumeControlPanel.style.display = "flex";
+                    volumeControlPanel.style.opacity = "1";
 
-                  //
-                  volumeControlPanel.style.display = "flex";
-                  volumeControlPanel.style.opacity = "1";
+                    const downButton =
+                      volumeControlPanel.querySelector("#volume-down");
+                    const upButton =
+                      volumeControlPanel.querySelector("#volume-up");
 
-                  const downButton =
-                    volumeControlPanel.querySelector("#volume-down");
-                  const upButton =
-                    volumeControlPanel.querySelector("#volume-up");
+                    const volumeCrement = 10;
 
-                  const volumeCrement = 10;
-
-                  function handleVolumeDown() {
-                    const currentVolume = player.getVolume();
-                    if (currentVolume === 100) {
-                      upButton.style.color = "black";
+                    function handleVolumeDown() {
+                      const currentVolume = player.getVolume();
+                      if (currentVolume === 100) {
+                        upButton.style.color = "black";
+                      }
+                      if (currentVolume === 0) {
+                        downButton.style.color = "gray";
+                        return;
+                      }
+                      player.setVolume(currentVolume - volumeCrement);
                     }
-                    if (currentVolume === 0) {
-                      downButton.style.color = "gray";
-                      return;
+
+                    function handleVolumeUp() {
+                      const currentVolume = player.getVolume();
+                      if (currentVolume === 0) {
+                        downButton.style.color = "black";
+                      }
+                      if (currentVolume === 100) {
+                        upButton.style.color = "gray";
+                        return;
+                      }
+                      player.setVolume(currentVolume + volumeCrement);
                     }
-                    player.setVolume(currentVolume - volumeCrement);
-                    console.log(player.getVolume());
+
+                    downButton.addEventListener("click", handleVolumeDown, {
+                      passive: true,
+                    });
+                    upButton.addEventListener("click", handleVolumeUp, {
+                      passive: true,
+                    });
+                  } else {
+                    volumeMessage.style.zIndex = "-1";
                   }
-
-                  function handleVolumeUp() {
-                    const currentVolume = player.getVolume();
-                    if (currentVolume === 0) {
-                      downButton.style.color = "black";
-                    }
-                    if (currentVolume === 100) {
-                      upButton.style.color = "gray";
-                      return;
-                    }
-                    player.setVolume(currentVolume + volumeCrement);
-                  }
-
-                  downButton.addEventListener("click", handleVolumeDown, {
-                    passive: true,
-                  });
-                  upButton.addEventListener("click", handleVolumeUp, {
-                    passive: true,
-                  });
                 }, 200);
 
                 volumeController.abort();
@@ -1167,9 +1244,9 @@ const { media } = Astro.props;
       const volumeControlPanel = volumeControlPanels[iframeIndex];
       const overlayCloseButton = overlayCloseButtons[iframeIndex];
 
-      const wasStopped = iframe.classList.contains("stop-video");
+      const wasStopped = mediaContainer.classList.contains("stop-video");
       if (wasStopped) {
-        iframe.classList.remove("stop-video");
+        mediaContainer.classList.remove("stop-video");
       }
 
       //
@@ -1208,7 +1285,7 @@ const { media } = Astro.props;
         return;
       }
 
-      if (iframe.classList.contains(youtubePlayerLoadingFlag)) {
+      if (mediaContainer.classList.contains(youtubePlayerLoadingFlag)) {
         return;
       }
       // first youtube video (when youtube api is iniitialising) will run from onYoutubeApiReady; following ones will run with code below.
@@ -1229,7 +1306,7 @@ const { media } = Astro.props;
         return;
       }
 
-      iframe.classList.add(youtubePlayerLoadingFlag);
+      mediaContainer.classList.add(youtubePlayerLoadingFlag);
 
       showLoading();
 
