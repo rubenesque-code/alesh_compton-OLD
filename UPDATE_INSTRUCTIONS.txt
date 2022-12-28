@@ -40,6 +40,10 @@ ADD PAGE TO NAVIGATION
 - you can reorder the array however you want to reorder the links as they appear on the navigation panel.
 
 
+SOCIAL MEDIA & EMAIL LINKS
+--------------------------
+- change text and hrefs in components/Footer.astro and components/Navigation.astro
+
 SEO
 -------
 - add a site description in /layouts/Layout.astro
