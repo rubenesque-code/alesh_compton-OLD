@@ -80,6 +80,7 @@ import PageLinks from "./PageLinks.astro";
       gap: 4em;
       padding-left: 1em;
       opacity: 0;
+      height: 100vh;
     }
     .nav-small-links-container {
       margin-top: 4em;
@@ -103,15 +104,11 @@ import PageLinks from "./PageLinks.astro";
   const header = document.getElementById("header") as HTMLElement;
 
   menu.style.top = `${header.getBoundingClientRect().height}px`;
-  menu.style.height = `${
-    window.innerHeight
-    // window.innerHeight - header.getBoundingClientRect().height
-  }px`;
 
   // HELPERS
   const openMenu = () => {
     menu.classList.add("open");
-    menu.style.zIndex = "10";
+    menu.style.zIndex = "30";
     menu.style.opacity = "1";
     document.body.style.overflow = "hidden";
   };

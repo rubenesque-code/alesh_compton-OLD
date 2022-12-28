@@ -838,6 +838,16 @@ const { media } = Astro.props;
 
 <script>
   function repositionScrollMain() {
+    const isTouchDevice =
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      // @ts-ignore: Unreachable code error
+      navigator.msMaxTouchPoints > 0;
+
+    if (!isTouchDevice) {
+      return;
+    }
+
     window.addEventListener("orientationchange", () => {
       const transformContainers = Array.from(
         document.getElementsByClassName(
