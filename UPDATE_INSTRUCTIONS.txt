@@ -42,7 +42,7 @@ ADD PAGE TO NAVIGATION
 
 SOCIAL MEDIA & EMAIL LINKS
 --------------------------
-- change text and hrefs in components/Footer.astro and components/Navigation.astro
+- change text and hrefs in components/Footer.astro, components/Navigation.astro and pages/404.astro
 
 SEO
 -------
