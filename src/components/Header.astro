@@ -1,8 +1,20 @@
 ---
+// import { Image } from "@astrojs/image/components";
+
 import Navigation from "./Navigation.astro";
+// import logo from "~images/logo.png";
 ---
 
 <div class="header-container" id="header">
+  <!--   <a class="header-name" href="/">
+<Image
+      width={70}
+      height={70}
+      alt=""
+      src={logo}
+      format="avif"
+      fit="contain"
+    /> </a> -->
   <a class="header-name" href="/"><span>Alesh Compton</span></a>
   <Navigation />
 </div>
@@ -25,8 +37,7 @@ import Navigation from "./Navigation.astro";
   .header-name > span {
     position: absolute;
     top: -6px;
-    font-family: "LM", sans-serif;
     white-space: nowrap;
-    /* transform: translateY(12px); */
+    text-transform: uppercase;
   }
 </style>
