@@ -19,5 +19,6 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
-# prototype pages
-src/pages/prototypes/
+
+# temp
+src/pages/archive-for-now/
