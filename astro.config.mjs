@@ -16,7 +16,7 @@ export default defineConfig({
     }),
     astroImageTools,
   ],
-  site: "https://joshua-gordon.netlify.app/",
+  site: "https://aleshcompton.com",
   base: "/",
   publicDir: "./public",
 });

@@ -24,7 +24,7 @@ const youtubeId = getYoutubeVideoIdFromUrl(youtubeUrl)!;
 const youtubeEmbedSrc = getYoutubeEmbedUrlFromId(youtubeId);
 const youtubeThumbnailSrc = getThumbnailFromYoutubeId(youtubeId);
 
-const youtubeIframeParams = `?enablejsapi=1&modestbranding=1&rel=0&color=white&frameborder=0&${
+const youtubeIframeParams = `?enablejsapi=1&modestbranding=1&rel=0&color=white&frameborder=0&origin=${
   import.meta.env.PROD ? domain : ""
 }`;
 

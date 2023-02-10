@@ -1,0 +1,37 @@
+---
+import Page from "~layouts/Page.astro";
+
+import type { Page as PageData } from "~types/index";
+
+const pageData: PageData = {
+  title: "Various video",
+  media: [
+    {
+      type: "youtube-video",
+      youtubeUrl: " https://www.youtube.com/watch?v=DzHe2JBLGUg",
+    },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://youtu.be/AqWI1bmZf4U",
+    },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://www.youtube.com/watch?v=eSLd-ZOwXB4",
+    },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://youtu.be/kz_RFnhKheA",
+    },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://youtu.be/AV-6HVc1KRk",
+    },
+    {
+      type: "youtube-video",
+      youtubeUrl: "https://youtu.be/IlbYlI4Qjy0",
+    },
+  ],
+};
+---
+
+<Page {...pageData} />

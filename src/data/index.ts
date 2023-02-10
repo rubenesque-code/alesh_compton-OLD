@@ -1,1 +1,1 @@
-export const domain = "https://joshua-gordon.netlify.app";
+export const domain = "https://aleshcompton.com/";
