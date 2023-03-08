@@ -27,7 +27,7 @@ ADD DATA
     - IMPORTANT: if you add the same video twice on the same page it won't work.
 
 ADD PAGE TO NAVIGATION
-- Add the page to the /src/componets/PageLinks.astro file 
+- Add the page to the /src/components/PageLinks.astro file 
 - if the route (which is the file name) is the same as the page title:
   - e.g. "Butterfly".
   - simply add a string ("Butterfly") to the 'links' array. 
