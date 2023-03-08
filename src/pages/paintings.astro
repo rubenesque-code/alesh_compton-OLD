@@ -1,0 +1,98 @@
+---
+import Page from "~layouts/Page.astro";
+
+import image1 from "~images/paintings/1.jpg";
+import image2 from "~images/paintings/2.jpg";
+import image3 from "~images/paintings/3.jpg";
+import image4 from "~images/paintings/4.jpg";
+import image5 from "~images/paintings/5.jpg";
+import image6 from "~images/paintings/6.jpg";
+import image8 from "~images/paintings/8.jpg";
+import image9 from "~images/paintings/9.jpg";
+import image10 from "~images/paintings/10.jpg";
+import image11 from "~images/paintings/11.jpg";
+import image13 from "~images/paintings/13.jpg";
+import image14 from "~images/paintings/14.jpg";
+import image15 from "~images/paintings/15.jpg";
+import image16 from "~images/paintings/16.jpg";
+import image18 from "~images/paintings/18.jpg";
+import image20 from "~images/paintings/20.jpg";
+import image21 from "~images/paintings/21.jpg";
+import image22 from "~images/paintings/22.jpg";
+import image23 from "~images/paintings/23.jpg";
+import image24 from "~images/paintings/24.jpg";
+import image27 from "~images/paintings/27.jpg";
+import image28 from "~images/paintings/28.jpg";
+import image29 from "~images/paintings/29.jpg";
+import image30 from "~images/paintings/30.jpg";
+import image32 from "~images/paintings/32.jpg";
+import image33 from "~images/paintings/33.jpg";
+import image34 from "~images/paintings/34.jpg";
+import image35 from "~images/paintings/35.jpg";
+
+import type { Page as PageData } from "~types/index";
+
+const pageData: PageData = {
+  title: "PAINTINGS",
+  description: [
+    "Alesh Compton's paintings are centered around the trace which can be defined as a mark, an object or other indication of the existence or passing of something. Traces that are left from interactions allude to moments but not necessarily a final product. These Gutai-inspired action paintings are accompanied by videos leaving room for the viewer to imagine the circumstances under which the artworks were born.",
+    "This painting series was made in Paris at the DSXL artist residency and was shown in January of 2021 in an exhibition titled  'un Oueff Dur' .The videos were also screened separate to the paintings in Glasgow, June 2021 as part of the Alternative Degree show at SWG3.",
+    "",
+    "DATE NIGHT",
+    "A painting exploring the dynamics of a date scenario.",
+    "Acrylic on canvas applied via paint cannon (fabricated by Ned Prizeman)",
+    "160x400",
+    "",
+    "RUNNING MAN",
+    "A trace left from the act of Running.",
+    "Acrylic on canvas applied via paint cannon (fabricated by Ned Prizeman)",
+    "260x350",
+    "",
+    "FRIED EGGZ",
+    "A trace left from the act of frying an egg.",
+    "Acrylic on Canvas",
+    "260x280",
+    "",
+    "GLASS HALF FULL/EMPTY",
+    "An attempt to fill a glass whilst the rain washes it away.",
+    "Oil & Acrylic on Canvas",
+    "260x310",
+  ],
+  media: [
+    { type: "image", url: image1 },
+    { type: "image", url: image2 },
+    { type: "image", url: image3 },
+    { type: "image", url: image4 },
+    { type: "image", url: image5 },
+    { type: "image", url: image6 },
+    { type: "youtube-video", youtubeUrl: "https://youtu.be/RI1IhCPgt-E" },
+    { type: "image", url: image8 },
+    { type: "image", url: image9 },
+    { type: "image", url: image10 },
+    { type: "image", url: image11 },
+    { type: "image", url: image13 },
+    { type: "image", url: image14 },
+    { type: "image", url: image15 },
+    { type: "image", url: image16 },
+    { type: "youtube-video", youtubeUrl: "https://youtu.be/sbaUDVvcQ9Y" },
+    { type: "image", url: image18 },
+    { type: "image", url: image20 },
+    { type: "image", url: image21 },
+    { type: "image", url: image22 },
+    { type: "image", url: image23 },
+    { type: "image", url: image24 },
+    { type: "youtube-video", youtubeUrl: "https://youtu.be/DZlvy_9Xs48" },
+    { type: "image", url: image27 },
+    { type: "image", url: image28 },
+    { type: "image", url: image29 },
+    { type: "image", url: image30 },
+    { type: "youtube-video", youtubeUrl: "https://youtu.be/QqbG6iQWboE" },
+    { type: "image", url: image32 },
+    { type: "image", url: image33 },
+    { type: "image", url: image34 },
+    { type: "image", url: image35 },
+  ],
+};
+---
+
+<Page {...pageData} />
